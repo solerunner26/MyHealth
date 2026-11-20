@@ -15,6 +15,7 @@ googleId = "1.1.1"
 mlkitText = "16.0.1"
 pdfbox = "2.0.27.0"
 sqlcipher = "4.20.0"
+androidxSqlite = "2.7.1"
 coil = "3.6.3"
 serialization = "1.13.0"
 coroutines = "1.10.2"
@@ -54,6 +55,7 @@ googleid = { module = "com.google.android.libraries.identity.googleid:googleid",
 mlkit-text-recognition = { module = "com.google.mlkit:text-recognition", version.ref = "mlkitText" }
 pdfbox-android = { module = "com.tom-roush:pdfbox-android", version.ref = "pdfbox" }
 sqlcipher-android = { module = "net.zetetic:sqlcipher-android", version.ref = "sqlcipher" }
+androidx-sqlite = { module = "androidx.sqlite:sqlite", version.ref = "androidxSqlite" }
 coil-compose = { module = "io.coil-kt.coil3:coil-compose", version.ref = "coil" }
 coil-video = { module = "io.coil-kt.coil3:coil-video", version.ref = "coil" }
 

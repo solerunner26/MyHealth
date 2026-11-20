@@ -134,6 +134,7 @@ dependencies {
 
     // Encrypted local database
     implementation(libs.sqlcipher.android)
+    implementation(libs.androidx.sqlite)
 
     // Optional device telemetry (Health Connect = Fitbit/Google Health data on-device)
     implementation(libs.androidx.health.connect.client)
