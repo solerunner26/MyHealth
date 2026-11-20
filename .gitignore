@@ -1,0 +1,26 @@
+# Gradle / build output
+.gradle/
+build/
+*/build/
+local.properties
+captures/
+.externalNativeBuild/
+.cxx/
+
+# IDE
+.idea/
+*.iml
+*.ipr
+*.iws
+.vscode/
+.DS_Store
+
+# Secrets & signing (never commit)
+*.jks
+*.keystore
+keystore.properties
+secrets.properties
+
+# Local environment
+.env
+*.log
