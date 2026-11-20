@@ -47,8 +47,8 @@ private val LightScheme: ColorScheme = lightColorScheme(
     outline = Palette.Neutral70,
     outlineVariant = Palette.Neutral87,
     // Single-hue product: the "error" slot stays inside the palette (deep pine ink) so that
-    // destructive/critical styling never introduces a second hue. Severity is conveyed by
-    // iconography, weight and wording instead of colour.
+    // destructive/critical styling never introduces a second hue. Severity is carried by
+    // iconography, wording, fill weight and position instead of colour.
     error = Palette.Pine20,
     onError = Palette.Neutral100,
     errorContainer = Palette.Neutral90,
@@ -84,8 +84,18 @@ private val DarkScheme: ColorScheme = darkColorScheme(
     surfaceContainer = Palette.Neutral12,
     surfaceContainerHigh = Palette.Neutral17,
     surfaceContainerHighest = Palette.Neutral22,
+
     inverseSurface = Palette.Neutral90,
-/** Spacing scale — every gap in the product comes from here, so rhythm stays identical app-wide. */
+    inverseOnSurface = Palette.Neutral12,
+    outline = Palette.Neutral60,
+    outlineVariant = Palette.Neutral30,
+    error = Palette.Pine85,
+    onError = Palette.Pine05,
+    errorContainer = Palette.Neutral24,
+    onErrorContainer = Palette.Pine90,
+    scrim = Palette.Neutral0,
+)
+/** Spacing scale — every gap in the product comes from here, so the rhythm stays identical app-wide. */
 @Immutable
 data class Spacing(
     val xxs: Dp = 2.dp,
@@ -102,7 +112,7 @@ data class Spacing(
     val hairline: Dp = 1.dp,
 )
 
-/** Chart palette: tints of the single accent plus neutral, never independent hues. */
+/** Chart palette: tints of the single accent plus neutral, never an independent hue. */
 @Immutable
 data class ChartColors(
     val line: Color,
@@ -114,12 +124,6 @@ data class ChartColors(
     val axisLabel: Color,
     val areaTop: Color,
     val areaBottom: Color,
-)
-
-@Immutable
-data class MyHealthExtras(
-    val spacing: Spacing = Spacing(),
-    val chart: ChartColors = lightChartColors(),
 )
 
 fun lightChartColors(): ChartColors = ChartColors(
@@ -158,6 +162,11 @@ object MyHealthTokens {
         @Composable @ReadOnlyComposable get() = LocalChartColors.current
 }
 
+/**
+ * The single theme entry point. `darkTheme` is passed in from the user's setting
+ * (`ThemeMode.SYSTEM` resolves to [isSystemInDarkTheme] there), which keeps the "follow day/night"
+ * behaviour in one place instead of being re-derived in every screen.
+ */
 @Composable
 fun MyHealthTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
@@ -176,13 +185,3 @@ fun MyHealthTheme(
         )
     }
 }
-
-    inverseOnSurface = Palette.Neutral12,
-    outline = Palette.Neutral60,
-    outlineVariant = Palette.Neutral30,
-    error = Palette.Pine85,
-    onError = Palette.Pine05,
-    errorContainer = Palette.Neutral24,
-    onErrorContainer = Palette.Pine90,
-    scrim = Palette.Neutral0,
-)
