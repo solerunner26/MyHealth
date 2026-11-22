@@ -30,8 +30,6 @@
     <string name="hc_sync">अभी सिंक करें</string>
     <string name="hc_disconnect">डिस्कनेक्ट करें और लाया गया डेटा हटाएँ</string>
     <string name="hc_connected">जुड़ा है। पढ़ रहा है: %1$s</string>
-    <string name="hc_last_sync">Health Connect से %1$d दिन अपडेट हुए</string>
-    <string name="hc_days_stored">इस फ़ोन पर %1$d दिन का डेटा</string>
     <string name="hc_not_installed_title">Health Connect इंस्टॉल नहीं है</string>
     <string name="hc_not_installed_body">घड़ी या फ़िटनेस ऐप का डेटा लाने के लिए Play Store से Health Connect इंस्टॉल करें। MyHealth का बाकी सब इसके बिना भी चलता है।</string>
     <string name="hc_update_title">Health Connect को अपडेट करना ज़रूरी है</string>
@@ -50,4 +48,12 @@
     <string name="hc_rationale_title">MyHealth, Health Connect का कैसे उपयोग करता है</string>
     <string name="activity_title">रोज़ की गतिविधि</string>
     <string name="activity_steps_avg">रोज़ %1$s कदम (पिछले 7 दिन)</string>
+    <plurals name="hc_last_sync">
+        <item quantity="one">Health Connect से %d दिन अपडेट हुआ</item>
+        <item quantity="other">Health Connect से %d दिन अपडेट हुए</item>
+    </plurals>
+    <plurals name="hc_days_stored">
+        <item quantity="one">इस फ़ोन पर %d दिन का डेटा</item>
+        <item quantity="other">इस फ़ोन पर %d दिन का डेटा</item>
+    </plurals>
 </resources>

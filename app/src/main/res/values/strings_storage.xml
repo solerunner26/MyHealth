@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
     <string name="storage_opening">Unlocking your encrypted records…</string>
     <string name="storage_keystore_title">Secure storage is not responding</string>
     <string name="storage_keystore_body">Android\'s secure key store did not respond. Your records are still encrypted on this device. Restart the phone and try again.</string>

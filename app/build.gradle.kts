@@ -18,6 +18,38 @@ android {
         // Only ship the three supported UI languages (and drop library translations we cannot QA).
         localeFilters += listOf("en", "hi", "gu")
     }
+    // Release signing comes only from the environment (CI secrets or a local shell); nothing is committed.
+    val keystorePath = System.getenv("MYHEALTH_KEYSTORE")
+    signingConfigs {
+        if (keystorePath != null) create("release") {
+            storeFile = file(keystorePath)
+            storePassword = System.getenv("MYHEALTH_KEYSTORE_PASSWORD")
+            keyAlias = System.getenv("MYHEALTH_KEY_ALIAS")
+            keyPassword = System.getenv("MYHEALTH_KEY_PASSWORD")
+            enableV2Signing = true
+            enableV3Signing = true
+        }
+    }
+    buildTypes {
+        release {
+            isMinifyEnabled = true
+            isShrinkResources = true
+            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+            if (keystorePath != null) signingConfig = signingConfigs.getByName("release")
+        }
+        debug {
+            applicationIdSuffix = ".debug"
+        }
+    }
+    packaging {
+        // Post-quantum parameter tables from Bouncy Castle (pulled in by PdfBox) are never used: PDF decryption
+        // only needs classic ciphers. Saves ~7 MB.
+        resources { excludes += listOf("org/bouncycastle/pqc/**", "META-INF/versions/9/OSGI-INF/MANIFEST.MF") }
+    }
+    bundle {
+        // In-app language switching needs all three languages on the device (no Play language splits).
+        language { enableSplit = false }
+    }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17

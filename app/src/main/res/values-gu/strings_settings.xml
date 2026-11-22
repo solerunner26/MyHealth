@@ -49,7 +49,6 @@
     <string name="lock_title">MyHealth લૉક છે</string>
     <string name="lock_body">રેકોર્ડ ખોલવા PIN નાખો.</string>
     <string name="lock_wrong">ખોટો PIN</string>
-    <string name="lock_wait">ઘણા પ્રયત્નો. %1$d સેકન્ડ પછી ફરી પ્રયત્ન કરો.</string>
     <string name="lock_biometric">ફિંગરપ્રિન્ટ કે ચહેરો વાપરો</string>
     <string name="lock_biometric_title">MyHealth ખોલો</string>
     <string name="lock_use_pin">PIN વાપરો</string>
@@ -89,13 +88,11 @@
     <string name="score_missing_activity">છેલ્લા અઠવાડિયે Health Connect માંથી પગલાંનો ડેટા નથી</string>
     <string name="score_input">%1$s: %2$s → %3$d</string>
     <string name="score_steps">સરેરાશ પગલાં</string>
-    <string name="score_days_since">%1$d દિવસ પહેલાં</string>
     <string name="summary_title">ડૉક્ટર મુલાકાત સારાંશ</string>
     <string name="summary_intro">%1$s ની પ્રોફાઇલ, દવાઓ, તાજેતરનાં પરિણામ અને ચર્ચાની બાબતોનો એક પાનાનો સારાંશ. તે આ ફોનમાં જ બને છે; કોને મોકલવું તે તમે નક્કી કરો છો.</string>
     <string name="summary_pdf">PDF તરીકે શેર કરો</string>
     <string name="summary_csv">CSV તરીકે શેર કરો</string>
     <string name="summary_generated">MyHealth દ્વારા %1$s એ બનાવ્યું</string>
-    <string name="summary_patient">દર્દી</string>
     <string name="summary_age">ઉંમર %1$d</string>
     <string name="summary_meds">હાલની દવાઓ</string>
     <string name="summary_labs">તાજેતરનાં અને ખાસ પરિણામ</string>
@@ -114,4 +111,12 @@
     <string name="summary_vital">વાઇટલ</string>
     <string name="summary_treatment">સારવાર</string>
     <string name="summary_preparing">સારાંશ તૈયાર થઈ રહ્યો છે…</string>
+    <plurals name="lock_wait">
+        <item quantity="one">ઘણા પ્રયત્નો. %d સેકન્ડ પછી ફરી પ્રયત્ન કરો.</item>
+        <item quantity="other">ઘણા પ્રયત્નો. %d સેકન્ડ પછી ફરી પ્રયત્ન કરો.</item>
+    </plurals>
+    <plurals name="score_days_since">
+        <item quantity="one">%d દિવસ પહેલાં</item>
+        <item quantity="other">%d દિવસ પહેલાં</item>
+    </plurals>
 </resources>

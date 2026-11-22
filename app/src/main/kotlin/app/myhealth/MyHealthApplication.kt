@@ -16,6 +16,8 @@ open class MyHealthApplication : Application() {
         val crashLog = CrashLog.forContext(this, BuildInfo.versionName(this))
         crashLog.install()
         container = AppContainer(this, crashLog, ::createStorageOpener)
+        // PdfBox needs the application context once (glyph lists/fonts from its assets); cheap, no I/O until used.
+        runCatching { com.tom_roush.pdfbox.android.PDFBoxResourceLoader.init(this) }
         container.start()
     }
 }

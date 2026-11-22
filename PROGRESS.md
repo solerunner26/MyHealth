@@ -110,3 +110,19 @@ property). It was fixed forward in `63e5952`. Since then every commit runs only 
   test showed Robolectric behaves correctly; the flag is removed and the strict assertion (no old rows, file at the
   expected path) is restored. SQLCipher in production may not have been affected, but that cannot be verified here.
 - Not run here: the real Health Connect provider, permission UI and SAF pickers (need a device).
+
+## Phase 10: localisation audit, accessibility, hardening, CI, release (done)
+- Gate (`assembleDebug testDebugUnitTest :domain:test lintDebug assembleDebugAndroidTest`) → exit 0; lint 0 errors,
+  warnings reduced from 51 to 4 (accepted, see D-029).
+- `TranslationCompletenessTest`: every Hindi and Gujarati string differs from English (except an explicit allowlist
+  of lab abbreviations and placeholder-only strings) and is written in Devanagari or Gujarati script respectively.
+- `AccessibilityTest`: every clickable node on Home, Records, Trends, Care, More and Settings exposes a spoken label;
+  the app renders at 2× font scale in dark theme without failure. `PaletteTest` covers WCAG AA contrast.
+- Hardening: Context removed from ViewModels; startup prompt to share a locally saved error report; visible counts
+  pluralised; unused strings removed; restore progress text; daily-activity tile from Health Connect.
+- Release: `MYHEALTH_KEYSTORE=… ./gradlew assembleRelease bundleRelease` with a throwaway local keystore (outside
+  the repo) → `apksigner verify` passes (v2 + v3); `aapt2 dump badging` shows targetSdk 37 and no network
+  permission; APK 55 MB universal, AAB 32 MB.
+- CI: `.github/workflows/android.yml` (gate + no-network check, release build signed from secrets, instrumented
+  tests on an API 35 emulator). **Not executed here** (no GitHub Actions run from this container).
+- Not run here: the release (R8) build on a device; instrumented tests; TalkBack with a real screen reader.

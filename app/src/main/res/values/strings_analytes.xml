@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
     <string name="analyte_hb">Haemoglobin</string>
     <string name="analyte_rbc">Red blood cell count</string>
     <string name="analyte_hct">Haematocrit (PCV)</string>

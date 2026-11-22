@@ -14,13 +14,11 @@
     <string name="trend_from_report">સ્ત્રોત: %1$s</string>
     <string name="trend_manual">હાથે લખેલું</string>
     <string name="trend_not_found">ઇતિહાસ સમયગાળામાં આ તપાસનાં કોઈ પરિણામ નથી.</string>
-    <string name="trend_about">આ તપાસ વિશે</string>
     <string name="trend_direction_lower">આ તપાસમાં સામાન્ય રીતે ઓછું મૂલ્ય સારું ગણાય છે.</string>
     <string name="trend_direction_higher">આ તપાસમાં સામાન્ય રીતે વધારે મૂલ્ય સારું ગણાય છે.</string>
     <string name="trend_direction_range">સામાન્ય રેન્જની અંદરનાં મૂલ્યો સામાન્ય રીતે બરાબર ગણાય છે.</string>
     <string name="trends_empty_title">હજી કોઈ ટ્રેન્ડ નથી</string>
     <string name="trends_empty_body">તપાસ ઉમેરાશે એટલે ટ્રેન્ડ દેખાશે. જુદી જુદી તારીખની રિપોર્ટ ઉમેરો જેથી ફેરફાર દેખાય.</string>
-    <string name="trends_labs">લેબ તપાસ</string>
     <string name="trends_window">છેલ્લાં %1$d વર્ષ બતાવીએ છીએ</string>
     <string name="csv_date">તારીખ</string>
     <string name="csv_test">તપાસ</string>

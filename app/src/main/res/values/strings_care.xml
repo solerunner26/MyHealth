@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
     <string name="vitals_title">Vitals</string>
     <string name="vitals_add">Log a vital</string>
     <string name="vitals_empty_title">No vitals yet</string>
@@ -25,7 +25,7 @@
     <string name="vital_delete">Delete reading</string>
     <string name="vital_delete_title">Delete this reading?</string>
     <string name="vital_delete_body">It will be removed from history and charts.</string>
-    <string name="vital_chart_cd">%1$s chart with %2$d readings. Latest %3$s.</string>
+    <string name="vital_chart_cd" tools:ignore="PluralsCandidate">%1$s chart with %2$d readings. Latest %3$s.</string>
     <string name="vital_typical">Typical adult range: %1$s</string>
     <string name="legend_systolic">Upper (solid)</string>
     <string name="legend_diastolic">Lower (dashed)</string>
@@ -65,7 +65,7 @@
     <string name="med_err_end">End date cannot be before the start date</string>
     <string name="med_err_times">Add at least one reminder time</string>
     <string name="med_notif_denied">Notifications are turned off for MyHealth, so reminders cannot be shown. Turn them on in the phone\'s settings.</string>
-    <string name="med_adherence">Taken %1$d of %2$d doses in the last 7 days</string>
+    <string name="med_adherence" tools:ignore="PluralsCandidate">Taken %1$d of %2$d doses in the last 7 days</string>
     <string name="treat_add">Add a treatment</string>
     <string name="treat_empty_title">No treatments yet</string>
     <string name="treat_empty_body">Record procedures, surgeries, vaccinations and doctor visits, with follow-up dates.</string>

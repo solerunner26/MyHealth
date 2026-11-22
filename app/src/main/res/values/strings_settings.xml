@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
     <string name="more_insights">What to focus on</string>
     <string name="more_insights_sub">Findings with the evidence behind them</string>
     <string name="more_profile">Profile</string>
@@ -36,8 +36,8 @@
     <string name="settings_screenshots_sub">Also hides MyHealth in the recent apps preview</string>
     <string name="settings_data">Records</string>
     <string name="settings_history">History window</string>
-    <string name="settings_history_sub">Trends and lists show the last %1$d years. Older records are kept, not deleted.</string>
-    <string name="settings_years">%1$d y</string>
+    <string name="settings_history_sub" tools:ignore="PluralsCandidate">Trends and lists show the last %1$d years. Older records are kept, not deleted.</string>
+    <string name="settings_years" tools:ignore="PluralsCandidate">%1$d y</string>
     <string name="settings_error_report">Error report</string>
     <string name="settings_erase">Erase all data</string>
     <string name="settings_erase_sub">Destroys the encryption keys and every record on this phone</string>
@@ -49,13 +49,12 @@
     <string name="lock_title">MyHealth is locked</string>
     <string name="lock_body">Enter your PIN to open your records.</string>
     <string name="lock_wrong">Wrong PIN</string>
-    <string name="lock_wait">Too many attempts. Try again in %1$d seconds.</string>
     <string name="lock_biometric">Use fingerprint or face</string>
     <string name="lock_biometric_title">Unlock MyHealth</string>
     <string name="lock_use_pin">Use PIN</string>
     <string name="lock_digit">Digit %1$s</string>
     <string name="lock_delete_digit">Delete last digit</string>
-    <string name="lock_entered">%1$d digits entered</string>
+    <string name="lock_entered" tools:ignore="PluralsCandidate">%1$d digits entered</string>
     <string name="lock_forgot">Forgot PIN?</string>
     <string name="lock_forgot_body">For your privacy the PIN cannot be recovered. You can erase all data on this phone and start again, then restore an encrypted backup.</string>
     <string name="insights_title">What to focus on</string>
@@ -89,13 +88,11 @@
     <string name="score_missing_activity">No step data from Health Connect in the last week</string>
     <string name="score_input">%1$s: %2$s → %3$d</string>
     <string name="score_steps">Average steps</string>
-    <string name="score_days_since">%1$d days ago</string>
     <string name="summary_title">Doctor visit summary</string>
     <string name="summary_intro">A one-page overview of %1$s\'s profile, medicines, recent results and points to discuss. It is created on this phone; you choose who to share it with.</string>
     <string name="summary_pdf">Share as PDF</string>
     <string name="summary_csv">Share as CSV</string>
     <string name="summary_generated">Created on %1$s by MyHealth</string>
-    <string name="summary_patient">Patient</string>
     <string name="summary_age">Age %1$d</string>
     <string name="summary_meds">Current medicines</string>
     <string name="summary_labs">Recent and notable results</string>
@@ -114,4 +111,12 @@
     <string name="summary_vital">Vital</string>
     <string name="summary_treatment">Treatment</string>
     <string name="summary_preparing">Preparing the summary…</string>
+    <plurals name="lock_wait">
+        <item quantity="one">Too many attempts. Try again in %d second.</item>
+        <item quantity="other">Too many attempts. Try again in %d seconds.</item>
+    </plurals>
+    <plurals name="score_days_since">
+        <item quantity="one">%d day ago</item>
+        <item quantity="other">%d days ago</item>
+    </plurals>
 </resources>

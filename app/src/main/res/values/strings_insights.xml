@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
     <string name="sev_info">For your information</string>
     <string name="sev_low">Worth a look</string>
     <string name="sev_moderate">Discuss soon</string>
@@ -27,8 +27,8 @@
     <string name="focus_rapid_title">%1$s is changing quickly</string>
     <string name="focus_rapid_body">It moved from %1$s to %2$s in %3$s months (%4$s%% a month) in the less healthy direction.</string>
     <string name="focus_overdue_title">%1$s may be due for a re-test</string>
-    <string name="focus_overdue_body">Last tested on %1$s. Tests like this are often repeated about every %2$d months.</string>
-    <string name="focus_overdue_abnormal_body">The last result on %1$s was outside the range. Such results are often re-checked within about %2$d months.</string>
+    <string name="focus_overdue_body" tools:ignore="PluralsCandidate">Last tested on %1$s. Tests like this are often repeated about every %2$d months.</string>
+    <string name="focus_overdue_abnormal_body" tools:ignore="PluralsCandidate">The last result on %1$s was outside the range. Such results are often re-checked within about %2$d months.</string>
     <string name="focus_vital_title">%1$s: %2$s</string>
     <string name="focus_vital_body">Latest reading %1$s on %2$s.</string>
     <string name="gap_no_labs_title">No test results yet</string>
@@ -42,7 +42,7 @@
     <string name="med_overlap_title">%1$s is listed more than once</string>
     <string name="med_overlap_body">Two active courses of the same medicine overlap. Check with your doctor or pharmacist that both are intended.</string>
     <string name="med_missed_title">Missed doses of %1$s</string>
-    <string name="med_missed_body">%1$d scheduled doses in the last 7 days were not marked as taken.</string>
+    <string name="med_missed_body" tools:ignore="PluralsCandidate">%1$d scheduled doses in the last 7 days were not marked as taken.</string>
     <string name="med_ended_title">The %1$s course has ended</string>
     <string name="med_ended_body">The planned end date was %1$s. Mark it as finished, or change the end date if you are still taking it.</string>
     <string name="med_noreminders_title">Dose reminders are off</string>

@@ -2,6 +2,7 @@ package app.myhealth.ui.backup
 
 import android.content.Intent
 import android.net.Uri
+import androidx.core.net.toUri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
@@ -77,7 +78,7 @@ sealed interface BackupPhase {
     data class Failed(val failure: BackupFailure, val restoring: Boolean) : BackupPhase
 }
 
-class BackupViewModel(private val session: Session, private val context: android.content.Context) : ViewModel() {
+class BackupViewModel(private val session: Session, private val context: android.app.Application) : ViewModel() {
     private val _phase = MutableStateFlow<BackupPhase>(BackupPhase.Idle)
     val phase: StateFlow<BackupPhase> = _phase.asStateFlow()
 
@@ -109,23 +110,24 @@ class BackupViewModel(private val session: Session, private val context: android
 fun BackupScreen(onBack: () -> Unit) {
     val session = LocalSession.current
     val context = LocalContext.current
-    val vm = rememberVm { BackupViewModel(session, context.applicationContext) }
+    val vm = rememberVm { BackupViewModel(session, context.applicationContext as android.app.Application) }
     val phase by vm.phase.collectAsStateWithLifecycle()
     var pw by rememberSaveable { mutableStateOf("") }
     var pw2 by rememberSaveable { mutableStateOf("") }
     var restorePw by rememberSaveable { mutableStateOf("") }
     var errors by rememberSaveable { mutableStateOf<Int?>(null) }
     var confirmRestore by rememberSaveable { mutableStateOf(false) }
+    var restoring by rememberSaveable { mutableStateOf(false) }
     val sp = MyHealthTheme.spacing
-    val create = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/octet-stream")) { uri -> if (uri != null) vm.export(uri, pw.toCharArray()) }
-    val open = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri -> if (uri != null) vm.restore(uri, restorePw.toCharArray()) }
+    val create = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/octet-stream")) { uri -> if (uri != null) { restoring = false; vm.export(uri, pw.toCharArray()) } }
+    val open = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri -> if (uri != null) { restoring = true; vm.restore(uri, restorePw.toCharArray()) } }
     LaunchedEffect(phase) { if (phase is BackupPhase.Exported || phase is BackupPhase.Restored) { pw = ""; pw2 = ""; restorePw = "" } }
     Column(Modifier.fillMaxSize().background(MyHealthTheme.colors.background).testTag("backup")) {
         MyHealthTopBar(stringResource(R.string.backup_title), onBack = onBack, backLabel = stringResource(R.string.action_back))
         Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).imePadding().navigationBarsPadding().padding(horizontal = sp.gutter), verticalArrangement = Arrangement.spacedBy(sp.md)) {
             MyHealthInfoBanner(stringResource(R.string.backup_intro), icon = MyHealthIcons.Lock)
             when (val p = phase) {
-                BackupPhase.Working -> MyHealthProgress(stringResource(R.string.backup_working), null)
+                BackupPhase.Working -> MyHealthProgress(stringResource(if (restoring) R.string.restore_working else R.string.backup_working), null)
                 is BackupPhase.Exported -> MyHealthInfoBanner(stringResource(R.string.backup_done, p.info.members, p.info.attachments), icon = MyHealthIcons.StatusNormal)
                 is BackupPhase.Restored -> MyHealthInfoBanner(stringResource(R.string.restore_done, p.info.members, p.info.attachments), icon = MyHealthIcons.StatusNormal)
                 is BackupPhase.Failed -> MyHealthInfoBanner(stringResource(if (!p.restoring) R.string.backup_failed else when (p.failure) {
@@ -218,7 +220,7 @@ fun HealthConnectScreen(onBack: () -> Unit, sourceOverride: HealthSource? = null
                     MyHealthInfoBanner(stringResource(R.string.hc_intro), icon = MyHealthIcons.Activity)
                     MyHealthOfflineState(stringResource(t), stringResource(b), Modifier.height(260.dp()))
                     if (s.status != HcStatus.Unsupported) MyHealthSecondaryButton(stringResource(R.string.hc_open_store), {
-                        runCatching { context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=com.google.android.apps.healthdata")).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }
+                        runCatching { context.startActivity(Intent(Intent.ACTION_VIEW, "market://details?id=com.google.android.apps.healthdata".toUri()).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }
                     }, Modifier.fillMaxWidth())
                 }
             }
@@ -233,8 +235,8 @@ fun HealthConnectScreen(onBack: () -> Unit, sourceOverride: HealthSource? = null
                 } else {
                     MyHealthCard {
                         Text(stringResource(R.string.hc_connected, s.granted.map { names.getValue(it) }.joinToString(", ")), style = MyHealthTheme.typography.body, color = MyHealthTheme.colors.textPrimary)
-                        s.lastDays?.let { Text(stringResource(R.string.hc_last_sync, it), style = MyHealthTheme.typography.caption, color = MyHealthTheme.colors.textSecondary) }
-                        Text(stringResource(R.string.hc_days_stored, s.storedDays), style = MyHealthTheme.typography.caption, color = MyHealthTheme.colors.textSecondary)
+                        s.lastDays?.let { Text(androidx.compose.ui.res.pluralStringResource(R.plurals.hc_last_sync, it, it), style = MyHealthTheme.typography.caption, color = MyHealthTheme.colors.textSecondary) }
+                        Text(androidx.compose.ui.res.pluralStringResource(R.plurals.hc_days_stored, s.storedDays, s.storedDays), style = MyHealthTheme.typography.caption, color = MyHealthTheme.colors.textSecondary)
                     }
                     MyHealthPrimaryButton(stringResource(R.string.hc_sync), { vm.syncNow() }, Modifier.fillMaxWidth().testTag("hcSync"), icon = MyHealthIcons.Sync, enabled = !s.busy)
                     MyHealthTextButton(stringResource(R.string.hc_disconnect), { vm.disconnect() }, Modifier.fillMaxWidth(), icon = MyHealthIcons.Delete)

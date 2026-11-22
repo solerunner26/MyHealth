@@ -41,6 +41,8 @@ class Preferences(context: Context) {
         healthConnectEnabled = prefs.getBoolean("hc_enabled", false),
     )
 
+    /** commit(), not apply(): lock state and PIN attempt counters must survive an immediate process death. */
+    @android.annotation.SuppressLint("ApplySharedPref", "UseKtx")
     fun update(block: SharedPreferences.Editor.() -> Unit) {
         prefs.edit().apply(block).commit()
         _state.value = read()
@@ -68,5 +70,6 @@ class Preferences(context: Context) {
     fun setFailedAttempts(n: Int, lockoutUntil: Long) = update { putInt("pin_fail", n); putLong("pin_lockout_until", lockoutUntil) }
     fun lockoutUntil(): Long = prefs.getLong("pin_lockout_until", 0)
 
+    @android.annotation.SuppressLint("ApplySharedPref", "UseKtx")
     fun clearAll() { prefs.edit().clear().commit(); _state.value = read() }
 }

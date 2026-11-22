@@ -70,6 +70,8 @@ class ReminderScheduler(private val context: Context, private val clock: Clock) 
         runCatching { pending(medicineId, Instant.EPOCH, snooze, PendingIntent.FLAG_NO_CREATE)?.let { alarms?.cancel(it) } }
     }
 
+    // Exact alarms are only used on API 26–30, where no SCHEDULE_EXACT_ALARM permission exists; SecurityException is handled.
+    @android.annotation.SuppressLint("MissingPermission")
     private fun set(medicineId: String, fireAt: Instant, scheduledAt: Instant, snooze: Boolean) {
         val am = alarms ?: return
         val pi = pending(medicineId, scheduledAt, snooze, PendingIntent.FLAG_UPDATE_CURRENT) ?: return

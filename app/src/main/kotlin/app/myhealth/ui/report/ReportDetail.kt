@@ -61,7 +61,6 @@ import app.myhealth.ui.common.formatDate
 import app.myhealth.ui.common.kind
 import app.myhealth.ui.common.label
 import app.myhealth.ui.common.vitalValue
-import com.tom_roush.pdfbox.android.PDFBoxResourceLoader
 import com.tom_roush.pdfbox.pdmodel.PDDocument
 import com.tom_roush.pdfbox.rendering.PDFRenderer
 import kotlinx.coroutines.Dispatchers
@@ -167,7 +166,7 @@ fun ReportDetailScreen(
 }
 
 /** Renders a decrypted attachment entirely in memory (no plaintext file). */
-class AttachmentViewerViewModel(private val session: Session, private val attachmentId: String, private val context: android.content.Context) : ViewModel() {
+class AttachmentViewerViewModel(private val session: Session, private val attachmentId: String) : ViewModel() {
     data class State(val loading: Boolean = true, val pages: List<Bitmap> = emptyList(), val total: Int = 0, val error: Boolean = false)
     private val _state = MutableStateFlow(State())
     val state: StateFlow<State> = _state.asStateFlow()
@@ -179,7 +178,6 @@ class AttachmentViewerViewModel(private val session: Session, private val attach
                     val bytes = session.stack.records.attachmentBytes(attachmentId)
                     when (app.myhealth.ingest.DocumentSniffer.kind(bytes)) {
                         AttachmentKind.Pdf -> {
-                            PDFBoxResourceLoader.init(context.applicationContext)
                             PDDocument.load(bytes).use { doc ->
                                 val r = PDFRenderer(doc)
                                 val n = doc.numberOfPages

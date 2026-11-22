@@ -116,7 +116,7 @@ fun LockScreen(lock: AppLock, biometricEnabled: Boolean, onForgot: () -> Unit) {
     var forgot by rememberSaveable { mutableStateOf(false) }
     val wrong = stringResource(R.string.lock_wrong)
     val res = androidx.compose.ui.platform.LocalResources.current
-    val waitFmt: (Long) -> String = { s -> res.getString(R.string.lock_wait, s.toInt()) }
+    val waitFmt: (Long) -> String = { s -> res.getQuantityString(R.plurals.lock_wait, s.toInt(), s.toInt()) }
     val bioTitle = stringResource(R.string.lock_biometric_title); val usePin = stringResource(R.string.lock_use_pin)
     val canBio = biometricEnabled && Biometrics.available(context)
     val showBio = { (context as? FragmentActivity)?.let { Biometrics.prompt(it, bioTitle, usePin) { lock.unlockedByBiometric() } } }

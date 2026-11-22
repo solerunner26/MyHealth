@@ -24,7 +24,6 @@
     <string name="import_error_permission_body">પરવાનગી મળી નહીં. ફાઇલ પિકરમાંથી ફાઇલ ફરી પસંદ કરો.</string>
     <string name="import_error_camera">આ ફોનમાં કોઈ કેમેરા એપ નથી</string>
     <string name="import_choose_another">બીજી ફાઇલ પસંદ કરો</string>
-    <string name="import_saved">%1$s ના રેકોર્ડમાં સેવ થયું</string>
     <string name="import_save_failed">સેવ થઈ શક્યું નહીં. તમારો દસ્તાવેજ બદલાયો નથી; કૃપા કરી ફરી પ્રયત્ન કરો.</string>
     <string name="review_title">ચકાસો અને સેવ કરો</string>
     <string name="review_intro">જે મૂલ્યો રાખવા છે તે પસંદ કરો અને ખોટા વંચાયેલા સુધારો. સેવ દબાવો નહીં ત્યાં સુધી કંઈ સેવ નહીં થાય.</string>
@@ -50,7 +49,6 @@
     <string name="review_read_as">દસ્તાવેજમાંથી વાંચ્યું: %1$s</string>
     <string name="review_replaces">આ તારીખ માટે સેવ થયેલા %1$s ની જગ્યા લેશે</string>
     <string name="review_include">%1$s રાખો</string>
-    <string name="review_remove">દૂર કરો</string>
     <string name="review_systolic">ઉપરનું (સિસ્ટોલિક)</string>
     <string name="review_diastolic">નીચેનું (ડાયસ્ટોલિક)</string>
     <string name="review_med_name">દવાનું નામ</string>
@@ -61,7 +59,6 @@
     <string name="review_fix_errors">આગળ વધવા માટે ચિહ્નિત જગ્યાઓ સુધારો</string>
     <string name="review_pick_analyte">તપાસ પસંદ કરો</string>
     <string name="review_search_tests">તપાસ શોધો</string>
-    <string name="review_test">તપાસ</string>
     <string name="review_no_match">આ શોધથી કોઈ તપાસ મળી નહીં</string>
     <string name="saving">સેવ થઈ રહ્યું છે…</string>
     <plurals name="review_save">

@@ -1,0 +1,104 @@
+name: android
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: Build, unit tests, lint
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+      - uses: android-actions/setup-android@v3
+        with:
+          packages: "platforms;android-37.2 build-tools;37.0.0 platform-tools"
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Definition-of-Done gate
+        run: ./scripts/verify.sh --stacktrace
+      - name: No network permission in the merged manifest
+        run: |
+          AAPT2=$(ls -d $ANDROID_HOME/build-tools/37.0.0)/aapt2
+          ! $AAPT2 dump permissions app/build/outputs/apk/debug/app-debug.apk | grep -E "INTERNET|ACCESS_NETWORK_STATE"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: reports
+          path: |
+            **/build/reports/
+            **/build/test-results/
+
+  release:
+    name: Release build (signed when secrets are configured)
+    needs: verify
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    env:
+      KEYSTORE_B64: ${{ secrets.MYHEALTH_KEYSTORE_B64 }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+      - uses: android-actions/setup-android@v3
+        with:
+          packages: "platforms;android-37.2 build-tools;37.0.0"
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Decode keystore
+        if: ${{ env.KEYSTORE_B64 != '' }}
+        run: echo "$KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/release.jks" && echo "MYHEALTH_KEYSTORE=$RUNNER_TEMP/release.jks" >> "$GITHUB_ENV"
+      - name: Assemble
+        env:
+          MYHEALTH_KEYSTORE_PASSWORD: ${{ secrets.MYHEALTH_KEYSTORE_PASSWORD }}
+          MYHEALTH_KEY_ALIAS: ${{ secrets.MYHEALTH_KEY_ALIAS }}
+          MYHEALTH_KEY_PASSWORD: ${{ secrets.MYHEALTH_KEY_PASSWORD }}
+        run: ./gradlew assembleRelease bundleRelease
+      - name: Verify signature
+        if: ${{ env.MYHEALTH_KEYSTORE != '' }}
+        run: $ANDROID_HOME/build-tools/37.0.0/apksigner verify --verbose app/build/outputs/apk/release/app-release.apk
+      - uses: actions/upload-artifact@v4
+        with:
+          name: release
+          path: |
+            app/build/outputs/apk/release/
+            app/build/outputs/bundle/release/
+
+  device-tests:
+    name: Instrumented tests (emulator)
+    needs: verify
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules && sudo udevadm trigger --name-match=kvm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+      - uses: android-actions/setup-android@v3
+        with:
+          packages: "platforms;android-37.2 build-tools;37.0.0 platform-tools"
+      - uses: gradle/actions/setup-gradle@v4
+      - uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          arch: x86_64
+          target: google_apis
+          disable-animations: true
+          script: ./gradlew connectedDebugAndroidTest

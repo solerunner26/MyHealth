@@ -40,6 +40,7 @@ fun MoreContent(members: List<FamilyMember>, a: MoreActions) {
         item { MyHealthCard { MyHealthListRow(stringResource(R.string.more_insights), subtitle = stringResource(R.string.more_insights_sub), leadingIcon = MyHealthIcons.Insights, onClick = a.insights) } }
         item { MyHealthCard { MyHealthListRow(stringResource(R.string.more_summary), subtitle = stringResource(R.string.more_summary_sub), leadingIcon = MyHealthIcons.Pdf, onClick = a.summary,
             modifier = Modifier.testTag("openSummary")) } }
+        item { MyHealthCard { MyHealthListRow(stringResource(R.string.more_profile), subtitle = stringResource(R.string.more_profile_sub), leadingIcon = MyHealthIcons.Profile, onClick = a.profile) } }
         item { MyHealthSectionHeader(stringResource(R.string.more_family)) }
         items(members, key = { it.id }) { m ->
             MyHealthCard(onClick = { a.editMember(m.id) }) {

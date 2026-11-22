@@ -243,3 +243,21 @@ Erase cancels alarms and notifications, wipes share and camera caches, destroys 
 data keys, overwrites and deletes the database and vault files, resets preferences and the crash log, then opens a
 fresh empty store. A closed database refuses to reopen, so stale observers cannot recreate the old file with the old
 key.
+
+## D-028 Release build
+- R8 minification and resource shrinking. Keep rules cover SQLCipher JNI classes and PdfBox; ML Kit and Health
+  Connect ship consumer rules. Source and line attributes are kept so local error reports stay readable.
+- Bouncy Castle's post-quantum parameter tables (pulled in by PdfBox, never used) are excluded, saving ~7 MB. Most of
+  the remaining size is ML Kit's OCR pipeline and SQLCipher native code for four ABIs. The Play app bundle delivers
+  one ABI per device (~15 MB). Language splits are disabled in the bundle so in-app language switching always has
+  all three languages.
+- Signing reads only the `MYHEALTH_KEYSTORE*` environment variables (CI secrets). The repository contains no keystore
+  (`.gitignore` excludes `*.jks`/`*.keystore`). The debug build uses the `.debug` application id suffix so it can sit
+  beside a release install.
+- Android 12+ splash screen via theme attributes only (no core-splashscreen dependency). The single-accent icon has
+  a monochrome layer for themed icons.
+
+## D-029 Remaining accepted lint warnings
+`TrustAllX509TrustManager` ×3 come from Bouncy Castle inside the PdfBox dependency. That code can never run with
+network access (no INTERNET permission). `ObsoleteSdkInt` refers to the `mipmap-anydpi-v26` folder; removing the
+qualifier made aapt2 lose the adaptive icon, so it stays.

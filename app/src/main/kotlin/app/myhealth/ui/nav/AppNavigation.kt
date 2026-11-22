@@ -89,6 +89,7 @@ object Routes {
 fun AppRoot() {
     val session = LocalSession.current
     val members by session.members.collectAsStateWithLifecycle()
+    CrashReportPrompt()
     when {
         members == null -> MyHealthLoadingState(stringResource(R.string.state_loading))
         members!!.isEmpty() -> OnboardingFlow()
@@ -149,7 +150,7 @@ fun AppNavGraph(nav: NavHostController) {
         }
         composable(Routes.ATTACHMENT) { entry ->
             val id = entry.arguments?.getString("id")!!
-            val vm = rememberVm(id) { AttachmentViewerViewModel(session, id, context.applicationContext) }
+            val vm = rememberVm(id) { AttachmentViewerViewModel(session, id) }
             val state by vm.state.collectAsStateWithLifecycle()
             AttachmentViewerScreen(state, stringResource(R.string.report_attachments), onBack = { nav.popBackStack() })
         }
@@ -261,4 +262,21 @@ private fun TreatmentRoute(id: String?, onDone: () -> Unit) {
     val state by vm.state.collectAsStateWithLifecycle()
     LaunchedEffect(state.done) { if (state.done) onDone() }
     app.myhealth.ui.care.TreatmentEditorScreen(state, vm::edit, vm::save, vm::delete, onDone)
+}
+
+/** After an unexpected close, offer to share the locally saved error report (nothing is uploaded). */
+@Composable
+private fun CrashReportPrompt() {
+    val session = LocalSession.current
+    val context = LocalContext.current
+    val log = session.container.crashLog
+    var show by rememberSaveable { mutableStateOf(log.hasReport()) }
+    if (!show) return
+    val chooser = stringResource(R.string.crash_chooser_title)
+    app.myhealth.core.designsystem.components.MyHealthDialog(
+        title = stringResource(R.string.crash_title), text = stringResource(R.string.crash_body),
+        confirmLabel = stringResource(R.string.crash_share),
+        onConfirm = { show = false; runCatching { Share.launch(context, Share.write(context, "myhealth-error.txt", log.file.readBytes()), "text/plain", chooser) } },
+        dismissLabel = stringResource(R.string.crash_dismiss), onDismiss = { show = false; log.clear() }, icon = MyHealthIcons.Bug,
+    )
 }

@@ -88,7 +88,10 @@ import java.time.LocalTime
 import java.time.ZoneId
 
 /** Latest reading per type, BMI derived from weight + profile height when not recorded. */
-data class VitalsState(val loading: Boolean = true, val member: FamilyMember? = null, val vitals: List<Vital> = emptyList()) {
+data class VitalsState(val loading: Boolean = true, val member: FamilyMember? = null, val vitals: List<Vital> = emptyList(), val activity: List<app.myhealth.domain.model.DailyActivity> = emptyList()) {
+    /** Average daily steps over the last 7 complete days (Health Connect), null when not enough data. */
+    fun stepsAverage(today: LocalDate): Double? = activity.filter { it.steps != null && it.date.isBefore(today) && !it.date.isBefore(today.minusDays(7)) }
+        .takeIf { it.size >= 3 }?.mapNotNull { it.steps }?.average()
     fun latest(t: VitalType): Vital? = vitals.filter { it.type == t }.maxByOrNull { it.measuredAt } ?: if (t == VitalType.Bmi) derivedBmi().lastOrNull() else null
     fun series(t: VitalType): List<Vital> = vitals.filter { it.type == t }.sortedBy { it.measuredAt }.ifEmpty { if (t == VitalType.Bmi) derivedBmi() else emptyList() }
     fun derivedBmi(): List<Vital> {
@@ -100,7 +103,9 @@ data class VitalsState(val loading: Boolean = true, val member: FamilyMember? = 
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class VitalsViewModel(private val session: Session) : ViewModel() {
-    val state: StateFlow<VitalsState> = session.activeMember.filterNotNull().flatMapLatest { m -> session.stack.vitals.observe(m.id).map { VitalsState(false, m, it) } }
+    val state: StateFlow<VitalsState> = session.activeMember.filterNotNull().flatMapLatest { m ->
+        kotlinx.coroutines.flow.combine(session.stack.vitals.observe(m.id), session.stack.activity.observe(m.id)) { v, a -> VitalsState(false, m, v, a) }
+    }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), VitalsState())
 
     fun delete(id: String) = viewModelScope.launch(Safe.handler) { runCatching { session.stack.vitals.delete(id) } }
@@ -130,6 +135,10 @@ fun VitalsSection(state: VitalsState, onAdd: () -> Unit, onOpen: (VitalType) -> 
                 }
                 if (pair.size == 1) Spacer(Modifier.weight(1f))
             }
+        }
+        state.stepsAverage(LocalDate.now())?.let { avg ->
+            MyHealthMetricTile(stringResource(R.string.activity_title), ValueFormat.number(avg, 0), Modifier.fillMaxWidth().testTag("activityTile"),
+                caption = stringResource(R.string.activity_steps_avg, ValueFormat.number(avg, 0)))
         }
         MyHealthSecondaryButton(stringResource(R.string.vitals_add), onAdd, Modifier.fillMaxWidth().testTag("logVital"), icon = MyHealthIcons.Add)
     }

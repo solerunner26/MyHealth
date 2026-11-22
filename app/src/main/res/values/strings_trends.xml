@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
     <string name="trend_latest">Latest</string>
     <string name="trend_previous">Previous</string>
     <string name="trend_change">Change</string>
     <string name="trend_rate">Per month</string>
     <string name="trend_history">History</string>
     <string name="trend_export">Export CSV</string>
-    <string name="trend_chart_cd">%1$s chart with %2$d results from %3$s to %4$s. Latest %5$s, %6$s.</string>
+    <string name="trend_chart_cd" tools:ignore="PluralsCandidate">%1$s chart with %2$d results from %3$s to %4$s. Latest %5$s, %6$s.</string>
     <string name="legend_in_range">In range</string>
     <string name="legend_out_of_range">Outside range</string>
     <string name="legend_band">Reference range</string>
@@ -14,14 +14,12 @@
     <string name="trend_from_report">From: %1$s</string>
     <string name="trend_manual">Entered by hand</string>
     <string name="trend_not_found">There are no results for this test in the history window.</string>
-    <string name="trend_about">About this test</string>
     <string name="trend_direction_lower">Lower values are usually healthier for this test.</string>
     <string name="trend_direction_higher">Higher values are usually healthier for this test.</string>
     <string name="trend_direction_range">Values inside the reference range are usually considered healthy.</string>
     <string name="trends_empty_title">No trends yet</string>
     <string name="trends_empty_body">Trends appear once tests are added. Add reports from different dates to see how values change.</string>
-    <string name="trends_labs">Lab tests</string>
-    <string name="trends_window">Showing the last %1$d years</string>
+    <string name="trends_window" tools:ignore="PluralsCandidate">Showing the last %1$d years</string>
     <string name="csv_date">Date</string>
     <string name="csv_test">Test</string>
     <string name="csv_value">Value</string>

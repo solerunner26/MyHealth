@@ -139,7 +139,7 @@ fun ScoreBreakdown(s: HealthScore) {
                 val name: String; val v: String
                 when (comp.kind) {
                     ScoreComponentKind.LabMarkers -> { name = analyteName(inp.subject); v = analyteValue(inp.subject, inp.value) }
-                    ScoreComponentKind.Monitoring -> { name = analyteName(inp.subject); v = stringResource(R.string.score_days_since, inp.value.toInt()) }
+                    ScoreComponentKind.Monitoring -> { name = analyteName(inp.subject); v = androidx.compose.ui.res.pluralStringResource(R.plurals.score_days_since, inp.value.toInt(), inp.value.toInt()) }
                     ScoreComponentKind.Vitals -> { val t = VitalType.valueOf(inp.subject); name = label(t); v = vitalValue(t, inp.value, inp.value2) }
                     ScoreComponentKind.Activity -> { name = stringResource(R.string.score_steps); v = ValueFormat.number(inp.value, 0) }
                 }

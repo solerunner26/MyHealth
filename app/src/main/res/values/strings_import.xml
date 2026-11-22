@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
     <string name="import_title">Add a document</string>
     <string name="import_intro_title">Add a report, prescription or bill</string>
     <string name="import_intro_body">Choose a PDF or a photo. It is read on this device; nothing is uploaded. You will check every value before anything is saved.</string>
@@ -24,7 +24,6 @@
     <string name="import_error_permission_body">Permission was denied. Choose the file again from the file picker.</string>
     <string name="import_error_camera">No camera app is available on this device</string>
     <string name="import_choose_another">Choose another file</string>
-    <string name="import_saved">Saved to %1$s\'s records</string>
     <string name="import_save_failed">Could not save. Your document was not changed; please try again.</string>
     <string name="review_title">Check and save</string>
     <string name="review_intro">Tick the values to keep and correct anything that was read wrongly. Nothing is saved until you tap Save.</string>
@@ -50,7 +49,6 @@
     <string name="review_read_as">Read from document: %1$s</string>
     <string name="review_replaces">Replaces %1$s already saved for this date</string>
     <string name="review_include">Keep %1$s</string>
-    <string name="review_remove">Remove</string>
     <string name="review_systolic">Upper (systolic)</string>
     <string name="review_diastolic">Lower (diastolic)</string>
     <string name="review_med_name">Medicine name</string>
@@ -61,7 +59,6 @@
     <string name="review_fix_errors">Fix the highlighted fields to continue</string>
     <string name="review_pick_analyte">Choose a test</string>
     <string name="review_search_tests">Search tests</string>
-    <string name="review_test">Test</string>
     <string name="review_no_match">No test matches this search</string>
     <string name="saving">Saving…</string>
     <plurals name="review_save">

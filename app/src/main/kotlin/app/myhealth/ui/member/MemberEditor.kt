@@ -216,6 +216,7 @@ private fun MemberFormContent(state: MemberEditorState, onEvent: (MemberEvent) -
             Spacer(Modifier.height(sp.sm))
             MyHealthPrimaryButton(if (state.saving) stringResource(R.string.saving) else primaryLabel, { onEvent(MemberEvent.Save) },
                 Modifier.fillMaxWidth().testTag("saveMember"), enabled = !state.saving, icon = MyHealthIcons.Check)
+            if (!state.isNew && f.relationship == Relationship.Self) MyHealthInfoBanner(stringResource(R.string.member_cannot_delete_self), icon = MyHealthIcons.Info)
             if (state.canDelete) MyHealthTextButton(stringResource(R.string.member_delete), { confirmDelete = true }, Modifier.fillMaxWidth(), icon = MyHealthIcons.Delete)
             Spacer(Modifier.height(sp.xl))
         }

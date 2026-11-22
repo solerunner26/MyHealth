@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
     <string name="home_title">%1$s\'s health</string>
     <string name="home_score_title">Health score</string>
     <string name="home_score_caption">out of 100</string>

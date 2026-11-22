@@ -30,8 +30,4 @@
         <item quantity="one">%d પાનું</item>
         <item quantity="other">%d પાનાં</item>
     </plurals>
-    <plurals name="records_values_count">
-        <item quantity="one">%d મૂલ્ય</item>
-        <item quantity="other">%d મૂલ્યો</item>
-    </plurals>
 </resources>

@@ -114,7 +114,7 @@ class BackupRestoreFlowTest {
                 listOf(NewAttachment(app.myhealth.domain.model.Attachment("a1", "r1", app.myhealth.domain.model.AttachmentKind.Pdf, "cbc.pdf", "sha", 3, 1), "pdf".toByteArray())))
         }
         val file = File(ctx.cacheDir, "test.myhealth")
-        var vm = BackupViewModel(Session(ctx.container, stack), ctx)
+        var vm = BackupViewModel(Session(ctx.container, stack), ctx as android.app.Application)
         vm.export(Uri.fromFile(file), "a long password".toCharArray())
         waitFor { vm.phase.value is BackupPhase.Exported || vm.phase.value is BackupPhase.Failed }
         assertTrue(vm.phase.value.toString(), vm.phase.value is BackupPhase.Exported)
@@ -126,7 +126,7 @@ class BackupRestoreFlowTest {
         waitFor { erased && ctx.container.stackOrNull != null }
         stack = ctx.container.stackOrNull!!
         assertTrue(runBlocking { stack.members.all() }.isEmpty())
-        vm = BackupViewModel(Session(ctx.container, stack), ctx)
+        vm = BackupViewModel(Session(ctx.container, stack), ctx as android.app.Application)
         vm.restore(Uri.fromFile(file), "wrong password".toCharArray())
         waitFor { vm.phase.value is BackupPhase.Failed }
         assertEquals(app.myhealth.data.backup.BackupFailure.WrongPassword, (vm.phase.value as BackupPhase.Failed).failure)

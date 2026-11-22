@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
     <string name="backup_title">Backup and restore</string>
     <string name="backup_intro">A backup is one encrypted file with all members, records and documents. It is protected by a password you choose; without it the file cannot be opened by anyone, including you.</string>
     <string name="backup_create">Create a backup</string>
@@ -11,14 +11,14 @@
     <string name="backup_err_mismatch">The passwords do not match</string>
     <string name="backup_choose_location">Choose where to save</string>
     <string name="backup_working">Encrypting your backup…</string>
-    <string name="backup_done">Backup saved: %1$d members, %2$d documents.</string>
+    <string name="backup_done" tools:ignore="PluralsCandidate">Backup saved: %1$d members, %2$d documents.</string>
     <string name="backup_failed">The backup could not be written. Choose another location and try again.</string>
     <string name="restore_warning_title">Replace everything on this phone?</string>
     <string name="restore_warning_body">Restoring replaces all current members, records and documents with the ones in the backup. Current data is kept if the backup cannot be opened.</string>
     <string name="restore_password">Password of this backup</string>
     <string name="restore_choose">Choose the backup file</string>
     <string name="restore_working">Checking and restoring the backup…</string>
-    <string name="restore_done">Restored %1$d members and %2$d documents.</string>
+    <string name="restore_done" tools:ignore="PluralsCandidate">Restored %1$d members and %2$d documents.</string>
     <string name="restore_wrong_password">That password does not open this backup. Nothing was changed.</string>
     <string name="restore_corrupt">This backup file is damaged or incomplete. Nothing was changed.</string>
     <string name="restore_not_backup">This is not a MyHealth backup file. Nothing was changed.</string>
@@ -30,8 +30,6 @@
     <string name="hc_sync">Sync now</string>
     <string name="hc_disconnect">Disconnect and delete imported data</string>
     <string name="hc_connected">Connected. Reading: %1$s</string>
-    <string name="hc_last_sync">Updated %1$d days from Health Connect</string>
-    <string name="hc_days_stored">%1$d days stored on this phone</string>
     <string name="hc_not_installed_title">Health Connect is not installed</string>
     <string name="hc_not_installed_body">Install Health Connect from the Play Store to bring in data from your watch or fitness app. Everything else in MyHealth works without it.</string>
     <string name="hc_update_title">Health Connect needs an update</string>
@@ -50,4 +48,12 @@
     <string name="hc_rationale_title">How MyHealth uses Health Connect</string>
     <string name="activity_title">Daily activity</string>
     <string name="activity_steps_avg">%1$s steps a day (last 7 days)</string>
+    <plurals name="hc_last_sync">
+        <item quantity="one">Updated %d day from Health Connect</item>
+        <item quantity="other">Updated %d days from Health Connect</item>
+    </plurals>
+    <plurals name="hc_days_stored">
+        <item quantity="one">%d day stored on this phone</item>
+        <item quantity="other">%d days stored on this phone</item>
+    </plurals>
 </resources>
