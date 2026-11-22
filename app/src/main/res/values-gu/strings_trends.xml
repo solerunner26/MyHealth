@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="trend_latest">તાજું</string>
+    <string name="trend_previous">પાછલું</string>
+    <string name="trend_change">ફેરફાર</string>
+    <string name="trend_rate">દર મહિને</string>
+    <string name="trend_history">ઇતિહાસ</string>
+    <string name="trend_export">CSV નિકાસ કરો</string>
+    <string name="trend_chart_cd">%1$s નો ચાર્ટ, %3$s થી %4$s સુધી %2$d પરિણામ. તાજું %5$s, %6$s.</string>
+    <string name="legend_in_range">રેન્જમાં</string>
+    <string name="legend_out_of_range">રેન્જની બહાર</string>
+    <string name="legend_band">સામાન્ય રેન્જ</string>
+    <string name="trend_range">સામાન્ય %1$s</string>
+    <string name="trend_from_report">સ્ત્રોત: %1$s</string>
+    <string name="trend_manual">હાથે લખેલું</string>
+    <string name="trend_not_found">ઇતિહાસ સમયગાળામાં આ તપાસનાં કોઈ પરિણામ નથી.</string>
+    <string name="trend_about">આ તપાસ વિશે</string>
+    <string name="trend_direction_lower">આ તપાસમાં સામાન્ય રીતે ઓછું મૂલ્ય સારું ગણાય છે.</string>
+    <string name="trend_direction_higher">આ તપાસમાં સામાન્ય રીતે વધારે મૂલ્ય સારું ગણાય છે.</string>
+    <string name="trend_direction_range">સામાન્ય રેન્જની અંદરનાં મૂલ્યો સામાન્ય રીતે બરાબર ગણાય છે.</string>
+    <string name="trends_empty_title">હજી કોઈ ટ્રેન્ડ નથી</string>
+    <string name="trends_empty_body">તપાસ ઉમેરાશે એટલે ટ્રેન્ડ દેખાશે. જુદી જુદી તારીખની રિપોર્ટ ઉમેરો જેથી ફેરફાર દેખાય.</string>
+    <string name="trends_labs">લેબ તપાસ</string>
+    <string name="trends_window">છેલ્લાં %1$d વર્ષ બતાવીએ છીએ</string>
+    <string name="csv_date">તારીખ</string>
+    <string name="csv_test">તપાસ</string>
+    <string name="csv_value">મૂલ્ય</string>
+    <string name="csv_unit">યુનિટ</string>
+    <string name="csv_low">રેન્જ નીચી</string>
+    <string name="csv_high">રેન્જ ઉપલી</string>
+    <string name="csv_status">સ્થિતિ</string>
+    <string name="export_failed">ફાઇલ તૈયાર થઈ શકી નહીં. ફરી પ્રયત્ન કરો.</string>
+    <string name="panel_blood">બ્લડ કાઉન્ટ</string>
+    <string name="panel_diabetes">બ્લડ સુગર</string>
+    <string name="panel_lipids">કોલેસ્ટ્રોલ અને ચરબી</string>
+    <string name="panel_kidney">કિડની</string>
+    <string name="panel_electrolytes">ક્ષાર અને ખનિજ</string>
+    <string name="panel_liver">લિવર</string>
+    <string name="panel_thyroid">થાઇરોઇડ</string>
+    <string name="panel_vitamins">વિટામિન</string>
+    <string name="panel_iron">આયર્ન</string>
+    <string name="panel_inflammation">સોજો</string>
+    <string name="panel_hormones">હોર્મોન</string>
+    <string name="panel_urine">પેશાબ</string>
+    <string name="panel_other">અન્ય</string>
+</resources>

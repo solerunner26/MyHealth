@@ -148,3 +148,16 @@ Weights: lab key markers 40, vitals 30, monitoring up to date 15, activity 15. M
 the remaining weights are renormalised, so missing data never counts as good or bad. If less than 40% of the
 weight has data, no score is shown ("not enough data"), and the components still explain what is missing. Per-input
 points are shown so the user can see why the score is what it is.
+
+## D-019 UI structure
+- Tabs: Home (dashboard), Records, Trends, Care, More. Detail screens (report, attachment, trend, insights, import,
+  member editor) are navigation-compose destinations above the tab shell.
+- The member switcher in the top bar scopes every screen: all ViewModels observe `Session.activeMember` via
+  `flatMapLatest`, so switching re-queries everything for the new member and no data leaks across members.
+- Search and filters run in the composable on localised text, so searching works in Hindi and Gujarati as well as
+  English, aliases and printed names.
+- Attachments are decrypted and rendered in memory (PdfBox, 110 dpi, first 30 pages). *Share file* decrypts into
+  `cache/share`, warns that the copy is unencrypted, and the folder is wiped on the next start.
+- Charts mark out-of-range points as hollow rings with a heavy stroke and in-range points as small filled dots. The
+  band is drawn with dashed edges, a legend explains each encoding, and every chart has a text description for
+  TalkBack.

@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="home_title">%1$s\'s health</string>
+    <string name="home_score_title">Health score</string>
+    <string name="home_score_caption">out of 100</string>
+    <string name="home_score_none">Not enough data</string>
+    <string name="home_score_none_short">—</string>
+    <string name="home_score_coverage">Based on %1$d%% of the usual information</string>
+    <string name="home_score_how">How this is worked out</string>
+    <string name="home_score_cd">Health score %1$s. %2$s</string>
+    <string name="home_focus_title">What to focus on</string>
+    <string name="home_focus_all">See all</string>
+    <string name="home_focus_none_title">Nothing needs attention right now</string>
+    <string name="home_focus_none_body">Keep adding reports and vitals so changes are noticed early.</string>
+    <string name="home_latest">Latest results</string>
+    <string name="home_empty_title">Start %1$s\'s health record</string>
+    <string name="home_empty_body">Add a lab report or prescription. MyHealth reads it on this phone and shows trends and what to discuss with the doctor.</string>
+    <string name="home_add_document">Add a document</string>
+    <string name="home_quick_vital">Log a vital</string>
+    <string name="home_quick_medicine">Add a medicine</string>
+    <string name="switcher_title">Whose records?</string>
+    <string name="switcher_add">Add family member</string>
+    <string name="switcher_edit">Edit profile</string>
+    <string name="switcher_cd">Switch family member. Showing %1$s.</string>
+    <string name="switcher_selected">%1$s, selected</string>
+</resources>

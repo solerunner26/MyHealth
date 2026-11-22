@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="home_title">%1$s નું સ્વાસ્થ્ય</string>
+    <string name="home_score_title">હેલ્થ સ્કોર</string>
+    <string name="home_score_caption">100 માંથી</string>
+    <string name="home_score_none">પૂરતો ડેટા નથી</string>
+    <string name="home_score_none_short">—</string>
+    <string name="home_score_coverage">સામાન્ય માહિતીના %1$d%% પર આધારિત</string>
+    <string name="home_score_how">આ કેવી રીતે ગણાયું</string>
+    <string name="home_score_cd">હેલ્થ સ્કોર %1$s. %2$s</string>
+    <string name="home_focus_title">શેના પર ધ્યાન આપવું</string>
+    <string name="home_focus_all">બધું જુઓ</string>
+    <string name="home_focus_none_title">હમણાં કોઈ બાબત પર ધ્યાનની જરૂર નથી</string>
+    <string name="home_focus_none_body">રિપોર્ટ અને વાઇટલ્સ ઉમેરતા રહો જેથી ફેરફારો જલ્દી દેખાય.</string>
+    <string name="home_latest">તાજાં પરિણામ</string>
+    <string name="home_empty_title">%1$s નો હેલ્થ રેકોર્ડ શરૂ કરો</string>
+    <string name="home_empty_body">લેબ રિપોર્ટ કે ચિઠ્ઠી ઉમેરો. MyHealth તેને આ ફોનમાં વાંચીને ટ્રેન્ડ અને ડૉક્ટરને પૂછવાની બાબતો બતાવે છે.</string>
+    <string name="home_add_document">દસ્તાવેજ ઉમેરો</string>
+    <string name="home_quick_vital">વાઇટલ નોંધો</string>
+    <string name="home_quick_medicine">દવા ઉમેરો</string>
+    <string name="switcher_title">કોના રેકોર્ડ?</string>
+    <string name="switcher_add">પરિવારનો સભ્ય ઉમેરો</string>
+    <string name="switcher_edit">પ્રોફાઇલ બદલો</string>
+    <string name="switcher_cd">પરિવારનો સભ્ય બદલો. હમણાં %1$s દેખાય છે.</string>
+    <string name="switcher_selected">%1$s, પસંદ કરેલું</string>
+</resources>

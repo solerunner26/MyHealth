@@ -53,3 +53,14 @@ data-extraction rules, locale config); app-private crash log; EN/HI/GU strings.
   (insufficient data, weighting/renormalisation worked example, scoring curves).
 - E2E extended: after import → review → edit → save, the edited HbA1c is the latest point of its trend series with
   the printed band and a High status.
+
+Note on Phase 5: commit `7508131` contained a test file that did not compile (package name shadowed by a local
+property). It was fixed forward in `63e5952`. Since then every commit runs only after the full gate script exits 0.
+
+## Phase 6: navigation shell and core screens (done)
+- Gate (`assembleDebug testDebugUnitTest :domain:test lintDebug`) → exit 0; lint 0 errors
+- `AppFlowTest` (Robolectric, real MainActivity): onboarding through the UI → empty dashboard → seeded reports → score
+  card and an LDL focus item on the dashboard → trend tile → trend detail with chart and history → Records search
+  filters the list → report detail values → add a second member via the switcher → her empty dashboard (scoping) →
+  switch back.
+- `WideLayoutTest` (`w900dp`): navigation rail instead of bottom bar.

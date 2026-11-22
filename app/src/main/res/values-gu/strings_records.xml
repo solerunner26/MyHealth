@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="records_tab_reports">રિપોર્ટ</string>
+    <string name="records_tab_results">તપાસનાં પરિણામ</string>
+    <string name="records_search">શોધો</string>
+    <string name="records_filter_all">બધા</string>
+    <string name="records_empty_title">હજી કોઈ રિપોર્ટ નથી</string>
+    <string name="records_empty_body">તમે ઉમેરેલા રિપોર્ટ, ચિઠ્ઠીઓ અને બિલ અહીં દેખાશે, નવા સૌથી ઉપર.</string>
+    <string name="records_results_empty_title">હજી તપાસનાં પરિણામ નથી</string>
+    <string name="records_results_empty_body">રિપોર્ટમાંથી સેવ કરેલાં મૂલ્યો અહીં તપાસ મુજબ દેખાશે.</string>
+    <string name="records_no_match_title">કંઈ મળ્યું નહીં</string>
+    <string name="records_no_match_body">બીજો શબ્દ અજમાવો અથવા ફિલ્ટર હટાવો.</string>
+    <string name="records_clear">શોધ સાફ કરો</string>
+    <string name="report_attachments">મૂળ દસ્તાવેજ</string>
+    <string name="report_view">જુઓ</string>
+    <string name="report_share_file">ફાઇલ શેર કરો</string>
+    <string name="report_share_warning">શેર કરેલી કૉપિ એન્ક્રિપ્ટેડ હોતી નથી. ફક્ત વિશ્વાસુ લોકો (જેમ કે ડૉક્ટર) ને મોકલો.</string>
+    <string name="report_values">આ દસ્તાવેજનાં મૂલ્યો</string>
+    <string name="report_no_values">આ દસ્તાવેજમાંથી કોઈ મૂલ્ય સેવ થયું નથી.</string>
+    <string name="report_delete">રિપોર્ટ કાઢી નાખો</string>
+    <string name="report_delete_title">આ રિપોર્ટ કાઢી નાખવો છે?</string>
+    <string name="report_delete_body">દસ્તાવેજ અને તેમાંથી સેવ થયેલાં બધાં મૂલ્યો આ ફોનમાંથી દૂર થશે.</string>
+    <string name="report_not_found">આ રિપોર્ટ હવે ઉપલબ્ધ નથી.</string>
+    <string name="report_printed">આ રીતે છપાયું: %1$s</string>
+    <string name="viewer_page">પાનું %1$d / %2$d</string>
+    <string name="viewer_error">આ દસ્તાવેજ બતાવી શકાયો નહીં.</string>
+    <string name="viewer_loading">દસ્તાવેજ ડિક્રિપ્ટ થઈ રહ્યો છે…</string>
+    <string name="share_chooser">કોની સાથે શેર કરવું</string>
+    <plurals name="records_pages">
+        <item quantity="one">%d પાનું</item>
+        <item quantity="other">%d પાનાં</item>
+    </plurals>
+    <plurals name="records_values_count">
+        <item quantity="one">%d મૂલ્ય</item>
+        <item quantity="other">%d મૂલ્યો</item>
+    </plurals>
+</resources>

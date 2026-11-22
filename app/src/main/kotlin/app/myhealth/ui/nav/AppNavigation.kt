@@ -1,13 +1,17 @@
 package app.myhealth.ui.nav
 
+import android.widget.Toast
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -20,18 +24,35 @@ import app.myhealth.core.designsystem.components.MyHealthEmptyState
 import app.myhealth.core.designsystem.components.MyHealthIcons
 import app.myhealth.core.designsystem.components.MyHealthLoadingState
 import app.myhealth.core.designsystem.components.MyHealthTopBar
+import app.myhealth.domain.analytics.TrendCsv
 import app.myhealth.domain.model.Relationship
 import app.myhealth.ui.LocalSession
+import app.myhealth.ui.common.Share
+import app.myhealth.ui.common.analyteName
+import app.myhealth.ui.common.label
 import app.myhealth.ui.common.rememberVm
+import app.myhealth.ui.home.HomeContent
+import app.myhealth.ui.home.HomeViewModel
 import app.myhealth.ui.importer.ImportRoute
 import app.myhealth.ui.member.MemberEditorScreen
 import app.myhealth.ui.member.MemberEditorViewModel
 import app.myhealth.ui.onboarding.WelcomeScreen
-import app.myhealth.ui.records.RecordsList
+import app.myhealth.ui.records.RecordsContent
 import app.myhealth.ui.records.RecordsViewModel
+import app.myhealth.ui.report.AttachmentViewerScreen
+import app.myhealth.ui.report.AttachmentViewerViewModel
+import app.myhealth.ui.report.ReportDetailScreen
+import app.myhealth.ui.report.ReportDetailViewModel
+import app.myhealth.ui.report.shareAttachment
 import app.myhealth.ui.shell.AdaptiveNavScaffold
+import app.myhealth.ui.shell.MemberSwitcher
 import app.myhealth.ui.shell.TopLevel
 import app.myhealth.ui.shell.topLevelItems
+import app.myhealth.ui.trends.TrendDetailScreen
+import app.myhealth.ui.trends.TrendDetailViewModel
+import app.myhealth.ui.trends.TrendsContent
+import app.myhealth.ui.trends.TrendsViewModel
+import kotlinx.coroutines.launch
 
 object Routes {
     const val MAIN = "main"
@@ -40,8 +61,13 @@ object Routes {
     const val MEMBER_NEW = "member/new"
     const val MEMBER_EDIT = "member/edit/{id}"
     const val REPORT = "report/{id}"
+    const val ATTACHMENT = "attachment/{reportId}/{id}"
+    const val TREND = "trend/{id}"
+    const val INSIGHTS = "insights"
     fun memberEdit(id: String) = "member/edit/$id"
     fun report(id: String) = "report/$id"
+    fun attachment(reportId: String, id: String) = "attachment/$reportId/$id"
+    fun trend(id: String) = "trend/$id"
 }
 
 /** Root: onboarding until a profile exists, then the navigation graph. */
@@ -64,7 +90,7 @@ private fun OnboardingFlow() {
     else {
         val vm = rememberVm("onboarding") { MemberEditorViewModel(session, null, Relationship.Self, session.container.clock) }
         val state by vm.state.collectAsStateWithLifecycle()
-        state.savedId?.let { id -> session.container.preferences.update { putBoolean("onboarded", true); putString("active_member", id) } }
+        LaunchedEffect(state.savedId) { state.savedId?.let { id -> session.container.preferences.update { putBoolean("onboarded", true); putString("active_member", id) } } }
         MemberEditorScreen(state, vm::onEvent, stringResource(R.string.onb_profile_title), onBack = { step = 0 },
             primaryLabel = stringResource(R.string.onb_finish), intro = stringResource(R.string.onb_profile_body), lockRelationship = true)
     }
@@ -73,53 +99,95 @@ private fun OnboardingFlow() {
 @Composable
 fun AppNavGraph(nav: NavHostController) {
     val session = LocalSession.current
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    val chooser = stringResource(R.string.share_chooser)
+    val exportFailed = stringResource(R.string.export_failed)
     NavHost(nav, startDestination = Routes.MAIN) {
         composable(Routes.MAIN) {
-            MainTabs(onImport = { nav.navigate(Routes.IMPORT) }, onOpenReport = { nav.navigate(Routes.report(it)) })
+            MainTabs(nav)
         }
-        composable(Routes.IMPORT) {
-            ImportRoute(onBack = { nav.popBackStack() }, onSaved = { id -> nav.popBackStack(); nav.navigate(Routes.report(id)) })
-        }
+        composable(Routes.IMPORT) { ImportRoute(onBack = { nav.popBackStack() }, onSaved = { id -> nav.popBackStack(); nav.navigate(Routes.report(id)) }) }
         composable(Routes.IMPORT_MANUAL) {
             ImportRoute(onBack = { nav.popBackStack() }, onSaved = { id -> nav.popBackStack(); nav.navigate(Routes.report(id)) }, startManual = true)
         }
         composable(Routes.MEMBER_NEW) {
             val vm = rememberVm { MemberEditorViewModel(session, null, Relationship.Spouse, session.container.clock) }
             val state by vm.state.collectAsStateWithLifecycle()
-            if (state.savedId != null) { session.select(state.savedId!!); nav.popBackStack() }
+            LaunchedEffect(state.savedId) { state.savedId?.let { session.select(it); nav.popBackStack() } }
             MemberEditorScreen(state, vm::onEvent, stringResource(R.string.member_add_title), onBack = { nav.popBackStack() })
         }
         composable(Routes.MEMBER_EDIT) { entry ->
             val id = entry.arguments?.getString("id")
             val vm = rememberVm(id) { MemberEditorViewModel(session, id, Relationship.Other, session.container.clock) }
             val state by vm.state.collectAsStateWithLifecycle()
-            if (state.savedId != null || state.deleted) nav.popBackStack()
+            LaunchedEffect(state.savedId, state.deleted) { if (state.savedId != null || state.deleted) nav.popBackStack() }
             MemberEditorScreen(state, vm::onEvent, stringResource(R.string.member_edit_title), onBack = { nav.popBackStack() })
         }
         composable(Routes.REPORT) { entry ->
-            // Full report detail arrives in Phase 6; until then show the member's report list.
-            Column(Modifier.fillMaxSize().testTag("reportDetail")) {
-                MyHealthTopBar(stringResource(R.string.nav_records), onBack = { nav.popBackStack() }, backLabel = stringResource(R.string.action_back))
-                val vm = rememberVm { RecordsViewModel(session) }
-                val state by vm.state.collectAsStateWithLifecycle()
-                RecordsList(state, onOpen = {}, onAdd = { nav.navigate(Routes.IMPORT) })
-            }
+            val id = entry.arguments?.getString("id")!!
+            val vm = rememberVm(id) { ReportDetailViewModel(session, id) }
+            val state by vm.state.collectAsStateWithLifecycle()
+            LaunchedEffect(state.deleted) { if (state.deleted) nav.popBackStack() }
+            ReportDetailScreen(state, onBack = { nav.popBackStack() }, onView = { a -> nav.navigate(Routes.attachment(id, a.id)) },
+                onShare = { a -> scope.launch { if (!shareAttachment(context, vm, a, chooser)) Toast.makeText(context, exportFailed, Toast.LENGTH_SHORT).show() } },
+                onDelete = vm::delete, onOpenTrend = { nav.navigate(Routes.trend(it)) })
+        }
+        composable(Routes.ATTACHMENT) { entry ->
+            val id = entry.arguments?.getString("id")!!
+            val vm = rememberVm(id) { AttachmentViewerViewModel(session, id, context.applicationContext) }
+            val state by vm.state.collectAsStateWithLifecycle()
+            AttachmentViewerScreen(state, stringResource(R.string.report_attachments), onBack = { nav.popBackStack() })
+        }
+        composable(Routes.TREND) { entry ->
+            val id = entry.arguments?.getString("id")!!
+            val vm = rememberVm(id) { TrendDetailViewModel(session, id) }
+            val state by vm.state.collectAsStateWithLifecycle()
+            val header = listOf(R.string.csv_date, R.string.csv_test, R.string.csv_value, R.string.csv_unit, R.string.csv_low, R.string.csv_high, R.string.csv_status).map { stringResource(it) }
+            val name = analyteName(id)
+            val statusLabels = app.myhealth.domain.analytics.RangeStatus.entries.associateWith { label(it) }
+            TrendDetailScreen(state, id, onBack = { nav.popBackStack() }, onOpenReport = { nav.navigate(Routes.report(it)) }, onExport = { t ->
+                runCatching {
+                    val csv = TrendCsv.history(listOf(t), { name }, { statusLabels.getValue(it) }, header)
+                    Share.launch(context, Share.write(context, "$name.csv", csv.toByteArray(Charsets.UTF_8)), "text/csv", chooser)
+                }.onFailure { Toast.makeText(context, exportFailed, Toast.LENGTH_SHORT).show() }
+            })
+        }
+        composable(Routes.INSIGHTS) {
+            app.myhealth.ui.insights.InsightsRoute(onBack = { nav.popBackStack() }, onOpenTrend = { nav.navigate(Routes.trend(it)) })
         }
     }
 }
 
 @Composable
-private fun MainTabs(onImport: () -> Unit, onOpenReport: (String) -> Unit) {
+private fun MainTabs(nav: NavHostController) {
     val session = LocalSession.current
     var tab by rememberSaveable { mutableStateOf(TopLevel.Home) }
+    val members by session.members.collectAsStateWithLifecycle()
+    val active by session.activeMember.collectAsStateWithLifecycle()
+    val onImport = { nav.navigate(Routes.IMPORT) }
     AdaptiveNavScaffold(tab, { tab = it }) {
         Column(Modifier.fillMaxSize().testTag("shell")) {
-            MyHealthTopBar(title = topLevelItems()[tab.ordinal].label)
+            val title = if (tab == TopLevel.Home) active?.let { stringResource(R.string.home_title, it.name) } ?: "" else topLevelItems()[tab.ordinal].label
+            MyHealthTopBar(title = title) {
+                MemberSwitcher(members.orEmpty(), active, session::select, onAdd = { nav.navigate(Routes.MEMBER_NEW) }, onEdit = { nav.navigate(Routes.memberEdit(it)) })
+            }
             when (tab) {
+                TopLevel.Home -> {
+                    val vm = rememberVm { HomeViewModel(session) }
+                    val state by vm.state.collectAsStateWithLifecycle()
+                    HomeContent(state, onAddDocument = onImport, onLogVital = { tab = TopLevel.Trends }, onAddMedicine = { tab = TopLevel.Care },
+                        onOpenTrend = { nav.navigate(Routes.trend(it)) }, onOpenInsights = { nav.navigate(Routes.INSIGHTS) })
+                }
                 TopLevel.Records -> {
                     val vm = rememberVm { RecordsViewModel(session) }
                     val state by vm.state.collectAsStateWithLifecycle()
-                    RecordsList(state, onOpenReport, onImport)
+                    RecordsContent(state, { nav.navigate(Routes.report(it)) }, { nav.navigate(Routes.trend(it)) }, onImport)
+                }
+                TopLevel.Trends -> {
+                    val vm = rememberVm { TrendsViewModel(session) }
+                    val state by vm.state.collectAsStateWithLifecycle()
+                    TrendsContent(state, { nav.navigate(Routes.trend(it)) }, onImport)
                 }
                 else -> MyHealthEmptyState(MyHealthIcons.Document, stringResource(R.string.shell_placeholder_title), stringResource(R.string.shell_placeholder_body),
                     actionLabel = stringResource(R.string.import_title), onAction = onImport)

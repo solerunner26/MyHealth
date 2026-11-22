@@ -45,6 +45,7 @@ class AppContainer(
 
     fun start() {
         if (_storage.value is StorageState.Ready) return
+        appScope.launch(Dispatchers.IO) { app.myhealth.ui.common.Share.wipe(context) }
         appScope.launch(Dispatchers.IO) { openNow() }
     }
 

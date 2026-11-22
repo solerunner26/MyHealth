@@ -17,4 +17,8 @@ enum class StatusKind(val icon: ImageVector, val emphasis: Emphasis) {
     Unknown(MyHealthIcons.StatusUnknown, Emphasis.Subtle),
     Info(MyHealthIcons.Info, Emphasis.Subtle),
     Attention(MyHealthIcons.StatusWarning, Emphasis.Medium),
+    /** Insight severities: same glyph family, increasing fill weight. */
+    SeverityLow(MyHealthIcons.StatusWarning, Emphasis.Subtle),
+    SeverityModerate(MyHealthIcons.StatusWarning, Emphasis.Medium),
+    SeverityHigh(MyHealthIcons.StatusCritical, Emphasis.Strong),
 }

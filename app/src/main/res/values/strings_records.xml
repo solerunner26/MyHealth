@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="records_tab_reports">Reports</string>
+    <string name="records_tab_results">Test results</string>
+    <string name="records_search">Search</string>
+    <string name="records_filter_all">All</string>
+    <string name="records_empty_title">No reports yet</string>
+    <string name="records_empty_body">Reports, prescriptions and bills you add will appear here, newest first.</string>
+    <string name="records_results_empty_title">No test results yet</string>
+    <string name="records_results_empty_body">Values you save from reports appear here, grouped by test.</string>
+    <string name="records_no_match_title">Nothing matches</string>
+    <string name="records_no_match_body">Try a different word or clear the filter.</string>
+    <string name="records_clear">Clear search</string>
+    <string name="report_attachments">Original document</string>
+    <string name="report_view">View</string>
+    <string name="report_share_file">Share file</string>
+    <string name="report_share_warning">The shared copy is not encrypted. Share it only with people you trust, such as your doctor.</string>
+    <string name="report_values">Values from this document</string>
+    <string name="report_no_values">No values were saved from this document.</string>
+    <string name="report_delete">Delete report</string>
+    <string name="report_delete_title">Delete this report?</string>
+    <string name="report_delete_body">The document and every value saved from it will be removed from this device.</string>
+    <string name="report_not_found">This report is no longer available.</string>
+    <string name="report_printed">Printed as %1$s</string>
+    <string name="viewer_page">Page %1$d of %2$d</string>
+    <string name="viewer_error">This document could not be displayed.</string>
+    <string name="viewer_loading">Decrypting the document…</string>
+    <string name="share_chooser">Share with</string>
+    <plurals name="records_pages">
+        <item quantity="one">%d page</item>
+        <item quantity="other">%d pages</item>
+    </plurals>
+    <plurals name="records_values_count">
+        <item quantity="one">%d value</item>
+        <item quantity="other">%d values</item>
+    </plurals>
+</resources>

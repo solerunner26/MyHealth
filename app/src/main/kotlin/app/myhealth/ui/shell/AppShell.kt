@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import app.myhealth.R
@@ -23,8 +22,7 @@ import app.myhealth.core.designsystem.theme.MyHealthTheme
 enum class TopLevel { Home, Records, Trends, Care, More }
 
 /** Width class without an extra dependency: < 600dp is compact (bottom bar), otherwise a rail. */
-@Composable
-fun isCompactWidth(): Boolean = LocalConfiguration.current.screenWidthDp < 600
+const val COMPACT_MAX_WIDTH_DP = 600
 
 @Composable
 fun topLevelItems(): List<NavItem> = listOf(
@@ -39,7 +37,8 @@ fun topLevelItems(): List<NavItem> = listOf(
 fun AdaptiveNavScaffold(selected: TopLevel, onSelect: (TopLevel) -> Unit, content: @Composable () -> Unit) {
     val items = topLevelItems()
     val bg = Modifier.fillMaxSize().background(MyHealthTheme.colors.background)
-    if (isCompactWidth()) {
+    androidx.compose.foundation.layout.BoxWithConstraints(Modifier.fillMaxSize()) {
+    if (maxWidth.value < COMPACT_MAX_WIDTH_DP) {
         Column(bg) {
             Box(Modifier.weight(1f)) { content() }
             MyHealthBottomBar(items, selected.name, { onSelect(TopLevel.valueOf(it)) }, Modifier.testTag("bottomBar"))
@@ -49,6 +48,7 @@ fun AdaptiveNavScaffold(selected: TopLevel, onSelect: (TopLevel) -> Unit, conten
             MyHealthNavRail(items, selected.name, { onSelect(TopLevel.valueOf(it)) }, Modifier.testTag("navRail"))
             Box(Modifier.weight(1f).navigationBarsPadding()) { content() }
         }
+    }
     }
 }
 

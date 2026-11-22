@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="trend_latest">ताज़ा</string>
+    <string name="trend_previous">पिछला</string>
+    <string name="trend_change">बदलाव</string>
+    <string name="trend_rate">हर महीने</string>
+    <string name="trend_history">इतिहास</string>
+    <string name="trend_export">CSV निर्यात करें</string>
+    <string name="trend_chart_cd">%1$s का चार्ट, %3$s से %4$s तक %2$d नतीजे। ताज़ा %5$s, %6$s।</string>
+    <string name="legend_in_range">रेंज में</string>
+    <string name="legend_out_of_range">रेंज से बाहर</string>
+    <string name="legend_band">सामान्य रेंज</string>
+    <string name="trend_range">सामान्य %1$s</string>
+    <string name="trend_from_report">स्रोत: %1$s</string>
+    <string name="trend_manual">हाथ से लिखा</string>
+    <string name="trend_not_found">इतिहास अवधि में इस जाँच के कोई नतीजे नहीं।</string>
+    <string name="trend_about">इस जाँच के बारे में</string>
+    <string name="trend_direction_lower">इस जाँच में आम तौर पर कम मान बेहतर होता है।</string>
+    <string name="trend_direction_higher">इस जाँच में आम तौर पर ज़्यादा मान बेहतर होता है।</string>
+    <string name="trend_direction_range">सामान्य रेंज के भीतर के मान आम तौर पर ठीक माने जाते हैं।</string>
+    <string name="trends_empty_title">अभी कोई ट्रेंड नहीं</string>
+    <string name="trends_empty_body">जाँच जुड़ने पर ट्रेंड दिखेंगे। अलग-अलग तारीख़ों की रिपोर्ट जोड़ें ताकि बदलाव दिखें।</string>
+    <string name="trends_labs">लैब जाँच</string>
+    <string name="trends_window">पिछले %1$d साल दिखा रहे हैं</string>
+    <string name="csv_date">तारीख़</string>
+    <string name="csv_test">जाँच</string>
+    <string name="csv_value">मान</string>
+    <string name="csv_unit">यूनिट</string>
+    <string name="csv_low">रेंज निचली</string>
+    <string name="csv_high">रेंज ऊपरी</string>
+    <string name="csv_status">स्थिति</string>
+    <string name="export_failed">फ़ाइल तैयार नहीं हो सकी। फिर कोशिश करें।</string>
+    <string name="panel_blood">ब्लड काउंट</string>
+    <string name="panel_diabetes">ब्लड शुगर</string>
+    <string name="panel_lipids">कोलेस्ट्रॉल और चर्बी</string>
+    <string name="panel_kidney">किडनी</string>
+    <string name="panel_electrolytes">नमक और खनिज</string>
+    <string name="panel_liver">लिवर</string>
+    <string name="panel_thyroid">थायरॉइड</string>
+    <string name="panel_vitamins">विटामिन</string>
+    <string name="panel_iron">आयरन</string>
+    <string name="panel_inflammation">सूजन</string>
+    <string name="panel_hormones">हार्मोन</string>
+    <string name="panel_urine">पेशाब</string>
+    <string name="panel_other">अन्य</string>
+</resources>
