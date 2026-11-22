@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="onb_welcome_title">તમારા પરિવારના હેલ્થ રેકોર્ડ, સંપૂર્ણ ખાનગી</string>
+    <string name="onb_welcome_body">તમારા અને પરિવારના લેબ રિપોર્ટ, ચિઠ્ઠીઓ, વાઇટલ્સ અને દવાઓ ફક્ત આ ફોનમાં રાખો. ન એકાઉન્ટ, ન ક્લાઉડ, ન ટ્રેકિંગ.</string>
+    <string name="onb_point_offline">સંપૂર્ણ ઓફલાઇન ચાલે છે</string>
+    <string name="onb_point_encrypted">આ ફોનમાં એન્ક્રિપ્ટેડ</string>
+    <string name="onb_point_review">દરેક મૂલ્ય સેવ થાય તે પહેલાં તમે ચકાસો છો</string>
+    <string name="onb_point_not_diagnosis">ડૉક્ટર સાથે વાત કરવા માટેનો રેકોર્ડ, નિદાન નહીં</string>
+    <string name="onb_start">શરૂ કરો</string>
+    <string name="onb_profile_title">તમારા વિશે</string>
+    <string name="onb_profile_body">ફક્ત નામ જરૂરી છે. જન્મ તારીખ અને જાતિથી યોગ્ય સામાન્ય રેન્જ પસંદ કરવામાં મદદ મળે છે.</string>
+    <string name="onb_finish">સેવ કરીને આગળ વધો</string>
+    <string name="member_add_title">પરિવારનો સભ્ય ઉમેરો</string>
+    <string name="member_edit_title">પ્રોફાઇલ બદલો</string>
+    <string name="field_name">નામ</string>
+    <string name="field_relationship">તમારી સાથેનો સંબંધ</string>
+    <string name="field_dob">જન્મ તારીખ</string>
+    <string name="field_sex">જાતિ</string>
+    <string name="field_height">ઊંચાઈ (સેમી)</string>
+    <string name="field_blood_group">બ્લડ ગ્રુપ</string>
+    <string name="field_allergies">એલર્જી</string>
+    <string name="field_conditions">ચાલુ બીમારીઓ</string>
+    <string name="field_ec_name">કટોકટી સંપર્કનું નામ</string>
+    <string name="field_ec_phone">કટોકટી સંપર્ક ફોન</string>
+    <string name="field_ec_relation">તેમનો સંબંધ</string>
+    <string name="hint_comma_separated">અલ્પવિરામથી અલગ કરો, જેમ કે: પેનિસિલિન, મગફળી</string>
+    <string name="err_name_required">નામ લખો</string>
+    <string name="err_height_invalid">30 થી 250 સેમી વચ્ચે ઊંચાઈ લખો</string>
+    <string name="err_dob_future">જન્મ તારીખ ભવિષ્યની ન હોઈ શકે</string>
+    <string name="section_basics">મૂળ માહિતી</string>
+    <string name="section_medical">તબીબી માહિતી</string>
+    <string name="section_emergency">કટોકટી સંપર્ક</string>
+    <string name="date_not_set">નક્કી નથી</string>
+    <string name="date_pick">તારીખ પસંદ કરો</string>
+    <string name="member_delete">આ સભ્ય કાઢી નાખો</string>
+    <string name="member_delete_title">%1$s અને તેમના બધા રેકોર્ડ કાઢી નાખવા છે?</string>
+    <string name="member_delete_body">આ વ્યક્તિના દરેક રિપોર્ટ, મૂલ્ય, વાઇટલ્સ અને દવા આ ફોનમાંથી કાયમ માટે દૂર થશે.</string>
+    <string name="member_cannot_delete_self">તમારી પોતાની પ્રોફાઇલ કાઢી શકાતી નથી. તેના બદલે સેટિંગમાં \"બધો ડેટા ભૂંસો\" વાપરો.</string>
+</resources>

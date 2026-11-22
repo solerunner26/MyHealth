@@ -32,3 +32,16 @@ data-extraction rules, locale config); app-private crash log; EN/HI/GU strings.
   ColdStartTest 3 (clean install, keystore failure → retry recovers, invalidated key → erase → fresh start).
 - Not run here: real AndroidKeyStore and SQLCipher native code (no device or emulator). JVM tests use a
   software key wrapper and framework SQLite through the same SupportSQLite code path.
+
+## Phase 4: ingestion and import review (done)
+- `./gradlew assembleDebug testDebugUnitTest :domain:test lintDebug` → BUILD SUCCESSFUL, 74 tests, 0 failures; lint 0 errors
+- End-to-end (Robolectric, `ImportFlowTest`): a real PDF generated with PdfBox goes through the real text-layer
+  extractor → parser → review UI (value edited via `performTextReplacement`) → save → stored values, printed range, lab
+  name, encrypted attachment byte-identical → the same file is flagged as a duplicate on re-import; second test:
+  saved report visible in the Records list.
+- `IngestTest`: magic-byte sniffing; OCR path through the pipeline with a fake OCR engine (ML Kit cannot run on the
+  JVM). `ImportDraftTest` (domain): draft ↔ bundle conversion, unit edits, validation, low-confidence exclusion,
+  prescription → medicine course.
+- Onboarding (welcome + own profile) and the member editor are in place. Cold start now reaches onboarding.
+- Not run here: ML Kit OCR on a real image and the camera capture (needs a device); PdfBox rendering for the OCR
+  fallback (slow under Robolectric).

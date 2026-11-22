@@ -95,3 +95,25 @@ first, then commits all rows in one transaction, and removes the files again if 
 Theme, language, lock settings and the active member id are needed before the database opens, so they live in
 app-private SharedPreferences. They hold no health data and are excluded from backup. The PIN is stored only as a
 salted PBKDF2 hash.
+
+## D-015 Ingestion pipeline (dependencies: PdfBox-Android, ML Kit text recognition, navigation-compose)
+- **PdfBox-Android 2.0.27.0**: PDF text layer, sorted by position so table rows stay on one line, plus in-memory page
+  rendering for OCR. No plaintext temp files: `PdfRenderer` would need a file descriptor, so we don't use it.
+- **ML Kit `text-recognition` 16.0.1 (bundled Latin model)**: on-device OCR with no model download. Its telemetry
+  transport cannot send anything because the manifest strips INTERNET (D-005). Verified with `aapt2 dump permissions`.
+- **navigation-compose 2.10.2**: back stack and argument routing for detail screens. The tab shell stays custom
+  (D-006).
+- A page counts as "scanned" when its text layer has fewer than 40 letters/digits. Its OCR text is used only when it
+  is richer than the layer, so a failed OCR never loses a usable text layer. At most 40 pages, rendered at 200 dpi.
+- The file type comes from magic bytes, never from the name or MIME type. The size limit is 30 MB, enforced while
+  streaming.
+- Camera capture uses `ACTION_IMAGE_CAPTURE` through a `FileProvider` cache path, so no CAMERA permission is needed.
+  The capture is overwritten and deleted once it has been imported (encrypted) or abandoned.
+- SHA-256 duplicates are flagged on the review screen. Saving again is allowed and leaves a second copy, preserving
+  user intent.
+- Low-confidence rows start unticked. Values are shown in the canonical unit, with the printed line alongside for
+  traceability. The unit picker lists only units the analyte can convert from.
+- Analyte names are localised (`strings_analytes.xml`, generated from one table to guarantee parity). Indian lab
+  reports print English test names, so Hindi/Gujarati use common transliterations, often with the English
+  abbreviation (e.g. "HbA1c (3 महीने की औसत शुगर)").
+- If the title is left blank, the report gets the localised document-type label, so ViewModels never hold a Context.

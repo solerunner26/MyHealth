@@ -25,13 +25,13 @@ class ColdStartTest {
 
     private fun awaitTag(tag: String) = rule.waitUntil(10_000) { rule.onAllNodes(androidx.compose.ui.test.hasTestTag(tag)).fetchSemanticsNodes().isNotEmpty() }
 
-    @Test fun cleanInstallReachesShell() {
-        awaitTag("shell")
-        rule.onNodeWithTag("bottomBar").assertExists()
+    @Test fun cleanInstallReachesOnboarding() {
+        awaitTag("welcome")
+        rule.onNodeWithTag("onbStart").assertExists()
     }
 
     @Test fun keystoreFailureShowsRecoverableErrorAndRetryRecovers() {
-        awaitTag("shell")
+        awaitTag("welcome")
         // simulate the keystore going away and a fresh process start
         TestHooks.wrapper.failWith = SecureFailure.KeystoreUnavailable
         rule.runOnUiThread { app.container.eraseStateForTest() }
@@ -42,11 +42,11 @@ class ColdStartTest {
         // the keystore comes back: Retry opens the same data
         TestHooks.wrapper.failWith = null
         rule.onNodeWithText(app.getString(R.string.action_retry)).performClick()
-        awaitTag("shell")
+        awaitTag("welcome")
     }
 
     @Test fun eraseFromErrorScreenStartsFresh() {
-        awaitTag("shell")
+        awaitTag("welcome")
         TestHooks.wrapper.destroy() // key invalidated: data cannot be decrypted
         rule.runOnUiThread { app.container.eraseStateForTest() }
         kotlinx.coroutines.runBlocking { app.container.openNow() }
@@ -54,6 +54,6 @@ class ColdStartTest {
         rule.onNodeWithText(app.getString(R.string.storage_invalidated_title)).assertExists()
         rule.onNodeWithText(app.getString(R.string.storage_action_erase)).performClick()
         rule.onNodeWithText(app.getString(R.string.storage_erase_confirm)).performClick()
-        awaitTag("shell")
+        awaitTag("welcome")
     }
 }

@@ -31,4 +31,5 @@
     <string name="crash_share">Share error report</string>
     <string name="crash_dismiss">Dismiss</string>
     <string name="crash_chooser_title">Share error report</string>
+    <string name="join_dot">%1$s · %2$s</string>
 </resources>

@@ -7,10 +7,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.testTag
@@ -56,17 +52,3 @@ fun AdaptiveNavScaffold(selected: TopLevel, onSelect: (TopLevel) -> Unit, conten
     }
 }
 
-@Composable
-fun AppShell() {
-    var tab by rememberSaveable { mutableStateOf(TopLevel.Home) }
-    AdaptiveNavScaffold(tab, { tab = it }) {
-        Column(Modifier.fillMaxSize().testTag("shell")) {
-            MyHealthTopBar(title = topLevelItems()[tab.ordinal].label)
-            MyHealthEmptyState(
-                icon = MyHealthIcons.Document,
-                title = stringResource(R.string.shell_placeholder_title),
-                message = stringResource(R.string.shell_placeholder_body),
-            )
-        }
-    }
-}

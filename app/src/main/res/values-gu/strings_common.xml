@@ -30,4 +30,5 @@
     <string name="crash_share">ભૂલનો રિપોર્ટ શેર કરો</string>
     <string name="crash_dismiss">દૂર કરો</string>
     <string name="crash_chooser_title">ભૂલનો રિપોર્ટ શેર કરો</string>
+    <string name="join_dot">%1$s · %2$s</string>
 </resources>

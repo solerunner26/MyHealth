@@ -37,6 +37,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.error
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
@@ -222,3 +223,23 @@ fun MyHealthDialog(
 
 @Suppress("unused")
 private fun Modifier.clickableRow(onClick: () -> Unit) = this.clickable(onClick = onClick)
+
+/** Checkbox row; checked state is shown by a filled box with a tick (shape), not by colour alone. */
+@Composable
+fun MyHealthCheckbox(checked: Boolean, onCheckedChange: (Boolean) -> Unit, label: String, modifier: Modifier = Modifier, showLabel: Boolean = false) {
+    val c = MyHealthTheme.colors
+    Row(
+        modifier.heightIn(min = 48.dp).toggleable(value = checked, role = Role.Checkbox, onValueChange = onCheckedChange)
+            .semantics { this.contentDescription = label },
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        androidx.compose.material3.Checkbox(
+            checked = checked, onCheckedChange = null,
+            colors = androidx.compose.material3.CheckboxDefaults.colors(checkedColor = c.accent, uncheckedColor = c.outlineStrong, checkmarkColor = c.onAccent),
+        )
+        if (showLabel) {
+            Spacer(Modifier.width(MyHealthTheme.spacing.sm))
+            Text(label, style = MyHealthTheme.typography.body, color = c.textPrimary)
+        }
+    }
+}
