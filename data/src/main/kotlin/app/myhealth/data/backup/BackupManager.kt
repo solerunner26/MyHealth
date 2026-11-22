@@ -31,12 +31,12 @@ data class BackupInfo(val schemaVersion: Int, val createdAtMs: Long, val members
 class BackupManager(private val context: Context, private val stack: DataStack, private val vaultDir: File) {
 
     /** Tables in FK-safe insert order. */
-    private val tables = listOf("members", "reports", "attachments", "lab_results", "vitals", "medicines", "dose_logs", "treatments", "daily_activity", "meta")
+    private val tables = listOf("members", "reports", "attachments", "lab_results", "vitals", "medicines", "dose_logs", "treatments", "daily_activity", "vaccinations", "health_cards", "family_history", "visit_questions", "media", "meta")
 
     suspend fun export(out: OutputStream, password: CharArray, nowMs: Long, appVersion: String): BackupInfo {
         val dump = stack.database.read { db -> tables.associateWith { t -> rows(db, t) } }
         val attachmentIds = dump.getValue("attachments").map { (it as JSONObject).getString("id") }
-        val photoNames = stack.vault.names().filter { it.startsWith("photo-") }
+        val photoNames = stack.vault.names().filter { it.startsWith("photo-") || it.startsWith("media-") }
         val info = BackupInfo(Schema.VERSION, nowMs, dump.getValue("members").size, dump.getValue("reports").size, attachmentIds.size)
         try {
             ZipOutputStream(BackupCrypto.encrypting(out, password)).use { zip ->
@@ -88,7 +88,7 @@ class BackupManager(private val context: Context, private val stack: DataStack, 
             }
             val m = manifest ?: throw BackupException(BackupFailure.Corrupt)
             val d = data ?: throw BackupException(BackupFailure.Corrupt)
-            if (m.optInt("attachments", files.size) != files.count { !it.startsWith("photo-") }) throw BackupException(BackupFailure.Corrupt)
+            if (m.optInt("attachments", files.size) != files.count { !it.startsWith("photo-") && !it.startsWith("media-") }) throw BackupException(BackupFailure.Corrupt)
             val version = m.getInt("schema")
             if (version > Schema.VERSION) throw BackupException(BackupFailure.NewerVersion)
             val rows = upgrade(d, version)
@@ -99,7 +99,7 @@ class BackupManager(private val context: Context, private val stack: DataStack, 
             // swap attachments: drop current vault files, move staged ones in (same key, same AAD name)
             stack.vault.names().forEach { runCatching { stack.vault.delete(it) } }
             files.forEach { id -> File(staging, id).renameTo(File(vaultDir, id)) }
-            return BackupInfo(version, m.optLong("created"), m.optInt("members"), m.optInt("reports"), files.count { !it.startsWith("photo-") })
+            return BackupInfo(version, m.optLong("created"), m.optInt("members"), m.optInt("reports"), files.count { !it.startsWith("photo-") && !it.startsWith("media-") })
         } catch (e: BackupException) { throw e
         } catch (e: java.util.zip.ZipException) { throw BackupException(BackupFailure.Corrupt, e)
         } catch (e: org.json.JSONException) { throw BackupException(BackupFailure.Corrupt, e)

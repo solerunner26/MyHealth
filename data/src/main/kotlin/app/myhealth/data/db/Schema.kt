@@ -7,7 +7,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
  * snapshot file under `data/schemas/` (checked by SchemaSnapshotTest).
  */
 object Schema {
-    const val VERSION = 2
+    const val VERSION = 3
 
     /** DDL of version 1 (kept verbatim forever so migration tests can build a v1 database). */
     val V1: List<String> = listOf(
@@ -86,6 +86,29 @@ object Migrations {
                 member_id TEXT NOT NULL REFERENCES members(id) ON DELETE CASCADE, date TEXT NOT NULL,
                 steps INTEGER, resting_hr REAL, avg_hr REAL, sleep_minutes INTEGER, weight_kg REAL,
                 PRIMARY KEY(member_id, date))""",
+        )),
+        // v3: vaccinations, health cards, family history of relatives, visit questions, encrypted images.
+        Migration(2, 3, listOf(
+            """CREATE TABLE vaccinations (
+                id TEXT PRIMARY KEY NOT NULL, member_id TEXT NOT NULL REFERENCES members(id) ON DELETE CASCADE,
+                name TEXT NOT NULL, dose TEXT NOT NULL, given_date TEXT, due_date TEXT, provider TEXT NOT NULL, notes TEXT NOT NULL,
+                created_at INTEGER NOT NULL)""",
+            "CREATE INDEX idx_vaccinations_member ON vaccinations(member_id)",
+            """CREATE TABLE health_cards (
+                id TEXT PRIMARY KEY NOT NULL, member_id TEXT NOT NULL REFERENCES members(id) ON DELETE CASCADE,
+                kind TEXT NOT NULL, title TEXT NOT NULL, number TEXT NOT NULL, holder_name TEXT NOT NULL, issuer TEXT NOT NULL,
+                valid_until TEXT, notes TEXT NOT NULL, created_at INTEGER NOT NULL)""",
+            "CREATE INDEX idx_health_cards_member ON health_cards(member_id)",
+            """CREATE TABLE family_history (
+                id TEXT PRIMARY KEY NOT NULL, relation TEXT NOT NULL, condition TEXT NOT NULL, onset_age INTEGER,
+                notes TEXT NOT NULL, created_at INTEGER NOT NULL)""",
+            """CREATE TABLE visit_questions (
+                id TEXT PRIMARY KEY NOT NULL, member_id TEXT NOT NULL REFERENCES members(id) ON DELETE CASCADE,
+                text TEXT NOT NULL, done INTEGER NOT NULL, created_at INTEGER NOT NULL)""",
+            """CREATE TABLE media (
+                id TEXT PRIMARY KEY NOT NULL, member_id TEXT NOT NULL REFERENCES members(id) ON DELETE CASCADE,
+                owner_id TEXT NOT NULL, kind TEXT NOT NULL, created_at INTEGER NOT NULL)""",
+            "CREATE INDEX idx_media_owner ON media(owner_id)",
         )),
     )
 

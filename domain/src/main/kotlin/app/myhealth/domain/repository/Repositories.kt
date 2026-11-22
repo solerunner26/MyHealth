@@ -88,3 +88,39 @@ interface ActivityRepository {
     suspend fun setSyncToken(memberId: String, token: String?)
     suspend fun clear(memberId: String)
 }
+
+interface VaccinationRepository {
+    fun observe(memberId: String): Flow<List<app.myhealth.domain.model.Vaccination>>
+    suspend fun all(memberId: String): List<app.myhealth.domain.model.Vaccination>
+    suspend fun allMembersPending(): List<app.myhealth.domain.model.Vaccination>
+    suspend fun upsert(v: app.myhealth.domain.model.Vaccination)
+    suspend fun upsertAll(list: List<app.myhealth.domain.model.Vaccination>)
+    suspend fun delete(id: String)
+}
+
+interface HealthCardRepository {
+    fun observe(memberId: String): Flow<List<app.myhealth.domain.model.HealthCard>>
+    suspend fun upsert(card: app.myhealth.domain.model.HealthCard)
+    suspend fun delete(id: String)
+}
+
+interface FamilyHistoryRepository {
+    fun observe(): Flow<List<app.myhealth.domain.model.RelativeCondition>>
+    suspend fun upsert(r: app.myhealth.domain.model.RelativeCondition)
+    suspend fun delete(id: String)
+}
+
+interface VisitQuestionRepository {
+    fun observe(memberId: String): Flow<List<app.myhealth.domain.model.VisitQuestion>>
+    suspend fun upsert(q: app.myhealth.domain.model.VisitQuestion)
+    suspend fun delete(id: String)
+}
+
+/** Encrypted images belonging to vaccinations and health cards. */
+interface MediaRepository {
+    fun observe(ownerId: String): Flow<List<app.myhealth.domain.model.Media>>
+    suspend fun add(media: app.myhealth.domain.model.Media, bytes: ByteArray)
+    suspend fun bytes(id: String): ByteArray?
+    suspend fun delete(id: String)
+    suspend fun deleteForOwner(ownerId: String)
+}

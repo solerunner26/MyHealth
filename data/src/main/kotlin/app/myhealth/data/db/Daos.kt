@@ -203,3 +203,65 @@ object MetaDao {
         else db.upsert(T, ContentValues().apply { put("key", key); put("value", value) }, "key = ?", arrayOf(key))
     }
 }
+
+object VaccinationDao {
+    const val T = "vaccinations"
+    fun forMember(db: SupportSQLiteDatabase, memberId: String) =
+        db.q("SELECT * FROM vaccinations WHERE member_id = ? ORDER BY COALESCE(given_date, due_date) DESC, name", memberId).mapAll { map() }
+    fun pending(db: SupportSQLiteDatabase) = db.q("SELECT * FROM vaccinations WHERE given_date IS NULL AND due_date IS NOT NULL").mapAll { map() }
+    fun upsert(db: SupportSQLiteDatabase, v: app.myhealth.domain.model.Vaccination) = db.upsert(T, ContentValues().apply {
+        put("id", v.id); put("member_id", v.memberId); put("name", v.name); put("dose", v.dose); put("given_date", v.givenDate?.iso()); put("due_date", v.dueDate?.iso())
+        put("provider", v.provider); put("notes", v.notes); put("created_at", v.createdAtEpochMs)
+    }, "id = ?", arrayOf(v.id))
+    fun delete(db: SupportSQLiteDatabase, id: String) = db.delete(T, "id = ?", arrayOf(id))
+    private fun Cursor.map() = app.myhealth.domain.model.Vaccination(
+        str("id"), str("member_id"), str("name"), str("dose"), strOrNull("given_date")?.date(), strOrNull("due_date")?.date(), str("provider"), str("notes"), lng("created_at"),
+    )
+}
+
+object HealthCardDao {
+    const val T = "health_cards"
+    fun forMember(db: SupportSQLiteDatabase, memberId: String) = db.q("SELECT * FROM health_cards WHERE member_id = ? ORDER BY created_at", memberId).mapAll {
+        app.myhealth.domain.model.HealthCard(str("id"), str("member_id"), enumOr(str("kind"), app.myhealth.domain.model.HealthCardKind.Other), str("title"), str("number"),
+            str("holder_name"), str("issuer"), strOrNull("valid_until")?.date(), str("notes"), lng("created_at"))
+    }
+    fun upsert(db: SupportSQLiteDatabase, c: app.myhealth.domain.model.HealthCard) = db.upsert(T, ContentValues().apply {
+        put("id", c.id); put("member_id", c.memberId); put("kind", c.kind.name); put("title", c.title); put("number", c.number); put("holder_name", c.holderName)
+        put("issuer", c.issuer); put("valid_until", c.validUntil?.iso()); put("notes", c.notes); put("created_at", c.createdAtEpochMs)
+    }, "id = ?", arrayOf(c.id))
+    fun delete(db: SupportSQLiteDatabase, id: String) = db.delete(T, "id = ?", arrayOf(id))
+}
+
+object FamilyHistoryDao {
+    const val T = "family_history"
+    fun all(db: SupportSQLiteDatabase) = db.q("SELECT * FROM family_history ORDER BY created_at").mapAll {
+        app.myhealth.domain.model.RelativeCondition(str("id"), str("relation"), str("condition"), lngOrNull("onset_age")?.toInt(), str("notes"), lng("created_at"))
+    }
+    fun upsert(db: SupportSQLiteDatabase, r: app.myhealth.domain.model.RelativeCondition) = db.upsert(T, ContentValues().apply {
+        put("id", r.id); put("relation", r.relation); put("condition", r.condition); put("onset_age", r.onsetAge); put("notes", r.notes); put("created_at", r.createdAtEpochMs)
+    }, "id = ?", arrayOf(r.id))
+    fun delete(db: SupportSQLiteDatabase, id: String) = db.delete(T, "id = ?", arrayOf(id))
+}
+
+object VisitQuestionDao {
+    const val T = "visit_questions"
+    fun forMember(db: SupportSQLiteDatabase, memberId: String) = db.q("SELECT * FROM visit_questions WHERE member_id = ? ORDER BY created_at", memberId).mapAll {
+        app.myhealth.domain.model.VisitQuestion(str("id"), str("member_id"), str("text"), bool("done"), lng("created_at"))
+    }
+    fun upsert(db: SupportSQLiteDatabase, q: app.myhealth.domain.model.VisitQuestion) = db.upsert(T, ContentValues().apply {
+        put("id", q.id); put("member_id", q.memberId); put("text", q.text); put("done", if (q.done) 1 else 0); put("created_at", q.createdAtEpochMs)
+    }, "id = ?", arrayOf(q.id))
+    fun delete(db: SupportSQLiteDatabase, id: String) = db.delete(T, "id = ?", arrayOf(id))
+}
+
+object MediaDao {
+    const val T = "media"
+    private fun Cursor.map() = app.myhealth.domain.model.Media(str("id"), str("member_id"), str("owner_id"), enumOr(str("kind"), app.myhealth.domain.model.MediaKind.CardFront), lng("created_at"))
+    fun forOwner(db: SupportSQLiteDatabase, ownerId: String) = db.q("SELECT * FROM media WHERE owner_id = ? ORDER BY created_at", ownerId).mapAll { map() }
+    fun forMember(db: SupportSQLiteDatabase, memberId: String) = db.q("SELECT * FROM media WHERE member_id = ?", memberId).mapAll { map() }
+    fun insert(db: SupportSQLiteDatabase, m: app.myhealth.domain.model.Media) = db.upsert(T, ContentValues().apply {
+        put("id", m.id); put("member_id", m.memberId); put("owner_id", m.ownerId); put("kind", m.kind.name); put("created_at", m.createdAtEpochMs)
+    }, "id = ?", arrayOf(m.id))
+    fun delete(db: SupportSQLiteDatabase, id: String) = db.delete(T, "id = ?", arrayOf(id))
+    fun deleteForOwner(db: SupportSQLiteDatabase, ownerId: String) = db.delete(T, "owner_id = ?", arrayOf(ownerId))
+}

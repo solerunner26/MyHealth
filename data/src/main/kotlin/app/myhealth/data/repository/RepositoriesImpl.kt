@@ -40,8 +40,9 @@ class MemberRepositoryImpl(private val db: MyHealthDatabase, private val vault: 
     override suspend fun upsert(member: FamilyMember) = db.write(setOf(MemberDao.T)) { MemberDao.upsert(it, member) }
     override suspend fun delete(id: String) {
         val files = db.read { ReportDao.attachmentIdsForMember(it, id) }
-        db.write(RECORD_TABLES + setOf(MemberDao.T, TreatmentDao.T, ActivityDao.T, MedicineDao.D)) { MemberDao.delete(it, id) }
-        files.forEach { runCatching { vault.delete(it) } }
+        val media = db.read { app.myhealth.data.db.MediaDao.forMember(it, id) }.map { MediaRepositoryImpl.vaultName(it.id) }
+        db.write(RECORD_TABLES + setOf(MemberDao.T, TreatmentDao.T, ActivityDao.T, MedicineDao.D) + V3_TABLES) { MemberDao.delete(it, id) }
+        (files + media).forEach { runCatching { vault.delete(it) } }
         runCatching { app.myhealth.data.PhotoStore(vault).delete(id) }
     }
 }
@@ -128,4 +129,59 @@ class ActivityRepositoryImpl(private val db: MyHealthDatabase) : ActivityReposit
     override suspend fun syncToken(memberId: String) = db.read { MetaDao.get(it, "hc.token.$memberId") }
     override suspend fun setSyncToken(memberId: String, token: String?) = db.write(setOf(MetaDao.T)) { MetaDao.set(it, "hc.token.$memberId", token) }
     override suspend fun clear(memberId: String) = db.write(setOf(ActivityDao.T, MetaDao.T)) { ActivityDao.clear(it, memberId); MetaDao.set(it, "hc.token.$memberId", null) }
+}
+
+private val V3_TABLES = setOf(app.myhealth.data.db.VaccinationDao.T, app.myhealth.data.db.HealthCardDao.T, app.myhealth.data.db.VisitQuestionDao.T, app.myhealth.data.db.MediaDao.T)
+
+class VaccinationRepositoryImpl(private val db: MyHealthDatabase) : app.myhealth.domain.repository.VaccinationRepository {
+    private val t = setOf(app.myhealth.data.db.VaccinationDao.T)
+    override fun observe(memberId: String) = db.observe(t) { app.myhealth.data.db.VaccinationDao.forMember(it, memberId) }
+    override suspend fun all(memberId: String) = db.read { app.myhealth.data.db.VaccinationDao.forMember(it, memberId) }
+    override suspend fun allMembersPending() = db.read { app.myhealth.data.db.VaccinationDao.pending(it) }
+    override suspend fun upsert(v: app.myhealth.domain.model.Vaccination) = db.write(t) { app.myhealth.data.db.VaccinationDao.upsert(it, v) }
+    override suspend fun upsertAll(list: List<app.myhealth.domain.model.Vaccination>) = db.write(t) { d -> list.forEach { app.myhealth.data.db.VaccinationDao.upsert(d, it) } }
+    override suspend fun delete(id: String) { db.write(t) { app.myhealth.data.db.VaccinationDao.delete(it, id) } }
+}
+
+class HealthCardRepositoryImpl(private val db: MyHealthDatabase) : app.myhealth.domain.repository.HealthCardRepository {
+    private val t = setOf(app.myhealth.data.db.HealthCardDao.T)
+    override fun observe(memberId: String) = db.observe(t) { app.myhealth.data.db.HealthCardDao.forMember(it, memberId) }
+    override suspend fun upsert(card: app.myhealth.domain.model.HealthCard) = db.write(t) { app.myhealth.data.db.HealthCardDao.upsert(it, card) }
+    override suspend fun delete(id: String) { db.write(t) { app.myhealth.data.db.HealthCardDao.delete(it, id) } }
+}
+
+class FamilyHistoryRepositoryImpl(private val db: MyHealthDatabase) : app.myhealth.domain.repository.FamilyHistoryRepository {
+    private val t = setOf(app.myhealth.data.db.FamilyHistoryDao.T)
+    override fun observe() = db.observe(t) { app.myhealth.data.db.FamilyHistoryDao.all(it) }
+    override suspend fun upsert(r: app.myhealth.domain.model.RelativeCondition) = db.write(t) { app.myhealth.data.db.FamilyHistoryDao.upsert(it, r) }
+    override suspend fun delete(id: String) { db.write(t) { app.myhealth.data.db.FamilyHistoryDao.delete(it, id) } }
+}
+
+class VisitQuestionRepositoryImpl(private val db: MyHealthDatabase) : app.myhealth.domain.repository.VisitQuestionRepository {
+    private val t = setOf(app.myhealth.data.db.VisitQuestionDao.T)
+    override fun observe(memberId: String) = db.observe(t) { app.myhealth.data.db.VisitQuestionDao.forMember(it, memberId) }
+    override suspend fun upsert(q: app.myhealth.domain.model.VisitQuestion) = db.write(t) { app.myhealth.data.db.VisitQuestionDao.upsert(it, q) }
+    override suspend fun delete(id: String) { db.write(t) { app.myhealth.data.db.VisitQuestionDao.delete(it, id) } }
+}
+
+/** Images for vaccinations and health cards: row in `media`, bytes AES-GCM encrypted in the vault as "media-<id>". */
+class MediaRepositoryImpl(private val db: MyHealthDatabase, private val vault: EncryptedVault) : app.myhealth.domain.repository.MediaRepository {
+    private val t = setOf(app.myhealth.data.db.MediaDao.T)
+    override fun observe(ownerId: String) = db.observe(t) { app.myhealth.data.db.MediaDao.forOwner(it, ownerId) }
+    override suspend fun add(media: app.myhealth.domain.model.Media, bytes: ByteArray) {
+        require(bytes.size <= MAX_BYTES) { "image too large" }
+        vault.put(vaultName(media.id), bytes)
+        try { db.write(t) { app.myhealth.data.db.MediaDao.insert(it, media) } } catch (e: Exception) { runCatching { vault.delete(vaultName(media.id)) }; throw e }
+    }
+    override suspend fun bytes(id: String): ByteArray? = runCatching { if (vault.exists(vaultName(id))) vault.get(vaultName(id)) else null }.getOrNull()
+    override suspend fun delete(id: String) { db.write(t) { app.myhealth.data.db.MediaDao.delete(it, id) }; runCatching { vault.delete(vaultName(id)) } }
+    override suspend fun deleteForOwner(ownerId: String) {
+        val ids = db.read { app.myhealth.data.db.MediaDao.forOwner(it, ownerId) }.map { it.id }
+        db.write(t) { app.myhealth.data.db.MediaDao.deleteForOwner(it, ownerId) }
+        ids.forEach { runCatching { vault.delete(vaultName(it)) } }
+    }
+    companion object {
+        const val MAX_BYTES = 4 * 1024 * 1024
+        fun vaultName(id: String): String { require(id.matches(Regex("[A-Za-z0-9-]{1,64}"))); return "media-$id" }
+    }
 }
