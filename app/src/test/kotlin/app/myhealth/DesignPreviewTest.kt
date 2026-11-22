@@ -61,6 +61,11 @@ class DesignPreviewTest {
             rule.onNodeWithText(ctx.getString(R.string.nav_more)).performClick(); waitTag("more")
             rule.onNodeWithTag("more").performScrollToNode(hasTestTag("openSettings")); rule.onNodeWithTag("openSettings").performClick(); waitTag("settings"); shot("${t}_${m}_settings")
             rule.activityRule.scenario.onActivity { it.onBackPressedDispatcher.onBackPressed() }
+            if (System.getProperty("extra") != null) for ((tag, screen) in listOf("openVaccines" to "vaccinations", "openCards" to "healthCards", "openFamilyHistory" to "familyHistory", "openVisitPrep" to "visitPrep")) {
+                waitTag("more"); rule.onNodeWithTag("more").performScrollToNode(hasTestTag(tag)); rule.onNodeWithTag(tag).performClick(); waitTag(screen)
+                if (screen == "vaccinations") { rule.onNodeWithTag("suggestVaccines").performClick(); rule.mainClock.advanceTimeBy(1500) }
+                shot("${t}_${m}_$screen"); rule.activityRule.scenario.onActivity { it.onBackPressedDispatcher.onBackPressed() }
+            }
         }
     }
 }

@@ -63,6 +63,7 @@ android {
             if (project.hasProperty("screenshots")) {
                 t.systemProperty("screenshots", "1")
                 t.systemProperty("screenshotDir", layout.buildDirectory.dir("screenshots").get().asFile.absolutePath)
+                if (project.hasProperty("extra")) t.systemProperty("extra", "1")
                 listOf("themes", "modes").forEach { k -> project.findProperty(k)?.let { v -> t.systemProperty(k, v.toString()) } }
             }
         }

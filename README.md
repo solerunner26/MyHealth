@@ -5,7 +5,8 @@ scans (PDF/JPG/PNG/WebP/HEIC); MyHealth reads them **on the phone**, lets you ch
 trends and an explainable "what should I focus on" list to discuss with your doctor. It is a record and a
 conversation starter, **never a diagnosis**.
 
-- **No network.** The app has no INTERNET permission, no account, no analytics and no crash-reporting SDK.
+- **No data leaves the phone.** No account, no analytics, no crash-reporting SDK. The only network use is the
+  optional update check against this repository's GitHub releases (HTTPS, nothing about you is sent).
 - **Encrypted at rest.** SQLCipher database and AES-GCM attachment vault, with keys wrapped by the Android Keystore.
   OS backup is disabled.
 - **Family members.** Every screen is scoped to the selected member.
@@ -13,6 +14,8 @@ conversation starter, **never a diagnosis**.
   shown by icon, label and fill weight, never by colour alone.
 - **Smart import.** The patient name on a report picks the family member; several files (e.g. a photographed hospital
   file) become one record; every value is reviewed before saving.
+- **Family tools.** Vaccinations with reminders, government/insurance health cards, a family history map, visit
+  preparation, automatic encrypted backups to a folder, and sharing one member with another phone (file + QR code).
 - **Trend alerts.** Values that keep rising or falling across visits are flagged early, with the readings as evidence.
 
 ## Build and test

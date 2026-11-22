@@ -139,3 +139,11 @@ property). It was fixed forward in `63e5952`. Since then every commit runs only 
 - Not verified here: every theme on a physical phone, launcher-icon switching on real launchers, HEIC decoding on
   devices without a HEIF codec, TalkBack with the new gauges.
 
+## 0.3.0: design system, family features, sharing, self-update (done)
+- Items 1–16 of the third feedback round: see D-035 … D-041.
+- Tests added: SplashAndThemeTest, FamilyFlowTest, FamilyDataTest, MemberShareTest (incl. crafted file), batch import,
+  share code/QR, backup pruning, updater selection and host allowlist, page detection (domain + photo), red labels.
+- Gate → exit 0.
+- Not verified here: real update install on a phone (needs a release signed with the permanent key), automatic backup
+  to a real USB/SD provider, QR scanning of a photo taken by a real camera, vaccine notifications on a device.
+

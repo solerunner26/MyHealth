@@ -14,6 +14,10 @@ object SecureErase {
             }
         }
         runCatching { context.getSystemService(NotificationManager::class.java)?.cancelAll() }
+        // automatic backups stop and their sealed password becomes unreadable (the Keystore key is deleted)
+        app.myhealth.core.AutoBackup.schedule(context, app.myhealth.core.AutoBackupFrequency.Off)
+        app.myhealth.core.AutoBackup.forget()
+        runCatching { java.io.File(context.cacheDir, "update").deleteRecursively() }
         Share.wipe(context)
         c.eraseEverything(onDone)
     }

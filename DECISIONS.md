@@ -315,3 +315,55 @@ Accepted risks: the PIN gates the UI only (data keys are Keystore-bound, not PIN
 reboot, see D-012); a rooted device or one unlocked by an attacker with adb is out of scope; shared copies are
 plaintext by nature and stay until the next app start.
 
+## D-035 Design skill, theme families, static icon (0.3.0)
+- `.claude/skills/android-design-studio/` is the owner's design skill (Glass UI and Solid UI families, learned from
+  their reference boards). Every visual decision follows it; mockups live in a Claude Design canvas.
+- Seven themes: Glass (Aurora, Crystal, Pulse) and Solid (Evergreen default, Apricot, Citrus, Iris). Each is one hue
+  plus neutrals; new roles `hero/onHero/heroAccent` give each screen one focal card. Older stored theme names map over.
+- The launcher-icon switching of 0.2.0 (activity-aliases) restarted the app on theme change: removed. The icon is a
+  single static heart-and-pulse mark; the in-app mark (splash, header) follows the theme and beats.
+- Backgrounds are never flat: drifting light, hue fading and a glare sweep (draw-phase only, off with reduced motion).
+  Tabs, pages, chips and the tab-bar indicator animate.
+- Splash on every cold start with an Enter button (before the PIN lock).
+
+## D-036 Red for values not in range (owner's rule)
+The single exception to one-hue: a fixed status red (`danger`, ≥ 4.5:1 on every theme) marks values outside the normal
+range: red High/Low pill, red-tinted tile with a breathing red edge, red count on reports. Not-in-range items sort first.
+Tiles are compact, three across; every core vital has a tile (a "Log" invitation when empty).
+
+## D-037 Import by test date
+Files picked together are parsed one by one and grouped by printed test date (and printed patient): same date → one
+report, different dates → separate reports, no date → its own report. An overview lets the user review each and
+save every ready report at once.
+
+## D-038 Vaccinations, health cards, family history, visit preparation (schema v3)
+New tables `vaccinations`, `health_cards`, `family_history` (relatives outside the app), `visit_questions`, `media`
+(encrypted images in the vault as `media-<id>`). All in backups, removed with the member (images too).
+- Suggested vaccine schedule from date of birth (India UIP for children, boosters for adults), labelled "confirm with
+  your doctor"; due reminders at 09:00 on the due date (private notification, rebuilt after boot).
+- Card and certificate photos are re-encoded (no metadata), ≤ 2000 px, stored encrypted.
+- Family history map groups spelling variants and marks conditions in 2+ people.
+- Visit preparation is built only when opened (Home, More, Doctor summary): changes since the last consultation,
+  previous values, alerts, medicine changes and the user's questions; shareable as text.
+
+## D-039 Automatic backups and member sharing
+- Automatic backups (WorkManager, daily/weekly, battery not low) write the normal password-encrypted `.myhealth`
+  file into a folder chosen with the system folder picker (SD card/USB/any provider) and keep the newest 5
+  `MyHealth-auto-*` files. The password is AES-GCM sealed under a non-exportable Keystore key; secure erase deletes it.
+- Share one member with another phone: an encrypted file (that member only; family-wide notes stay) plus a
+  25-character code shown as QR (ZXing core 3.5.3, Apache-2.0, offline) and text. Import replaces an earlier copy of
+  the same member and rejects any row that belongs to a different member.
+
+## D-040 Page detection for camera photos
+Pure-Kotlin detector (Otsu threshold → largest bright region → four extreme corners, convexity/size checks); null when
+not confident. The user can drag corners; `Matrix.setPolyToPoly` straightens the page. "Use full photo" keeps it.
+
+## D-041 Self-update from GitHub (network for the updater only)
+The owner asked for updates without manual reinstalling, which needs network. INTERNET is now declared and used ONLY
+by `Updater`: HTTPS to GitHub hosts (checked on every redirect), system CAs only (network security config), no data
+about the user is sent; can be turned off in Settings. A release publishes `update.json`; the APK must match its
+SHA-256, keep the package name, have a higher versionCode (CI: 100 + run number) and be signed with the same
+certificate as the installed app. PackageInstaller installs it; on Android 12+ no tap is needed after the one-time
+"install unknown apps" permission. **Requires a stable release key** (repository secrets); test builds signed with a
+one-off key are refused by the certificate check, so they still need a manual reinstall.
+
