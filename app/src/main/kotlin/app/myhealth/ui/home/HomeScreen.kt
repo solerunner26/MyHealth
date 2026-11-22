@@ -104,6 +104,7 @@ fun HomeContent(
     onOpenInsights: () -> Unit,
     onOpenVital: (app.myhealth.domain.model.VitalType) -> Unit = {},
     onAllTests: () -> Unit = {},
+    onVisitPrep: () -> Unit = {},
     header: @Composable () -> Unit = {},
 ) {
     val sp = MyHealthTheme.spacing
@@ -123,6 +124,14 @@ fun HomeContent(
     header()
     LazyColumn(Modifier.fillMaxSize().testTag("home"), contentPadding = PaddingValues(start = sp.gutter, end = sp.gutter, bottom = sp.xl), verticalArrangement = Arrangement.spacedBy(sp.md)) {
         item { ScoreCard(state.score, onOpenInsights) }
+        item {
+            Row(Modifier.fillMaxWidth().appear(1)) {
+                app.myhealth.core.designsystem.components.MyHealthQuickAction(MyHealthIcons.Import, stringResource(R.string.home_action_report), onAddDocument, Modifier.weight(1f).testTag("homeAdd"))
+                app.myhealth.core.designsystem.components.MyHealthQuickAction(MyHealthIcons.Vitals, stringResource(R.string.home_quick_vital), onLogVital, Modifier.weight(1f))
+                app.myhealth.core.designsystem.components.MyHealthQuickAction(MyHealthIcons.Medicines, stringResource(R.string.home_quick_medicine), onAddMedicine, Modifier.weight(1f))
+                app.myhealth.core.designsystem.components.MyHealthQuickAction(MyHealthIcons.Document, stringResource(R.string.home_action_visit), onVisitPrep, Modifier.weight(1f).testTag("homeVisitPrep"))
+            }
+        }
         if (state.vitals.isNotEmpty()) {
             item { MyHealthSectionHeader(stringResource(R.string.dash_vitals)) { MyHealthTextButton(stringResource(R.string.home_quick_vital), onLogVital, icon = MyHealthIcons.Add) } }
             items(state.vitals.chunked(2)) { pair ->
@@ -154,13 +163,6 @@ fun HomeContent(
             }
         }
         items(top, key = { it.key }) { f -> FocusCard(f, onClick = onOpenInsights, modifier = Modifier.appear(3)) }
-        item { MyHealthPrimaryButton(stringResource(R.string.home_add_document), onAddDocument, Modifier.fillMaxWidth().testTag("homeAdd"), icon = MyHealthIcons.Import) }
-        item {
-            Row(horizontalArrangement = Arrangement.spacedBy(sp.sm)) {
-                MyHealthSecondaryButton(stringResource(R.string.home_quick_vital), onLogVital, Modifier.weight(1f), icon = MyHealthIcons.Vitals)
-                MyHealthSecondaryButton(stringResource(R.string.home_quick_medicine), onAddMedicine, Modifier.weight(1f), icon = MyHealthIcons.Medicines)
-            }
-        }
         item { MyHealthDisclaimer(stringResource(R.string.disclaimer_short)) }
     }
     }
@@ -173,7 +175,7 @@ private fun ScoreCard(score: HealthScore?, onHow: () -> Unit) {
     val coverage = (s.coverage * 100).toInt()
     val caption = if (value == null) stringResource(R.string.home_score_none) else stringResource(R.string.home_score_caption)
     val coverageText = stringResource(R.string.home_score_coverage, coverage)
-    MyHealthCard(Modifier.testTag("scoreCard").appear(0), onClick = onHow, emphasis = app.myhealth.core.designsystem.components.Emphasis.Medium) {
+    MyHealthCard(Modifier.testTag("scoreCard").appear(0), onClick = onHow, emphasis = app.myhealth.core.designsystem.components.Emphasis.Strong) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Box(Modifier.size(112.dp), contentAlignment = Alignment.Center) {
                 app.myhealth.core.designsystem.components.RingGauge((value ?: 0) / 100f, diameter = 112.dp)

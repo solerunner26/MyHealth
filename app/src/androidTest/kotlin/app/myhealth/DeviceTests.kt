@@ -22,7 +22,7 @@ class DeviceTests {
     private val ctx get() = InstrumentationRegistry.getInstrumentation().targetContext
 
     @Test fun coldStartReachesOnboardingOrShell() {
-        rule.waitUntil(20_000) { rule.onAllNodes(hasTestTag("welcome")).fetchSemanticsNodes().isNotEmpty() || rule.onAllNodes(hasTestTag("shell")).fetchSemanticsNodes().isNotEmpty() }
+        rule.waitUntil(20_000) { rule.onAllNodes(hasTestTag("splash")).fetchSemanticsNodes().isNotEmpty() || rule.onAllNodes(hasTestTag("welcome")).fetchSemanticsNodes().isNotEmpty() || rule.onAllNodes(hasTestTag("shell")).fetchSemanticsNodes().isNotEmpty() }
     }
 
     @Test fun summaryPdfRendersHindiAndGujarati() {

@@ -37,34 +37,29 @@ import androidx.compose.ui.unit.sp
 import app.myhealth.core.designsystem.theme.MyHealthTheme
 
 /**
- * Frosted-glass card: translucent gradient over the ambient background, hairline edge in the accent's tint, large
- * radius. Emphasis raises the edge weight and adds an accent glow (fill weight carries meaning, not colour alone).
+ * The app's card, in the theme family's material (see [material]). Emphasis picks the material: Subtle = card,
+ * Medium = soft tinted container with an accent edge, Strong = hero. [alert] adds the breathing glow rim used for
+ * out-of-range values. Content on hero material automatically uses the hero's text colours.
  */
 @Composable
 fun MyHealthCard(
     modifier: Modifier = Modifier,
     onClick: (() -> Unit)? = null,
     emphasis: Emphasis = Emphasis.Subtle,
+    alert: Boolean = false,
     content: @Composable ColumnScope.() -> Unit,
 ) {
-    val c = MyHealthTheme.colors
     val shape = MyHealthTheme.radii.lgShape
-    val fill = when (emphasis) {
-        Emphasis.Subtle -> androidx.compose.ui.graphics.Brush.verticalGradient(listOf(c.glassTop, c.glassBottom))
-        Emphasis.Medium -> androidx.compose.ui.graphics.Brush.verticalGradient(listOf(c.glassTop, c.accentSoft.copy(alpha = 0.92f)))
-        Emphasis.Strong -> androidx.compose.ui.graphics.Brush.verticalGradient(listOf(c.accentContainer, c.accentSoft))
+    val kind = when {
+        alert -> SurfaceKind.Alert
+        emphasis == Emphasis.Strong -> SurfaceKind.Hero
+        emphasis == Emphasis.Medium -> SurfaceKind.Soft
+        else -> SurfaceKind.Card
     }
-    val border = when (emphasis) {
-        Emphasis.Subtle -> BorderStroke(MyHealthTheme.stroke.hairline, c.glassBorder)
-        Emphasis.Medium -> BorderStroke(MyHealthTheme.stroke.regular, c.accent.copy(alpha = 0.75f))
-        Emphasis.Strong -> BorderStroke(MyHealthTheme.stroke.strong, c.accent)
-    }
-    val glowElevation = when (emphasis) { Emphasis.Subtle -> 0.dp; Emphasis.Medium -> 10.dp; Emphasis.Strong -> 18.dp }
-    val base = modifier.fillMaxWidth()
-        .shadow(glowElevation, shape, ambientColor = c.glow, spotColor = c.glow)
-        .clip(shape).background(fill).border(border, shape)
+    val base = modifier.fillMaxWidth().material(kind, shape).clip(shape)
     val clickable = if (onClick != null) base.clickable(role = Role.Button, onClick = onClick) else base
-    Column(clickable.padding(MyHealthTheme.spacing.lg), content = content)
+    if (kind == SurfaceKind.Hero || kind == SurfaceKind.Alert) ProvideHeroColors { Column(clickable.padding(MyHealthTheme.spacing.lg), content = content) }
+    else Column(clickable.padding(MyHealthTheme.spacing.lg), content = content)
 }
 
 @Composable
@@ -183,8 +178,8 @@ fun MyHealthMetricTile(
 fun MyHealthInfoBanner(text: String, modifier: Modifier = Modifier, icon: ImageVector = MyHealthIcons.Info) {
     val c = MyHealthTheme.colors
     Row(
-        modifier.fillMaxWidth().clip(MyHealthTheme.radii.mdShape).background(c.accentSoft.copy(alpha = 0.85f))
-            .border(MyHealthTheme.stroke.hairline, c.glassBorder, MyHealthTheme.radii.mdShape)
+        modifier.fillMaxWidth().clip(MyHealthTheme.radii.mdShape).background(c.accentSoft.copy(alpha = if (c.isGlass) 0.85f else 1f))
+            .then(if (c.isGlass) Modifier.border(MyHealthTheme.stroke.hairline, c.glassBorder, MyHealthTheme.radii.mdShape) else Modifier)
             .padding(MyHealthTheme.spacing.md),
         verticalAlignment = Alignment.Top,
     ) {

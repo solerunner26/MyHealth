@@ -12,6 +12,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
+import androidx.compose.animation.togetherWith
 import androidx.compose.runtime.remember
 import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -47,12 +49,18 @@ class MainActivity : FragmentActivity() {
             // Tapjacking: while the PIN pad is up, ignore touches that pass through another app's overlay.
             LaunchedEffect(locked) { window.decorView.filterTouchesWhenObscured = locked }
             val saved = androidx.compose.runtime.saveable.rememberSaveableStateHolder()
+            var entered by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(c.splashDone || !(application as MyHealthApplication).showSplash) }
             MyHealthTheme(prefs.theme, prefs.colorTheme) {
                 app.myhealth.core.designsystem.components.MyHealthAmbientBackground {
                 // While locked the app's screens are not composed at all: nothing is drawn, nothing reaches
                 // accessibility services, and no dialog or popup window (which would float above an overlay) can
                 // stay open. Navigation and unsaved input come back on unlock from the saveable state holder.
-                Box(Modifier.fillMaxSize()) {
+                androidx.compose.animation.AnimatedContent(entered, transitionSpec = {
+                    androidx.compose.animation.fadeIn(androidx.compose.animation.core.tween(500)) togetherWith
+                        androidx.compose.animation.fadeOut(androidx.compose.animation.core.tween(300)) + androidx.compose.animation.scaleOut(targetScale = 1.06f)
+                }, label = ENTRY) { inApp ->
+                if (!inApp) app.myhealth.ui.startup.SplashScreen { c.splashDone = true; entered = true }
+                else Box(Modifier.fillMaxSize()) {
                     Box(Modifier.fillMaxSize().then(if (locked) Modifier.clearAndSetSemantics { } else Modifier)) {
                         StorageGate(storage, onRetry = c::retry, onErase = { SecureErase.run(this@MainActivity) }) { stack ->
                             val session = remember(stack) { Session(c, stack) }
@@ -64,11 +72,13 @@ class MainActivity : FragmentActivity() {
                     if (locked) LockScreen(c.lock, prefs.biometricEnabled, onForgot = { SecureErase.run(this@MainActivity) })
                 }
                 }
+                }
             }
         }
     }
 
-    private companion object { const val APP_STATE = "app" }
+    private companion object { const val APP_STATE = "app"; const val ENTRY = "entry" // animation inspector id, not UI copy
+    }
 
     override fun onStart() { super.onStart(); runCatching { container.lock.onForeground() } }
 

@@ -17,7 +17,7 @@ class Preferences(context: Context) {
 
     data class Snapshot(
         val theme: ThemeMode = ThemeMode.System,
-        val colorTheme: MyHealthThemeId = MyHealthThemeId.Aurora,
+        val colorTheme: MyHealthThemeId = MyHealthThemeId.Default,
         val language: String = "", // "" = follow system
         val lockEnabled: Boolean = false,
         val biometricEnabled: Boolean = false,
@@ -33,7 +33,7 @@ class Preferences(context: Context) {
 
     private fun read() = Snapshot(
         theme = runCatching { ThemeMode.valueOf(prefs.getString("theme", ThemeMode.System.name)!!) }.getOrDefault(ThemeMode.System),
-        colorTheme = runCatching { MyHealthThemeId.valueOf(prefs.getString("color_theme", MyHealthThemeId.Aurora.name)!!) }.getOrDefault(MyHealthThemeId.Aurora),
+        colorTheme = MyHealthThemeId.parse(prefs.getString("color_theme", null)),
         language = prefs.getString("language", "") ?: "",
         lockEnabled = prefs.getBoolean("lock", false),
         biometricEnabled = prefs.getBoolean("biometric", false),

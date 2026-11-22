@@ -1,6 +1,18 @@
 package app.myhealth.ui.nav
 
 import android.widget.Toast
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.togetherWith
+import app.myhealth.core.designsystem.theme.MyHealthTheme
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
@@ -53,6 +65,8 @@ import app.myhealth.ui.trends.TrendDetailViewModel
 import app.myhealth.ui.trends.TrendsContent
 import app.myhealth.ui.trends.TrendsViewModel
 import kotlinx.coroutines.launch
+
+private const val TABS = "tabs" // animation inspector id, not UI copy
 
 object Routes {
     const val MAIN = "main"
@@ -118,7 +132,16 @@ fun AppNavGraph(nav: NavHostController) {
     val scope = rememberCoroutineScope()
     val chooser = stringResource(R.string.share_chooser)
     val exportFailed = stringResource(R.string.export_failed)
-    NavHost(nav, startDestination = Routes.MAIN) {
+    // Shared-axis page motion: a pushed screen fades in while rising 6 %, the old one fades back; reversed on pop.
+    val reduce = MyHealthTheme.reduceMotion
+    val enterMs = if (reduce) 0 else 360; val exitMs = if (reduce) 0 else 220
+    val easing = MyHealthTheme.motion.emphasized
+    NavHost(nav, startDestination = Routes.MAIN,
+        enterTransition = { fadeIn(tween(enterMs, easing = easing)) + slideInVertically(tween(enterMs, easing = easing)) { it / 16 } },
+        exitTransition = { fadeOut(tween(exitMs)) + scaleOut(tween(exitMs), targetScale = 0.97f) },
+        popEnterTransition = { fadeIn(tween(enterMs, easing = easing)) + scaleIn(tween(enterMs, easing = easing), initialScale = 0.97f) },
+        popExitTransition = { fadeOut(tween(exitMs)) + slideOutVertically(tween(exitMs)) { it / 16 } },
+    ) {
         composable(Routes.MAIN) {
             MainTabs(nav)
         }
@@ -198,6 +221,8 @@ fun AppNavGraph(nav: NavHostController) {
 
 @Composable
 private fun MainTabs(nav: NavHostController) {
+    val reduce = MyHealthTheme.reduceMotion
+    val easing = MyHealthTheme.motion.emphasized
     val session = LocalSession.current
     var tab by rememberSaveable { mutableStateOf(TopLevel.Home) }
     val members by session.members.collectAsStateWithLifecycle()
@@ -210,12 +235,19 @@ private fun MainTabs(nav: NavHostController) {
                 MemberSwitcher(members.orEmpty(), active, session::select, onAdd = { nav.navigate(Routes.MEMBER_NEW) }, onEdit = { nav.navigate(Routes.memberEdit(it)) })
             }
             if (picker) active?.let { a -> app.myhealth.ui.shell.MemberPickerDialog(members.orEmpty(), a, session::select, { nav.navigate(Routes.MEMBER_NEW) }, { nav.navigate(Routes.memberEdit(it)) }) { picker = false } }
-            when (tab) {
+            AnimatedContent(tab, transitionSpec = {
+                // Tabs slide toward the side of the tapped tab and cross-fade.
+                val dir = if (targetState.ordinal > initialState.ordinal) 1 else -1
+                if (reduce) (fadeIn(tween(0)) togetherWith fadeOut(tween(0)))
+                else (fadeIn(tween(300, easing = easing)) + slideInHorizontally(tween(300, easing = easing)) { dir * it / 10 }) togetherWith
+                    (fadeOut(tween(160)) + slideOutHorizontally(tween(200)) { -dir * it / 14 })
+            }, label = TABS) { current ->
+            when (current) {
                 TopLevel.Home -> {
                     val vm = rememberVm { HomeViewModel(session) }
                     val state by vm.state.collectAsStateWithLifecycle()
                     val photo = app.myhealth.ui.member.rememberMemberPhoto(active)
-                    HomeContent(state, onAddDocument = onImport, onLogVital = { nav.navigate(Routes.vitalNew()) }, onAddMedicine = { nav.navigate(Routes.MEDICINE_NEW) },
+                    HomeContent(state, onAddDocument = onImport, onVisitPrep = { nav.navigate(Routes.SUMMARY) }, onLogVital = { nav.navigate(Routes.vitalNew()) }, onAddMedicine = { nav.navigate(Routes.MEDICINE_NEW) },
                         onOpenTrend = { nav.navigate(Routes.trend(it)) }, onOpenInsights = { nav.navigate(Routes.INSIGHTS) },
                         onOpenVital = { nav.navigate(Routes.vital(it.name)) }, onAllTests = { tab = TopLevel.Records },
                         header = { active?.let { a -> app.myhealth.ui.home.DashboardHeader(a, photo, members.orEmpty(), session::select) { picker = true } } })
@@ -245,6 +277,7 @@ private fun MainTabs(nav: NavHostController) {
                     editMember = { nav.navigate(Routes.memberEdit(it)) }, addMember = { nav.navigate(Routes.MEMBER_NEW) }, summary = { nav.navigate(Routes.SUMMARY) },
                     settings = { nav.navigate(Routes.SETTINGS) }, backup = { nav.navigate(Routes.BACKUP) }, healthConnect = { nav.navigate(Routes.HEALTH_CONNECT) },
                 ))
+            }
             }
         }
     }

@@ -1,17 +1,28 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="settings_color_theme">रंग थीम</string>
-    <string name="settings_color_theme_note">होम स्क्रीन पर ऐप का आइकन भी उसी हिसाब से बदलता है। कुछ लॉन्चर में इसमें थोड़ा समय लगता है।</string>
+    <string name="settings_color_theme_note">हर थीम में एक ही रंग और शांत न्यूट्रल रंग हैं। ग्लास थीम में चलती रोशनी पर धुंधले काँच के पैनल हैं; सॉलिड थीम गर्म काग़ज़ जैसी सतह पर हैं।</string>
+    <string name="theme_family_glass">ग्लास</string>
+    <string name="theme_family_solid">सॉलिड</string>
     <string name="theme_aurora">ऑरोरा</string>
-    <string name="theme_aurora_desc">गहरे रात के आसमान पर चमकती पुदीना रोशनी</string>
+    <string name="theme_aurora_desc">रात के आसमान पर धुंधले काँच से छनती फ़िरोज़ी रोशनी</string>
     <string name="theme_crystal">क्रिस्टल</string>
-    <string name="theme_crystal_desc">हल्की चमक वाला धुंधला बैंगनी काँच</string>
-    <string name="theme_botanical">बॉटनिकल</string>
-    <string name="theme_botanical_desc">गर्म काग़ज़ पर शांत हरी पत्तियाँ</string>
-    <string name="theme_precision">प्रिसिज़न</string>
-    <string name="theme_precision_desc">लैब उपकरण जैसा साफ़ बिजली-नीला</string>
+    <string name="theme_crystal_desc">साफ़ नीला काँच, सटीक और ठंडा</string>
     <string name="theme_pulse">पल्स</string>
-    <string name="theme_pulse_desc">हल्की चमक के साथ नियॉन धड़कन गुलाबी</string>
+    <string name="theme_pulse_desc">काँच के पीछे चमकती मैजेंटा धड़कन</string>
+    <string name="theme_evergreen">एवरग्रीन</string>
+    <string name="theme_evergreen_desc">गर्म क्रीम काग़ज़ पर गहरा जंगली हरा</string>
+    <string name="theme_apricot">खुबानी</string>
+    <string name="theme_apricot_desc">मुलायम क्रीम पर गर्म खुबानी रंग, हल्का और अपनापन भरा</string>
+    <string name="theme_citrus">सिट्रस</string>
+    <string name="theme_citrus_desc">लाइम और स्याही, बोल्ड और डिजिटल</string>
+    <string name="theme_iris">आइरिस</string>
+    <string name="theme_iris_desc">लैवेंडर सफ़ेद पर शांत बैंगनी</string>
     <string name="theme_selected">%1$s थीम, चुनी हुई</string>
     <string name="logo_cd">MyHealth लोगो</string>
+    <string name="splash_title">आपके परिवार की सेहत,</string>
+    <string name="splash_title_accent">एक शांत जगह पर</string>
+    <string name="splash_body">रिपोर्ट, वाइटल्स और दवाइयाँ, आपके फ़ोन पर पढ़ी और एन्क्रिप्ट करके रखी जाती हैं। कुछ भी डिवाइस से बाहर नहीं जाता।</string>
+    <string name="splash_enter">MyHealth खोलें</string>
+    <string name="splash_footer">निजी · ऑफ़लाइन · English · हिन्दी · ગુજરાતી</string>
 </resources>

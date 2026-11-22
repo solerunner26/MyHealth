@@ -10,9 +10,11 @@ import java.io.File
 class TestApp : MyHealthApplication() {
     override fun createStorageOpener(): StorageOpener =
         StorageOpener(this, StoragePaths(File(noBackupFilesDir, "secure")), TestHooks.wrapper) { FrameworkSQLiteOpenHelperFactory() }
+    override val showSplash: Boolean get() = TestHooks.splash
 }
 
 object TestHooks {
     var wrapper = SoftwareKeyWrapper()
+    var splash = false
     fun reset() { wrapper = SoftwareKeyWrapper() }
 }

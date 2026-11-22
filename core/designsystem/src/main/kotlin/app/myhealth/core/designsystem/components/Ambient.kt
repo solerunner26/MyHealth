@@ -22,39 +22,66 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.lerp
+import androidx.compose.ui.graphics.drawscope.rotate
 import app.myhealth.core.designsystem.theme.MyHealthTheme
 import kotlin.math.cos
 import kotlin.math.sin
 
 /**
- * Calm animated backdrop: two or three very soft glows of the theme's accent drift slowly behind the content
- * (an "aurora"). Purely decorative, never behind text without a glass card in between, and static when the user
- * disabled animations.
+ * Living backdrop, never a flat colour (android-design-studio: "backgrounds are never flat").
+ * - Glass: three large blobs of the hue drift slowly, their tint fading between the accent, its bright step and the
+ *   hero shade; a faint diagonal glare sweeps across every ~16 s.
+ * - Solid: a warm canvas with a soft header wash that drifts and breathes, a second wash low on the page, and the
+ *   same glare sweep, much fainter.
+ * Drawing reads the animation values in the draw phase only (no recomposition per frame). Static when the user
+ * turned animations off.
  */
 @Composable
 fun MyHealthAmbientBackground(modifier: Modifier = Modifier, content: @Composable BoxScope.() -> Unit) {
     val c = MyHealthTheme.colors
     val reduce = MyHealthTheme.reduceMotion
-    val t = if (reduce) 0.25f else {
-        val tr = rememberInfiniteTransition(label = AMBIENT)
-        tr.animateFloat(0f, 1f, infiniteRepeatable(tween(MyHealthTheme.motion.ambientMillis, easing = LinearEasing), RepeatMode.Reverse), label = AMBIENT).value
-    }
+    val tr = if (reduce) null else rememberInfiniteTransition(label = AMBIENT)
+    val drift = tr?.animateFloat(0f, 1f, infiniteRepeatable(tween(MyHealthTheme.motion.ambientMillis, easing = LinearEasing), RepeatMode.Reverse), label = AMBIENT)
+    val hue = tr?.animateFloat(0f, 1f, infiniteRepeatable(tween(MyHealthTheme.motion.ambientMillis * 4 / 3, easing = LinearEasing), RepeatMode.Reverse), label = AMBIENT)
+    val glare = tr?.animateFloat(0f, 1f, infiniteRepeatable(tween(GLARE_MILLIS, easing = LinearEasing), RepeatMode.Restart), label = AMBIENT)
     Box(modifier.fillMaxSize().background(Brush.verticalGradient(listOf(c.background, c.backgroundAlt)))) {
         Canvas(Modifier.fillMaxSize()) {
             val w = size.width; val h = size.height
+            val t = drift?.value ?: 0.25f
+            val k = hue?.value ?: 0.3f
             val a = t * 2 * Math.PI.toFloat()
-            fun glow(cx: Float, cy: Float, r: Float, alpha: Float) = drawCircle(
-                Brush.radialGradient(listOf(c.glow.copy(alpha = c.glow.alpha * alpha), Color.Transparent), center = Offset(cx, cy), radius = r),
-                radius = r, center = Offset(cx, cy),
+            fun glow(cx: Float, cy: Float, r: Float, color: Color) = drawCircle(
+                Brush.radialGradient(listOf(color, Color.Transparent), center = Offset(cx, cy), radius = r), radius = r, center = Offset(cx, cy),
             )
-            glow(w * (0.15f + 0.10f * sin(a)), h * (0.10f + 0.05f * cos(a)), w * 0.85f, 0.9f)
-            glow(w * (0.95f - 0.12f * cos(a)), h * (0.42f + 0.08f * sin(a * 0.7f)), w * 0.70f, 0.55f)
-            glow(w * (0.35f + 0.15f * cos(a * 0.6f)), h * (0.95f - 0.05f * sin(a)), w * 0.9f, 0.45f)
+            if (c.isGlass) {
+                val base = c.glow.alpha
+                glow(w * (0.15f + 0.12f * sin(a)), h * (0.10f + 0.06f * cos(a)), w * 0.9f, lerp(c.accent, c.accentBright, k).copy(alpha = base * 0.95f))
+                glow(w * (0.95f - 0.14f * cos(a)), h * (0.45f + 0.10f * sin(a * 0.7f)), w * 0.75f, lerp(c.hero, c.accent, 1f - k).copy(alpha = base * 0.85f))
+                glow(w * (0.30f + 0.18f * cos(a * 0.6f)), h * (0.98f - 0.06f * sin(a)), w * 0.95f, lerp(c.accentBright, c.hero, k).copy(alpha = base * 0.6f))
+            } else {
+                val wash = if (c.isDark) 0.22f else 0.55f
+                glow(w * (0.10f + 0.20f * sin(a)), h * (0.02f + 0.04f * cos(a)), w * 1.05f, lerp(c.accentSoft, c.heroAccent, 0.25f + 0.25f * k).copy(alpha = wash))
+                glow(w * (1.0f - 0.15f * cos(a)), h * (0.80f + 0.06f * sin(a)), w * 0.7f, lerp(c.accentSoft, c.accentContainer, k).copy(alpha = wash * 0.6f))
+            }
+            // Glare: a wide soft diagonal band crossing during the first 40 % of each cycle.
+            val g = glare?.value ?: 1f
+            if (g < 0.4f) {
+                val x = -w * 0.6f + (g / 0.4f) * w * 2.2f
+                val band = w * 0.45f
+                val alpha = if (c.isGlass) 0.06f else if (c.isDark) 0.04f else 0.35f
+                val tint = if (c.isGlass || c.isDark) Color.White else c.surfaceRaised
+                rotate(20f, pivot = Offset(x, h / 2)) {
+                    drawRect(Brush.horizontalGradient(listOf(Color.Transparent, tint.copy(alpha = alpha), Color.Transparent), startX = x - band / 2, endX = x + band / 2),
+                        topLeft = Offset(x - band / 2, -h), size = androidx.compose.ui.geometry.Size(band, h * 3))
+                }
+            }
         }
         content()
     }
 }
 
+private const val GLARE_MILLIS = 16_000
 private const val AMBIENT = "ambient" // animation inspector id, not UI copy
 private const val APPEAR = "appear" // animation inspector id, not UI copy
 

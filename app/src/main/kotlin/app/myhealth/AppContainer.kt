@@ -35,6 +35,8 @@ class AppContainer(
 ) {
     val appScope = CoroutineScope(SupervisorJob() + Dispatchers.Default + Safe.handler)
     val preferences = Preferences(context)
+    /** True once the user tapped "Enter" on this app start's splash (process lifetime, not persisted). */
+    var splashDone = false
     val lock = app.myhealth.core.AppLock(preferences, app.myhealth.core.AndroidMonotonic(context))
     val reminders by lazy { app.myhealth.reminders.ReminderScheduler(context, clock) }
 

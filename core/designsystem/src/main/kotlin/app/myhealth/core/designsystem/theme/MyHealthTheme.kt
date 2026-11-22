@@ -23,7 +23,7 @@ import app.myhealth.core.designsystem.tokens.toColors
 
 enum class ThemeMode { System, Light, Dark }
 
-val LocalMyHealthColors = staticCompositionLocalOf { MyHealthColorRoles.roles(MyHealthThemeId.Aurora, false).toColors(false, MyHealthThemeId.Aurora) }
+val LocalMyHealthColors = staticCompositionLocalOf { MyHealthColorRoles.roles(MyHealthThemeId.Default, false).toColors(false, MyHealthThemeId.Default) }
 
 /** True when the user turned animations off in system settings: decorative motion stops. */
 val LocalReduceMotion = staticCompositionLocalOf { false }
@@ -47,13 +47,13 @@ object MyHealthTheme {
 }
 
 @Composable
-fun MyHealthTheme(mode: ThemeMode = ThemeMode.System, theme: MyHealthThemeId = MyHealthThemeId.Aurora, content: @Composable () -> Unit) {
+fun MyHealthTheme(mode: ThemeMode = ThemeMode.System, theme: MyHealthThemeId = MyHealthThemeId.Default, content: @Composable () -> Unit) {
     val dark = when (mode) {
         ThemeMode.System -> isSystemInDarkTheme()
         ThemeMode.Light -> false
         ThemeMode.Dark -> true
     }
-    val colors = MyHealthColorRoles.roles(theme, dark).toColors(dark, theme)
+    val colors = androidx.compose.runtime.remember(theme, dark) { MyHealthColorRoles.roles(theme, dark).toColors(dark, theme) }
     val ctx = androidx.compose.ui.platform.LocalContext.current
     val reduceMotion = androidx.compose.runtime.remember(ctx) {
         runCatching { android.provider.Settings.Global.getFloat(ctx.contentResolver, android.provider.Settings.Global.ANIMATOR_DURATION_SCALE, 1f) == 0f }.getOrDefault(false)

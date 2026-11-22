@@ -1,17 +1,28 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="settings_color_theme">રંગ થીમ</string>
-    <string name="settings_color_theme_note">હોમ સ્ક્રીન પર એપનો આઇકન પણ તે મુજબ બદલાય છે. કેટલાક લૉન્ચરમાં તેમાં થોડો સમય લાગે છે.</string>
+    <string name="settings_color_theme_note">દરેક થીમમાં એક જ રંગ અને શાંત ન્યુટ્રલ રંગો છે. ગ્લાસ થીમમાં ચાલતા પ્રકાશ પર ધૂંધળા કાચની પેનલ છે; સોલિડ થીમ ગરમ કાગળ જેવી સપાટી પર છે.</string>
+    <string name="theme_family_glass">ગ્લાસ</string>
+    <string name="theme_family_solid">સોલિડ</string>
     <string name="theme_aurora">ઓરોરા</string>
-    <string name="theme_aurora_desc">ઘેરા રાત્રિ આકાશ પર ચમકતો ફુદીના રંગનો પ્રકાશ</string>
+    <string name="theme_aurora_desc">રાતના આકાશ પર ધૂંધળા કાચમાંથી આવતો ફિરોઝી પ્રકાશ</string>
     <string name="theme_crystal">ક્રિસ્ટલ</string>
-    <string name="theme_crystal_desc">હળવી ચમકવાળો ધૂંધળો જાંબલી કાચ</string>
-    <string name="theme_botanical">બોટનિકલ</string>
-    <string name="theme_botanical_desc">ગરમ કાગળ પર શાંત લીલાં પાન</string>
-    <string name="theme_precision">પ્રિસિઝન</string>
-    <string name="theme_precision_desc">લેબ સાધન જેવો સ્પષ્ટ વીજળી-વાદળી</string>
+    <string name="theme_crystal_desc">સ્વચ્છ વાદળી કાચ, ચોક્કસ અને ઠંડો</string>
     <string name="theme_pulse">પલ્સ</string>
-    <string name="theme_pulse_desc">હળવી ચમક સાથે નિયોન ધબકાર ગુલાબી</string>
-    <string name="theme_selected">%1$s થીમ, પસંદ કરેલી</string>
+    <string name="theme_pulse_desc">કાચની પાછળ ચમકતા મજેન્ટા ધબકારા</string>
+    <string name="theme_evergreen">એવરગ્રીન</string>
+    <string name="theme_evergreen_desc">ગરમ ક્રીમ કાગળ પર ઘેરો જંગલી લીલો</string>
+    <string name="theme_apricot">જરદાળુ</string>
+    <string name="theme_apricot_desc">નરમ ક્રીમ પર ગરમ જરદાળુ રંગ, હળવો અને આત્મીય</string>
+    <string name="theme_citrus">સાઇટ્રસ</string>
+    <string name="theme_citrus_desc">લાઇમ અને શાહી, બોલ્ડ અને ડિજિટલ</string>
+    <string name="theme_iris">આઇરિસ</string>
+    <string name="theme_iris_desc">લવંડર સફેદ પર શાંત જાંબલી</string>
+    <string name="theme_selected">%1$s થીમ, પસંદ કરેલ</string>
     <string name="logo_cd">MyHealth લોગો</string>
+    <string name="splash_title">તમારા પરિવારનું આરોગ્ય,</string>
+    <string name="splash_title_accent">એક શાંત જગ્યાએ</string>
+    <string name="splash_body">રિપોર્ટ, વાઇટલ્સ અને દવાઓ, તમારા ફોન પર વાંચીને એન્ક્રિપ્ટ કરીને રાખવામાં આવે છે. કંઈ પણ ડિવાઇસની બહાર જતું નથી.</string>
+    <string name="splash_enter">MyHealth ખોલો</string>
+    <string name="splash_footer">ખાનગી · ઓફલાઇન · English · हिन्दी · ગુજરાતી</string>
 </resources>

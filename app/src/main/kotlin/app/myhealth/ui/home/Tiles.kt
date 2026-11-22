@@ -87,8 +87,14 @@ fun GaugeTile(
 ) {
     val c = MyHealthTheme.colors
     val cd = stringResource(R.string.dash_tile_cd, title, listOf(value, unit).filter { it.isNotBlank() }.joinToString(" "), status?.first ?: "", footer)
+    // Out of range = a different MATERIAL (hero fill + breathing glow rim), slightly off = tinted container with an
+    // accent edge, in range = the plain card. Checked in greyscale too: material, icon and label all change.
+    val k = status?.second
+    val outOfRange = k == StatusKind.Low || k == StatusKind.High || k == StatusKind.Critical
+    val slightly = k == StatusKind.Attention || k == StatusKind.Worsening
     MyHealthCard(modifier.fillMaxHeight().appear(index).semantics(mergeDescendants = true) { contentDescription = cd }, onClick = onClick,
-        emphasis = if (status?.second == StatusKind.Critical) Emphasis.Medium else Emphasis.Subtle) {
+        emphasis = if (slightly) Emphasis.Medium else Emphasis.Subtle, alert = outOfRange) {
+        val c = MyHealthTheme.colors
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text(title.uppercase(), style = MyHealthTheme.typography.overline, color = c.textSecondary, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
             if (status != null) Icon(status.second.icon, null, tint = c.accent, modifier = Modifier.size(18.dp))
@@ -100,7 +106,7 @@ fun GaugeTile(
                 autoSize = TextAutoSize.StepBased(minFontSize = 16.sp, maxFontSize = MyHealthTheme.typography.metric.fontSize), modifier = Modifier.weight(1f, fill = false))
             if (unit.isNotBlank()) Text(unit, style = MyHealthTheme.typography.caption, color = c.textSecondary, maxLines = 1, modifier = Modifier.padding(start = 4.dp, bottom = 4.dp))
         }
-        if (status != null) Box(Modifier.padding(top = 4.dp)) { MyHealthStatusBadge(status.first, status.second) }
+        if (status != null) Box(Modifier.padding(top = 4.dp)) { MyHealthStatusBadge(status.first, if (outOfRange) StatusKind.Critical else status.second) }
         Text(footer, style = MyHealthTheme.typography.caption, color = c.textTertiary, maxLines = 2, overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(top = 4.dp))
     }
 }

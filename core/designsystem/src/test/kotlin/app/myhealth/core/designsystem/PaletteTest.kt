@@ -54,6 +54,9 @@ class PaletteTest {
             assertTrue("$tag onAccent over bright end of gradient ${contrast(r.onAccent, r.accentBright)}", !dark || contrast(r.onAccent, r.accentBright) >= 4.5)
             assertTrue("$tag onContainer", contrast(r.onAccentContainer, r.accentContainer) >= 4.5)
             assertTrue("$tag accent vs surface ${contrast(r.accent, r.surface)}", contrast(r.accent, r.surface) >= 3.0)
+            assertTrue("$tag onHero ${contrast(r.onHero, r.hero)}", contrast(r.onHero, r.hero) >= 4.5)
+            assertTrue("$tag heroAccent ${contrast(r.heroAccent, r.hero)}", contrast(r.heroAccent, r.hero) >= 3.0)
+            assertTrue("$tag hero stands out from the page ${contrast(r.hero, r.background)}", contrast(r.hero, r.background) >= 1.5)
             assertTrue("$tag outlineStrong ${contrast(r.outlineStrong, r.surface)}", contrast(r.outlineStrong, r.surface) >= 3.0)
         }
     }

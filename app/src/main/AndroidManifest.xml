@@ -35,77 +35,18 @@
         android:theme="@style/Theme.MyHealth"
         tools:targetApi="37">
 
-        <!-- Not exported: only the launcher aliases below are reachable from other apps (no data-carrying intents). -->
+        <!-- The launcher entry. The app icon is static (it never changes with the theme). MainActivity reads no
+             data from incoming intents, so being reachable from the launcher exposes nothing. -->
         <activity
             android:name=".MainActivity"
-            android:exported="false"
+            android:exported="true"
             android:windowSoftInputMode="adjustResize"
-            android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize|keyboardHidden" />
-        <!-- Launcher entry for the Aurora theme; the app enables exactly one (see LauncherIcons). -->
-        <activity-alias
-            android:name="app.myhealth.LauncherAurora"
-            android:exported="true"
-            android:enabled="true"
-            android:icon="@mipmap/ic_launcher_aurora"
-            android:roundIcon="@mipmap/ic_launcher_aurora"
-            android:targetActivity=".MainActivity">
+            android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize|keyboardHidden">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
-        </activity-alias>
-        <!-- Launcher entry for the Crystal theme; the app enables exactly one (see LauncherIcons). -->
-        <activity-alias
-            android:name="app.myhealth.LauncherCrystal"
-            android:exported="true"
-            android:enabled="false"
-            android:icon="@mipmap/ic_launcher_crystal"
-            android:roundIcon="@mipmap/ic_launcher_crystal"
-            android:targetActivity=".MainActivity">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-        </activity-alias>
-        <!-- Launcher entry for the Botanical theme; the app enables exactly one (see LauncherIcons). -->
-        <activity-alias
-            android:name="app.myhealth.LauncherBotanical"
-            android:exported="true"
-            android:enabled="false"
-            android:icon="@mipmap/ic_launcher_botanical"
-            android:roundIcon="@mipmap/ic_launcher_botanical"
-            android:targetActivity=".MainActivity">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-        </activity-alias>
-        <!-- Launcher entry for the Precision theme; the app enables exactly one (see LauncherIcons). -->
-        <activity-alias
-            android:name="app.myhealth.LauncherPrecision"
-            android:exported="true"
-            android:enabled="false"
-            android:icon="@mipmap/ic_launcher_precision"
-            android:roundIcon="@mipmap/ic_launcher_precision"
-            android:targetActivity=".MainActivity">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-        </activity-alias>
-        <!-- Launcher entry for the Pulse theme; the app enables exactly one (see LauncherIcons). -->
-        <activity-alias
-            android:name="app.myhealth.LauncherPulse"
-            android:exported="true"
-            android:enabled="false"
-            android:icon="@mipmap/ic_launcher_pulse"
-            android:roundIcon="@mipmap/ic_launcher_pulse"
-            android:targetActivity=".MainActivity">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-        </activity-alias>
+        </activity>
 
         <activity android:name=".health.HealthPermissionsRationaleActivity" android:exported="true">
             <intent-filter>

@@ -86,25 +86,39 @@ fun MyHealthTextField(
     )
 }
 
-/** A selectable chip: selection shown by fill + check glyph, not colour alone. */
+/**
+ * A selectable chip: selection shown by fill + check glyph, not colour alone. Selection animates (fill and text
+ * cross-fade, the check grows in). Solid themes use the hero ink pill; Glass themes a tinted glass pill.
+ */
 @Composable
 fun MyHealthChip(label: String, selected: Boolean, onClick: () -> Unit, modifier: Modifier = Modifier) {
     val c = MyHealthTheme.colors
+    val spec = androidx.compose.animation.core.tween<androidx.compose.ui.graphics.Color>(if (MyHealthTheme.reduceMotion) 0 else 280, easing = MyHealthTheme.motion.emphasized)
+    val selBg = if (c.isGlass) c.accentContainer else c.hero
+    val selFg = if (c.isGlass) c.onAccentContainer else c.onHero
+    val bg by androidx.compose.animation.animateColorAsState(if (selected) selBg else if (c.isGlass) c.glassTop else c.surfaceRaised, spec, label = CHIP)
+    val fg by androidx.compose.animation.animateColorAsState(if (selected) selFg else c.textPrimary, spec, label = CHIP)
+    val edge by androidx.compose.animation.animateColorAsState(if (selected) (if (c.isGlass) c.accent else c.hero) else if (c.isGlass) c.glassBorder else c.outline, spec, label = CHIP)
     Surface(
         modifier = modifier.heightIn(min = 40.dp).selectable(selected = selected, role = Role.Tab, onClick = onClick),
         shape = MyHealthTheme.radii.pillShape,
-        color = if (selected) c.accentContainer else c.surface,
-        border = BorderStroke(if (selected) MyHealthTheme.stroke.regular else MyHealthTheme.stroke.hairline, if (selected) c.accent else c.outlineStrong),
+        color = bg,
+        border = BorderStroke(if (selected) MyHealthTheme.stroke.regular else MyHealthTheme.stroke.hairline, edge),
     ) {
         Row(Modifier.padding(horizontal = MyHealthTheme.spacing.md, vertical = MyHealthTheme.spacing.sm), verticalAlignment = Alignment.CenterVertically) {
-            if (selected) {
-                Icon(MyHealthIcons.Check, null, tint = c.onAccentContainer, modifier = Modifier.size(16.dp))
-                Spacer(Modifier.width(MyHealthTheme.spacing.xs))
+            androidx.compose.animation.AnimatedVisibility(selected, enter = androidx.compose.animation.expandHorizontally() + androidx.compose.animation.scaleIn(),
+                exit = androidx.compose.animation.shrinkHorizontally() + androidx.compose.animation.scaleOut()) {
+                Row {
+                    Icon(MyHealthIcons.Check, null, tint = fg, modifier = Modifier.size(16.dp))
+                    Spacer(Modifier.width(MyHealthTheme.spacing.xs))
+                }
             }
-            Text(label, style = MyHealthTheme.typography.label, color = if (selected) c.onAccentContainer else c.textPrimary)
+            Text(label, style = MyHealthTheme.typography.label, color = fg)
         }
     }
 }
+
+private const val CHIP = "chip" // animation inspector id, not UI copy
 
 @Composable
 fun <T> MyHealthChipRow(options: List<T>, selected: T?, label: @Composable (T) -> String, onSelect: (T) -> Unit, modifier: Modifier = Modifier) {

@@ -1,17 +1,28 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="settings_color_theme">Colour theme</string>
-    <string name="settings_color_theme_note">The app icon on your home screen changes to match. Some launchers take a moment to update it.</string>
+    <string name="settings_color_theme_note">Every theme uses one colour plus calm neutrals. Glass themes float frosted panels over moving light; Solid themes sit on warm paper.</string>
+    <string name="theme_family_glass">Glass</string>
+    <string name="theme_family_solid">Solid</string>
     <string name="theme_aurora">Aurora</string>
-    <string name="theme_aurora_desc">Glowing mint light on a deep night sky</string>
+    <string name="theme_aurora_desc">Teal light through frosted glass on a night sky</string>
     <string name="theme_crystal">Crystal</string>
-    <string name="theme_crystal_desc">Frosted violet glass with soft refraction</string>
-    <string name="theme_botanical">Botanical</string>
-    <string name="theme_botanical_desc">Calm sage leaves on warm paper</string>
-    <string name="theme_precision">Precision</string>
-    <string name="theme_precision_desc">Electric blue, crisp as a lab instrument</string>
+    <string name="theme_crystal_desc">Clear blue glass, precise and cool</string>
     <string name="theme_pulse">Pulse</string>
-    <string name="theme_pulse_desc">Neon heartbeat pink with gentle glow</string>
+    <string name="theme_pulse_desc">A magenta heartbeat glowing behind glass</string>
+    <string name="theme_evergreen">Evergreen</string>
+    <string name="theme_evergreen_desc">Deep forest green on warm cream paper</string>
+    <string name="theme_apricot">Apricot</string>
+    <string name="theme_apricot_desc">Warm apricot on soft cream, friendly and light</string>
+    <string name="theme_citrus">Citrus</string>
+    <string name="theme_citrus_desc">Lime and ink, bold and digital</string>
+    <string name="theme_iris">Iris</string>
+    <string name="theme_iris_desc">Calm violet on lavender white</string>
     <string name="theme_selected">%1$s theme, selected</string>
     <string name="logo_cd">MyHealth logo</string>
+    <string name="splash_title">Your family\'s health,</string>
+    <string name="splash_title_accent">in one calm place</string>
+    <string name="splash_body">Reports, vitals and medicines, read on your phone and kept encrypted. Nothing leaves the device.</string>
+    <string name="splash_enter">Enter MyHealth</string>
+    <string name="splash_footer">Private · Offline · English · हिन्दी · ગુજરાતી</string>
 </resources>

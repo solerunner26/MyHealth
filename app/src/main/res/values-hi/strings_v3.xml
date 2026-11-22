@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="home_action_report">रिपोर्ट जोड़ें</string>
+    <string name="home_action_visit">विज़िट तैयारी</string>
+</resources>

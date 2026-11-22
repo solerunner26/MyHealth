@@ -65,10 +65,11 @@ fun SettingsScreen(onBack: () -> Unit, onErased: () -> Unit) {
         Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).navigationBarsPadding().padding(horizontal = sp.gutter), verticalArrangement = Arrangement.spacedBy(sp.sm)) {
             MyHealthSectionHeader(stringResource(R.string.settings_appearance))
             Text(stringResource(R.string.settings_color_theme), style = MyHealthTheme.typography.label, color = MyHealthTheme.colors.textSecondary)
-            app.myhealth.core.designsystem.tokens.MyHealthThemeId.entries.forEach { t ->
-                ThemeCard(t, selected = t == prefs.colorTheme, dark = MyHealthTheme.colors.isDark) {
-                    c.preferences.setColorTheme(t)
-                    app.myhealth.core.LauncherIcons.apply(context, t)
+            app.myhealth.core.designsystem.tokens.ThemeFamily.entries.forEach { fam ->
+                Text(stringResource(if (fam == app.myhealth.core.designsystem.tokens.ThemeFamily.Glass) R.string.theme_family_glass else R.string.theme_family_solid).uppercase(),
+                    style = MyHealthTheme.typography.overline, color = MyHealthTheme.colors.textSecondary, modifier = Modifier.padding(top = sp.sm))
+                app.myhealth.core.designsystem.tokens.MyHealthThemeId.entries.filter { it.family == fam }.forEach { t ->
+                    ThemeCard(t, selected = t == prefs.colorTheme, dark = MyHealthTheme.colors.isDark) { c.preferences.setColorTheme(t) }
                 }
             }
             Text(stringResource(R.string.settings_color_theme_note), style = MyHealthTheme.typography.caption, color = MyHealthTheme.colors.textSecondary)
@@ -126,20 +127,21 @@ private fun ThemeCard(t: app.myhealth.core.designsystem.tokens.MyHealthThemeId, 
     val selectedCd = stringResource(R.string.theme_selected, stringResource(app.myhealth.ui.common.Branding.name(t)))
     androidx.compose.foundation.layout.Row(
         Modifier.fillMaxWidth().clip(shape)
-            .background(androidx.compose.ui.graphics.Brush.linearGradient(listOf(p.background, p.accentSoft, p.backgroundAlt)))
+            .background(if (p.isGlass) androidx.compose.ui.graphics.Brush.linearGradient(listOf(p.background, p.accentSoft, p.backgroundAlt))
+                else androidx.compose.ui.graphics.Brush.linearGradient(listOf(p.background, p.background, p.accentSoft)))
             .border(if (selected) 2.5.dp else 1.dp, if (selected) p.accent else p.outline, shape)
             .selectable(selected = selected, role = androidx.compose.ui.semantics.Role.RadioButton, onClick = onClick)
             .then(if (selected) Modifier.semantics { contentDescription = selectedCd } else Modifier)
             .padding(MyHealthTheme.spacing.md).testTag("theme_${t.name}"),
         verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
     ) {
-        app.myhealth.ui.common.MyHealthLogo(52.dp, theme = t, alive = selected)
+        app.myhealth.ui.common.MyHealthLogo(52.dp, colors = p, alive = selected)
         androidx.compose.foundation.layout.Spacer(Modifier.width(MyHealthTheme.spacing.md))
         Column(Modifier.weight(1f)) {
             Text(stringResource(app.myhealth.ui.common.Branding.name(t)), style = MyHealthTheme.typography.subtitle, color = p.textPrimary)
             Text(stringResource(app.myhealth.ui.common.Branding.description(t)), style = MyHealthTheme.typography.caption, color = p.textSecondary)
             androidx.compose.foundation.layout.Row(Modifier.padding(top = 6.dp), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                listOf(p.accent, p.accentBright, p.accentContainer, p.surfaceRaised).forEach { sw ->
+                listOf(p.hero, p.accent, p.heroAccent, p.accentSoft, p.surfaceRaised).forEach { sw ->
                     androidx.compose.foundation.layout.Box(Modifier.size(16.dp).clip(androidx.compose.foundation.shape.CircleShape).background(sw).border(1.dp, p.outline, androidx.compose.foundation.shape.CircleShape))
                 }
             }

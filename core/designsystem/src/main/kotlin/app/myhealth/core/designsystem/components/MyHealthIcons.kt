@@ -2,6 +2,7 @@ package app.myhealth.core.designsystem.components
 
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.automirrored.filled.TrendingDown
 import androidx.compose.material.icons.automirrored.filled.TrendingFlat
 import androidx.compose.material.icons.automirrored.filled.TrendingUp
@@ -59,6 +60,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 /** Semantic icon set. Screens refer to meaning (MyHealthIcons.Labs), not to a glyph. */
 object MyHealthIcons {
     val Back: ImageVector = Icons.AutoMirrored.Filled.ArrowBack
+    val Forward: ImageVector = Icons.AutoMirrored.Filled.ArrowForward
     val Add = Icons.Filled.Add
     val Close = Icons.Filled.Close
     val Check = Icons.Filled.Check

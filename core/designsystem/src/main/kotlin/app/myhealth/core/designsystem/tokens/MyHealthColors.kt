@@ -5,22 +5,38 @@ import androidx.compose.ui.graphics.Color
 import kotlin.math.abs
 import kotlin.math.roundToInt
 
+/** Visual family (see the android-design-studio skill): frosted panels over living colour, or warm paper + hero card. */
+enum class ThemeFamily { Glass, Solid }
+
 /**
- * The five MyHealth themes. Each has exactly ONE accent hue (a neon in dark mode, a deep saturated tone in light
- * mode for contrast) plus near-neutral surfaces whose tint is either pure grey or a whisper of the same hue.
- * Status is never colour-only: icon, label, fill weight and marker position carry it.
+ * MyHealth themes. Each is exactly ONE accent hue plus neutrals; tints, glows, hero cards and chart steps are
+ * lightness/chroma steps of that hue. Status is never colour-only: icon, label, fill weight and material carry it.
  */
-enum class MyHealthThemeId(val hue: Float, val accentSat: Float, val neutralSat: Float, val neutralHue: Float = hue) {
-    /** Bioluminescent mint glow on deep night. */
-    Aurora(168f, 0.92f, 0.10f),
-    /** Frosted violet glass. */
-    Crystal(252f, 0.90f, 0.12f),
-    /** Calm sage on warm paper. */
-    Botanical(150f, 0.38f, 0.14f, neutralHue = 40f),
-    /** Electric precision blue. */
-    Precision(214f, 0.95f, 0.10f),
-    /** Neon heartbeat pink. */
-    Pulse(330f, 0.88f, 0.08f),
+enum class MyHealthThemeId(val hue: Float, val accentSat: Float, val neutralSat: Float, val family: ThemeFamily, val neutralHue: Float = hue) {
+    /** Teal light through frosted glass on a night sky. */
+    Aurora(168f, 0.80f, 0.10f, ThemeFamily.Glass),
+    /** Clear blue glass, precise and cool. */
+    Crystal(214f, 0.85f, 0.10f, ThemeFamily.Glass),
+    /** Magenta pulse glowing behind glass. */
+    Pulse(330f, 0.80f, 0.08f, ThemeFamily.Glass),
+    /** Deep forest green on warm cream paper. */
+    Evergreen(150f, 0.45f, 0.14f, ThemeFamily.Solid, neutralHue = 45f),
+    /** Warm apricot on soft cream. */
+    Apricot(26f, 0.75f, 0.15f, ThemeFamily.Solid),
+    /** Lime and ink: bold and digital. */
+    Citrus(80f, 0.80f, 0.15f, ThemeFamily.Solid),
+    /** Calm violet on lavender white. */
+    Iris(255f, 0.70f, 0.14f, ThemeFamily.Solid);
+
+    companion object {
+        val Default = Evergreen
+        /** Stored names from earlier versions keep working. */
+        fun parse(name: String?): MyHealthThemeId = when (name) {
+            "Botanical" -> Evergreen
+            "Precision" -> Crystal
+            else -> entries.firstOrNull { it.name == name } ?: Default
+        }
+    }
 }
 
 /** Semantic colour roles. Screens use roles, never raw values. */
@@ -34,6 +50,11 @@ data class MyHealthColors(
     /** Same hue, brighter: gradients, highlights and glows. */
     val accentBright: Color,
     val glow: Color,
+    /** Hero material: the one focal card per screen and every out-of-range value. */
+    val hero: Color,
+    val onHero: Color,
+    /** Gauge fills, deltas and highlights drawn on [hero]. */
+    val heroAccent: Color,
     val background: Color,
     val backgroundAlt: Color,
     val surface: Color,
@@ -42,6 +63,8 @@ data class MyHealthColors(
     val glassTop: Color,
     val glassBottom: Color,
     val glassBorder: Color,
+    /** Soft, hue-tinted drop shadow (Solid family). */
+    val shadow: Color,
     val outline: Color,
     val outlineStrong: Color,
     val textPrimary: Color,
@@ -50,15 +73,19 @@ data class MyHealthColors(
     val scrim: Color,
     val isDark: Boolean,
     val theme: MyHealthThemeId,
-)
+) {
+    val family get() = theme.family
+    val isGlass get() = theme.family == ThemeFamily.Glass
+}
 
 /** ARGB longs for JVM tests (contrast, hue). */
 data class ColorRoles(
     val accent: Long, val onAccent: Long, val accentContainer: Long, val onAccentContainer: Long, val accentSoft: Long, val accentBright: Long,
+    val hero: Long, val onHero: Long, val heroAccent: Long,
     val background: Long, val backgroundAlt: Long, val surface: Long, val surfaceRaised: Long, val surfaceSunken: Long,
     val outline: Long, val outlineStrong: Long, val textPrimary: Long, val textSecondary: Long, val textTertiary: Long,
 ) {
-    val chromatic get() = listOf(accent, accentContainer, onAccentContainer, accentSoft, accentBright)
+    val chromatic get() = listOf(accent, accentContainer, onAccentContainer, accentSoft, accentBright, hero, heroAccent)
     val neutrals get() = listOf(background, backgroundAlt, surface, surfaceRaised, surfaceSunken, outline, outlineStrong, textPrimary, textSecondary, textTertiary)
 }
 
@@ -92,19 +119,31 @@ object MyHealthColorRoles {
     fun roles(t: MyHealthThemeId, dark: Boolean): ColorRoles {
         fun a(s: Float, l: Float) = Hsl.argb(t.hue, s, l)
         fun n(l: Float, s: Float = t.neutralSat) = Hsl.argb(t.neutralHue, s, l)
+        val solid = t.family == ThemeFamily.Solid
         val lightAccentL = solve(t.hue, t.accentSat * 0.85f, 0.40f, 0xFFFFFFFF, 4.8, darker = true)
         val darkOn = a(t.accentSat * 0.6f, 0.07f)
         val brightL = solve(t.hue, t.accentSat, 0.74f, darkOn, 4.8, darker = false).coerceAtMost(0.80f)
         val darkAccentL = solve(t.hue, t.accentSat, 0.62f, darkOn, 4.8, darker = false)
+        val accentLight = a(t.accentSat * 0.85f, lightAccentL)
+        val accentDark = a(t.accentSat, darkAccentL)
+        // Hero: deep shade of the hue (Citrus: ink) in light mode; the accent itself (inverted material) in dark mode.
+        val heroLight = if (t == MyHealthThemeId.Citrus) a(0.30f, 0.09f) else a(t.accentSat * 0.62f, 0.21f)
+        val heroDark = if (solid) accentDark else a(t.accentSat * 0.6f, 0.23f)
+        val hero = if (dark) heroDark else heroLight
+        val onHero = if (dark && solid) darkOn else n(0.975f, t.neutralSat * 0.5f)
+        val heroAccentL = solve(t.hue, t.accentSat, 0.62f, hero, 3.2, darker = dark && solid)
+        val heroAccent = a(t.accentSat, heroAccentL)
         return if (!dark) ColorRoles(
-            accent = a(t.accentSat * 0.85f, lightAccentL), onAccent = 0xFFFFFFFF, accentContainer = a(t.accentSat * 0.70f, 0.90f), onAccentContainer = a(t.accentSat, 0.14f),
-            accentSoft = a(t.accentSat * 0.6f, 0.955f), accentBright = a(t.accentSat, 0.50f),
-            background = n(0.955f), backgroundAlt = n(0.925f, t.neutralSat * 1.4f), surface = n(0.985f), surfaceRaised = 0xFFFFFFFF, surfaceSunken = n(0.925f),
+            accent = accentLight, onAccent = 0xFFFFFFFF, accentContainer = a(t.accentSat * 0.70f, 0.90f), onAccentContainer = a(t.accentSat, 0.14f),
+            accentSoft = a(t.accentSat * 0.6f, if (solid) 0.92f else 0.955f), accentBright = a(t.accentSat, 0.50f),
+            hero = hero, onHero = onHero, heroAccent = heroAccent,
+            background = n(0.955f), backgroundAlt = n(0.925f, t.neutralSat * 1.4f), surface = if (solid) 0xFFFFFFFF else n(0.985f), surfaceRaised = 0xFFFFFFFF, surfaceSunken = n(0.925f),
             outline = n(0.84f), outlineStrong = n(0.42f, t.neutralSat * 0.6f), textPrimary = n(0.09f, t.neutralSat * 0.5f), textSecondary = n(0.28f, t.neutralSat * 0.5f), textTertiary = n(0.38f, t.neutralSat * 0.5f),
         ) else ColorRoles(
-            accent = a(t.accentSat, darkAccentL), onAccent = darkOn, accentContainer = a(t.accentSat * 0.55f, 0.20f), onAccentContainer = a(t.accentSat * 0.9f, 0.88f),
+            accent = accentDark, onAccent = darkOn, accentContainer = a(t.accentSat * 0.55f, 0.20f), onAccentContainer = a(t.accentSat * 0.9f, 0.88f),
             accentSoft = a(t.accentSat * 0.45f, 0.12f), accentBright = a(t.accentSat, maxOf(brightL, darkAccentL)),
-            background = n(0.045f), backgroundAlt = n(0.075f, t.neutralSat * 1.6f), surface = n(0.085f), surfaceRaised = n(0.12f), surfaceSunken = n(0.035f),
+            hero = hero, onHero = onHero, heroAccent = heroAccent,
+            background = n(0.045f), backgroundAlt = n(0.075f, t.neutralSat * 1.6f), surface = n(if (solid) 0.10f else 0.085f), surfaceRaised = n(if (solid) 0.13f else 0.12f), surfaceSunken = n(0.035f),
             outline = n(0.20f), outlineStrong = n(0.54f, t.neutralSat * 0.6f), textPrimary = n(0.95f, t.neutralSat * 0.5f), textSecondary = n(0.78f, t.neutralSat * 0.5f), textTertiary = n(0.64f, t.neutralSat * 0.5f),
         )
     }
@@ -117,6 +156,8 @@ fun ColorRoles.toColors(isDark: Boolean, theme: MyHealthThemeId): MyHealthColors
     return MyHealthColors(
         accent = acc, onAccent = onAccent.c(), accentContainer = accentContainer.c(), onAccentContainer = onAccentContainer.c(), accentSoft = accentSoft.c(),
         accentBright = bright, glow = bright.copy(alpha = if (isDark) 0.45f else 0.22f),
+        hero = hero.c(), onHero = onHero.c(), heroAccent = heroAccent.c(),
+        shadow = if (isDark) Color(0x66000000) else Color(Hsl.argb(theme.hue, 0.35f, 0.18f).toInt()).copy(alpha = 0.16f),
         background = background.c(), backgroundAlt = backgroundAlt.c(), surface = surface.c(), surfaceRaised = surfaceRaised.c(), surfaceSunken = surfaceSunken.c(),
         glassTop = if (isDark) surfaceRaised.c().copy(alpha = 0.78f) else Color.White.copy(alpha = 0.86f),
         glassBottom = if (isDark) surface.c().copy(alpha = 0.62f) else surface.c().copy(alpha = 0.70f),

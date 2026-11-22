@@ -1,13 +1,14 @@
 package app.myhealth.core.designsystem.components
 
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
+import androidx.compose.ui.draw.scale
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.runtime.getValue
@@ -75,38 +76,52 @@ fun MyHealthTopBar(
     }
 }
 
-/** Floating frosted-glass tab bar. Selected tab = accent pill + glow + bold label (never colour alone). */
+/**
+ * Floating tab bar. The selected tab sits on a capsule that SLIDES between items (spring), carrying the icon and a
+ * bold label; Glass = accent gradient capsule with glow on a frosted bar, Solid = hero-ink capsule on a paper bar
+ * with a soft shadow. Status is never colour alone: capsule, weight and label all change.
+ */
 @Composable
 fun MyHealthBottomBar(items: List<NavItem>, selectedKey: String, onSelect: (String) -> Unit, modifier: Modifier = Modifier) {
     val c = MyHealthTheme.colors
     val shape = MyHealthTheme.radii.xlShape
-    Row(
+    val index = items.indexOfFirst { it.key == selectedKey }.coerceAtLeast(0)
+    val reduce = MyHealthTheme.reduceMotion
+    val pos by androidx.compose.animation.core.animateFloatAsState(
+        index.toFloat(),
+        if (reduce) androidx.compose.animation.core.snap() else androidx.compose.animation.core.spring(dampingRatio = 0.78f, stiffness = 380f), label = NAV,
+    )
+    val barBg = if (c.isGlass) Modifier.shadow(16.dp, shape, ambientColor = c.glow, spotColor = c.scrim)
+        .background(androidx.compose.ui.graphics.Brush.verticalGradient(listOf(c.glassTop, c.surfaceRaised.copy(alpha = 0.94f))), shape)
+        .border(MyHealthTheme.stroke.hairline, c.glassBorder, shape)
+    else Modifier.shadow(18.dp, shape, ambientColor = c.shadow, spotColor = c.shadow).background(c.surfaceRaised, shape)
+    androidx.compose.foundation.layout.BoxWithConstraints(
         modifier.fillMaxWidth().navigationBarsPadding().padding(horizontal = MyHealthTheme.spacing.md, vertical = MyHealthTheme.spacing.sm)
-            .shadow(16.dp, shape, ambientColor = c.glow, spotColor = c.scrim)
-            .clip(shape)
-            .background(androidx.compose.ui.graphics.Brush.verticalGradient(listOf(c.glassTop, c.surfaceRaised.copy(alpha = 0.94f))))
-            .border(MyHealthTheme.stroke.hairline, c.glassBorder, shape)
-            .padding(horizontal = MyHealthTheme.spacing.xs, vertical = MyHealthTheme.spacing.xs)
-            .selectableGroup(),
-        horizontalArrangement = Arrangement.SpaceEvenly,
+            .then(barBg).clip(shape).padding(MyHealthTheme.spacing.xs),
     ) {
-        items.forEach { item ->
-            val selected = item.key == selectedKey
-            val w by animateFloatAsState(if (selected) 1f else 0f, tween(MyHealthTheme.motion.mediumMillis), label = NAV)
-            Column(
-                Modifier.weight(1f).heightIn(min = 56.dp).clip(MyHealthTheme.radii.mdShape)
-                    .selectable(selected = selected, role = Role.Tab, onClick = { onSelect(item.key) })
-                    .padding(vertical = 6.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-            ) {
-                Box(
-                    Modifier.size(width = 52.dp, height = 30.dp).clip(MyHealthTheme.radii.pillShape)
-                        .background(c.accentContainer.copy(alpha = w))
-                        .border(MyHealthTheme.stroke.hairline, c.accent.copy(alpha = 0.6f * w), MyHealthTheme.radii.pillShape),
-                    contentAlignment = Alignment.Center,
-                ) { Icon(item.icon, contentDescription = null, tint = if (selected) c.onAccentContainer else c.textSecondary, modifier = Modifier.size(22.dp)) }
-                Text(item.label, style = MyHealthTheme.typography.caption.copy(fontWeight = if (selected) androidx.compose.ui.text.font.FontWeight.Bold else androidx.compose.ui.text.font.FontWeight.Medium),
-                    color = if (selected) c.textPrimary else c.textSecondary, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(top = 2.dp))
+        val itemW = maxWidth / items.size
+        val capsule = if (c.isGlass) androidx.compose.ui.graphics.Brush.horizontalGradient(listOf(c.accent, androidx.compose.ui.graphics.lerp(c.accent, c.accentBright, 0.5f)))
+            else androidx.compose.ui.graphics.SolidColor(c.hero)
+        Box(
+            Modifier.offset(x = itemW * pos).width(itemW).height(60.dp).padding(horizontal = 4.dp)
+                .shadow(if (c.isGlass) 12.dp else 6.dp, MyHealthTheme.radii.lgShape, ambientColor = c.glow, spotColor = if (c.isGlass) c.glow else c.hero)
+                .background(capsule, MyHealthTheme.radii.lgShape),
+        )
+        Row(Modifier.fillMaxWidth().selectableGroup()) {
+            items.forEachIndexed { i, item ->
+                val selected = i == index
+                val near = (1f - kotlin.math.abs(pos - i)).coerceIn(0f, 1f)
+                val onCapsule = if (c.isGlass) c.onAccent else c.onHero
+                val tint = androidx.compose.ui.graphics.lerp(c.textSecondary, onCapsule, near)
+                Column(
+                    Modifier.weight(1f).height(60.dp).clip(MyHealthTheme.radii.lgShape)
+                        .selectable(selected = selected, role = Role.Tab, onClick = { onSelect(item.key) }),
+                    horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center,
+                ) {
+                    Icon(item.icon, contentDescription = null, tint = tint, modifier = Modifier.size(22.dp).scale(1f + 0.08f * near))
+                    Text(item.label, style = MyHealthTheme.typography.caption.copy(fontWeight = if (selected) androidx.compose.ui.text.font.FontWeight.Bold else androidx.compose.ui.text.font.FontWeight.Medium),
+                        color = tint, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(top = 2.dp))
+                }
             }
         }
     }
