@@ -36,6 +36,21 @@ tests.
    (device, app version, stack trace) before the process dies; Settings → About offers "Share last crash
    log", and the database error screen shows the cause with a Retry button. Nothing is uploaded.
 
+### Follow-up: the real device error (versionCode 3)
+The device then reported: **"unknown error (code 0): Queries can be performed using SQLiteDatabase query
+or rawQuery methods only."** That is Android rejecting `execSQL("PRAGMA journal_mode = WAL")`: the
+statement returns a row (the resulting mode), so it must go through `rawQuery`. This was the next failure
+behind the launch crash.
+
+* `SqlcipherDbFactory` now configures a new database through an internal `DbConfigurator` split: plain
+  statements use `execSQL`, row-returning PRAGMAs use `rawQuery`. `DatabaseConfigurationTest` pins the
+  split so it cannot regress.
+* WAL is treated as optional: if a device refuses it, the app logs and continues (slower, still correct).
+* If an older build left a half-initialised database, `AppContainer` quarantines it once
+  (`myhealth.db.unusable-<ts>`) and starts clean. A database that opened successfully before is never
+  touched, because a `db_initialized` marker is stored after the first successful open.
+* Evidence: **51 unit tests, 0 failures**, `assembleDebug` successful, APK **versionCode 3** uploaded.
+
 ### Evidence
 - `AppLaunchTest` launches the real `MainActivity` with the real `Application` under Robolectric; it failed
   on the unguarded Keystore write before the fix and passes now.

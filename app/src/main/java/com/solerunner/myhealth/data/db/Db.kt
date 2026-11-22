@@ -46,6 +46,25 @@ fun interface DbFactory {
     fun create(passphrase: CharArray): Db
 }
 
+
+/**
+ * Splits database configuration into statements that return rows and statements that do not.
+ *
+ * Android's `execSQL` throws `unknown error (code 0): Queries can be performed using SQLiteDatabase
+ * query or rawQuery methods only.` for row-returning PRAGMAs such as `journal_mode`, which is what broke
+ * the first on-device run. This helper exists so the split is unit-tested instead of discovered on a
+ * phone.
+ */
+internal interface DbConfigurator {
+    fun exec(sql: String)
+    fun query(sql: String)
+}
+
+internal fun configureDatabase(configurator: DbConfigurator) {
+    configurator.exec("PRAGMA foreign_keys = ON")
+    configurator.query("PRAGMA journal_mode = WAL")
+}
+
 /**
  * SQLCipher-backed database: AES-256 page encryption keyed by the Keystore-wrapped passphrase.
  * `System.loadLibrary` is called defensively because a couple of OEM builds preload it.
@@ -64,8 +83,20 @@ class SqlcipherDbFactory(
         val file = File(context.applicationContext.getDatabasePath(fileName).parentFile, fileName)
         file.parentFile?.mkdirs()
         val database = SQLiteDatabase.openOrCreateDatabase(file, String(passphrase), null, null)
-        database.execSQL("PRAGMA foreign_keys = ON")
-        database.execSQL("PRAGMA journal_mode = WAL")
+        configureDatabase(
+            object : DbConfigurator {
+                override fun exec(sql: String) = database.execSQL(sql)
+
+                override fun query(sql: String) {
+                    // rawQuery returns the resulting mode ("wal"); execSQL rejects row-returning SQL.
+                    // A device that refuses WAL is slower but still fully usable, so this is not fatal.
+                    runCatching { database.rawQuery(sql, null)?.use { cursor -> cursor.moveToFirst() } }
+                        .onFailure { error ->
+                            android.util.Log.w("MyHealthDb", "Could not run $sql; continuing without it", error)
+                        }
+                }
+            },
+        )
         return SqlcipherDb(database)
     }
 

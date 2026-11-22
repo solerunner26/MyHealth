@@ -75,6 +75,8 @@ abandoned, re-claim with a note in `HANDOFF.md`).
 - [x] T-037 Unit tests: 50 tests across parsers, catalog, trends/focus/score, CSV, PIN hashing, vitals, i18n parity, database gating, activity launch (by: cline)
 - [x] T-045 Startup crash hardening: database observers gated on open, StrongBox fallback fixed, secure
   writes fail closed, passphrase never overwritten, crash logger + share action, retry UI (by: cline)
+- [x] T-046 Database open on device: `PRAGMA journal_mode` moved from `execSQL` to `rawQuery`, WAL made
+  optional, never-initialised database quarantined once, regression test (by: cline)
 
 ---
 

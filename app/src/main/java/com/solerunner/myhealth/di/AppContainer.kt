@@ -83,18 +83,47 @@ class AppContainer(context: Context) {
     private val failureState = MutableStateFlow<String?>(null)
     val failure: StateFlow<String?> = failureState.asStateFlow()
 
+    private val databaseState = appContext.getSharedPreferences("myhealth_db_state", Context.MODE_PRIVATE)
+
     fun start() {
         if (readyState.value) return
         failureState.value = null
         scope.launch {
-            runCatching { database.open(crypto.databasePassphrase()) }
-                .onSuccess { readyState.value = true }
-                .onFailure { error ->
-                    android.util.Log.e("MyHealth", "Encrypted database could not be opened", error)
-                    failureState.value = error.message?.takeIf { it.isNotBlank() }
-                        ?: error::class.java.simpleName
+            val passphrase = runCatching { crypto.databasePassphrase() }
+                .getOrElse { error ->
+                    fail(error)
+                    return@launch
                 }
+            var result = runCatching { database.open(passphrase) }
+            if (result.isFailure && !databaseState.getBoolean(KEY_DB_INITIALIZED, false)) {
+                // The database was never opened successfully (for example the first build failed while
+                // configuring journal mode). Keep the file for inspection and start clean.
+                runCatching { quarantineDatabaseFiles() }
+                result = runCatching { database.open(passphrase) }
+            }
+            result.onSuccess {
+                databaseState.edit().putBoolean(KEY_DB_INITIALIZED, true).apply()
+                readyState.value = true
+            }.onFailure { error -> fail(error) }
         }
+    }
+
+    private fun fail(error: Throwable) {
+        android.util.Log.e("MyHealth", "Encrypted database could not be opened", error)
+        failureState.value = error.message?.takeIf { it.isNotBlank() } ?: error::class.java.simpleName
+    }
+
+    /** Renames the database and its sidecars; only used when no successful open ever happened. */
+    private fun quarantineDatabaseFiles() {
+        val base = appContext.getDatabasePath("myhealth.db")
+        val stamp = System.currentTimeMillis()
+        listOf(base, java.io.File(base.path + "-wal"), java.io.File(base.path + "-shm")).forEach { file ->
+            if (file.exists()) file.renameTo(java.io.File(file.path + ".unusable-$stamp"))
+        }
+    }
+
+    private companion object {
+        const val KEY_DB_INITIALIZED = "db_initialized"
     }
 
     fun close() {
