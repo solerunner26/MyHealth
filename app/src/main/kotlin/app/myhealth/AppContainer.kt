@@ -35,6 +35,7 @@ class AppContainer(
 ) {
     val appScope = CoroutineScope(SupervisorJob() + Dispatchers.Default + Safe.handler)
     val preferences = Preferences(context)
+    val reminders by lazy { app.myhealth.reminders.ReminderScheduler(context, clock) }
 
     private val _storage = MutableStateFlow<StorageState>(StorageState.Opening)
     val storage: StateFlow<StorageState> = _storage.asStateFlow()
@@ -56,6 +57,8 @@ class AppContainer(
         try {
             val stack = openerFactory().open()
             _storage.value = StorageState.Ready(stack)
+            // Keep alarms in sync with the stored schedule on every unlock (idempotent).
+            appScope.launch(Dispatchers.IO) { runCatching { reminders.ensureChannel(); reminders.rescheduleAll(stack) } }
             stack
         } catch (e: SecureStorageException) {
             Log.w("MyHealth", "storage open failed: ${e.failure}")

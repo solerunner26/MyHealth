@@ -28,6 +28,20 @@ object VitalRules {
 
     fun bmiBand(bmi: Double) = when { bmi < 18.5 -> VitalBand.Low; bmi < 25 -> VitalBand.Normal; bmi < 30 -> VitalBand.Elevated; bmi < 35 -> VitalBand.High; else -> VitalBand.VeryHigh }
 
+    /** Typical adult band used to shade vital charts (systolic for BP; diastolic in [normalRange2]). */
+    fun normalRange(t: VitalType): Pair<Double, Double>? = when (t) {
+        VitalType.BloodPressure -> 90.0 to 129.0
+        VitalType.Pulse -> 50.0 to 100.0
+        VitalType.SpO2 -> 95.0 to 100.0
+        VitalType.Bmi -> 18.5 to 24.9
+        VitalType.Temperature -> 36.1 to 37.4
+        VitalType.RespiratoryRate -> 12.0 to 20.0
+        VitalType.BloodGlucose -> 70.0 to 140.0
+        VitalType.Weight, VitalType.Height, VitalType.Custom -> null
+    }
+
+    fun normalRange2(t: VitalType): Pair<Double, Double>? = if (t == VitalType.BloodPressure) 60.0 to 79.0 else null
+
     fun bmi(weightKg: Double, heightCm: Double): Double? = if (heightCm <= 0 || weightKg <= 0) null else
         Math.round(weightKg / ((heightCm / 100) * (heightCm / 100)) * 10) / 10.0
 }

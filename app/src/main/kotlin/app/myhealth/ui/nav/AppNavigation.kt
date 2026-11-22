@@ -64,6 +64,16 @@ object Routes {
     const val ATTACHMENT = "attachment/{reportId}/{id}"
     const val TREND = "trend/{id}"
     const val INSIGHTS = "insights"
+    const val VITAL_NEW = "vital/new?type={type}"
+    const val VITAL = "vital/{type}"
+    const val MEDICINE_NEW = "medicine/new"
+    const val MEDICINE = "medicine/{id}"
+    const val TREATMENT_NEW = "treatment/new"
+    const val TREATMENT = "treatment/{id}"
+    fun vitalNew(type: String? = null) = if (type == null) "vital/new" else "vital/new?type=$type"
+    fun vital(type: String) = "vital/$type"
+    fun medicine(id: String) = "medicine/$id"
+    fun treatment(id: String) = "treatment/$id"
     fun memberEdit(id: String) = "member/edit/$id"
     fun report(id: String) = "report/$id"
     fun attachment(reportId: String, id: String) = "attachment/$reportId/$id"
@@ -153,6 +163,24 @@ fun AppNavGraph(nav: NavHostController) {
                 }.onFailure { Toast.makeText(context, exportFailed, Toast.LENGTH_SHORT).show() }
             })
         }
+        composable(Routes.VITAL_NEW, arguments = listOf(androidx.navigation.navArgument("type") { nullable = true; defaultValue = null })) { entry ->
+            val type = entry.arguments?.getString("type")?.let { t -> app.myhealth.domain.model.VitalType.entries.firstOrNull { it.name == t } }
+            val vm = rememberVm { app.myhealth.ui.vitals.VitalEditorViewModel(session, session.container.clock, type) }
+            val state by vm.state.collectAsStateWithLifecycle()
+            LaunchedEffect(state.saved) { if (state.saved) nav.popBackStack() }
+            app.myhealth.ui.vitals.VitalEditorScreen(state, vm::edit, vm::save, onBack = { nav.popBackStack() })
+        }
+        composable(Routes.VITAL) { entry ->
+            val type = app.myhealth.domain.model.VitalType.valueOf(entry.arguments?.getString("type")!!)
+            val vm = rememberVm { app.myhealth.ui.vitals.VitalsViewModel(session) }
+            val state by vm.state.collectAsStateWithLifecycle()
+            app.myhealth.ui.vitals.VitalDetailScreen(state, type, session.container.clock.zone, onBack = { nav.popBackStack() },
+                onAdd = { nav.navigate(Routes.vitalNew(if (type == app.myhealth.domain.model.VitalType.Bmi) "Weight" else type.name)) }, onDelete = { vm.delete(it) })
+        }
+        composable(Routes.MEDICINE_NEW) { MedicineRoute(null) { nav.popBackStack() } }
+        composable(Routes.MEDICINE) { entry -> MedicineRoute(entry.arguments?.getString("id")) { nav.popBackStack() } }
+        composable(Routes.TREATMENT_NEW) { TreatmentRoute(null) { nav.popBackStack() } }
+        composable(Routes.TREATMENT) { entry -> TreatmentRoute(entry.arguments?.getString("id")) { nav.popBackStack() } }
         composable(Routes.INSIGHTS) {
             app.myhealth.ui.insights.InsightsRoute(onBack = { nav.popBackStack() }, onOpenTrend = { nav.navigate(Routes.trend(it)) })
         }
@@ -176,7 +204,7 @@ private fun MainTabs(nav: NavHostController) {
                 TopLevel.Home -> {
                     val vm = rememberVm { HomeViewModel(session) }
                     val state by vm.state.collectAsStateWithLifecycle()
-                    HomeContent(state, onAddDocument = onImport, onLogVital = { tab = TopLevel.Trends }, onAddMedicine = { tab = TopLevel.Care },
+                    HomeContent(state, onAddDocument = onImport, onLogVital = { nav.navigate(Routes.vitalNew()) }, onAddMedicine = { nav.navigate(Routes.MEDICINE_NEW) },
                         onOpenTrend = { nav.navigate(Routes.trend(it)) }, onOpenInsights = { nav.navigate(Routes.INSIGHTS) })
                 }
                 TopLevel.Records -> {
@@ -187,11 +215,39 @@ private fun MainTabs(nav: NavHostController) {
                 TopLevel.Trends -> {
                     val vm = rememberVm { TrendsViewModel(session) }
                     val state by vm.state.collectAsStateWithLifecycle()
-                    TrendsContent(state, { nav.navigate(Routes.trend(it)) }, onImport)
+                    val vvm = rememberVm { app.myhealth.ui.vitals.VitalsViewModel(session) }
+                    val vitals by vvm.state.collectAsStateWithLifecycle()
+                    TrendsContent(state, { nav.navigate(Routes.trend(it)) }, onImport) {
+                        app.myhealth.ui.vitals.VitalsSection(vitals, onAdd = { nav.navigate(Routes.vitalNew()) }, onOpen = { nav.navigate(Routes.vital(it.name)) }, zone = session.container.clock.zone)
+                    }
+                }
+                TopLevel.Care -> {
+                    val vm = rememberVm { app.myhealth.ui.care.CareViewModel(session) }
+                    val state by vm.state.collectAsStateWithLifecycle()
+                    app.myhealth.ui.care.CareContent(state, session.container.clock, onAddMedicine = { nav.navigate(Routes.MEDICINE_NEW) }, onEditMedicine = { nav.navigate(Routes.medicine(it)) },
+                        onAddTreatment = { nav.navigate(Routes.TREATMENT_NEW) }, onEditTreatment = { nav.navigate(Routes.treatment(it)) })
                 }
                 else -> MyHealthEmptyState(MyHealthIcons.Document, stringResource(R.string.shell_placeholder_title), stringResource(R.string.shell_placeholder_body),
                     actionLabel = stringResource(R.string.import_title), onAction = onImport)
             }
         }
     }
+}
+
+@Composable
+private fun MedicineRoute(id: String?, onDone: () -> Unit) {
+    val session = LocalSession.current
+    val vm = rememberVm(id ?: "new") { app.myhealth.ui.care.MedicineEditorViewModel(session, id) }
+    val state by vm.state.collectAsStateWithLifecycle()
+    LaunchedEffect(state.done) { if (state.done) onDone() }
+    app.myhealth.ui.care.MedicineEditorScreen(state, vm::edit, { vm.save(it) }, vm::delete, onDone)
+}
+
+@Composable
+private fun TreatmentRoute(id: String?, onDone: () -> Unit) {
+    val session = LocalSession.current
+    val vm = rememberVm(id ?: "new") { app.myhealth.ui.care.TreatmentEditorViewModel(session, id) }
+    val state by vm.state.collectAsStateWithLifecycle()
+    LaunchedEffect(state.done) { if (state.done) onDone() }
+    app.myhealth.ui.care.TreatmentEditorScreen(state, vm::edit, vm::save, vm::delete, onDone)
 }

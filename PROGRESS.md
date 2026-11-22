@@ -64,3 +64,13 @@ property). It was fixed forward in `63e5952`. Since then every commit runs only 
   filters the list → report detail values → add a second member via the switcher → her empty dashboard (scoping) →
   switch back.
 - `WideLayoutTest` (`w900dp`): navigation rail instead of bottom bar.
+
+## Phase 7: vitals, medicines, treatments, reminders (done)
+- Gate → exit 0 (all suites green; lint 0 errors)
+- Domain `CareRulesTest` 5: vital entry validation and unit conversion, next dose (same day, next day, boundary),
+  every-other-day, weekly, end date, stopped, as-needed, future start, DST wall-clock.
+- `ReminderTest` 4 (Robolectric): next alarm time equals the schedule; alarms rebuilt after simulated reboot
+  (BOOT_COMPLETED); none after reminders are turned off; firing posts a private notification with 3 actions and
+  chains the next dose; Snooze schedules +15 min and Taken is logged; locked storage → receiver does nothing, no crash.
+- `CareFlowTest` (UI): log BP 142/92 → tile shows "High"; add a medicine with reminders → alarm scheduled, badge shown.
+- Not run here: real alarm delivery under Doze and notification rendering on a device.
