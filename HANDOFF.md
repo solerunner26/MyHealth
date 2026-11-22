@@ -40,6 +40,14 @@ what is left, gotchas. Keep it short and factual; the code is the source of trut
 - Treatments editor moved from an AlertDialog to the Rare sheet; import progress and error states use the
   Rare spinner and empty state; Settings shows a real "Documents" label for storage.
 
+### Quality pass after lint
+- Lint flagged three real errors, all fixed: `LocalDate.ofInstant` needed API 34 (now `Instant.atZone`), StrongBox
+  calls needed an API 28 guard, and three composables read `Locale.getDefault()` instead of
+  `LocalConfiguration`. `CredentialManagerMisuse` is handled by catching `NoCredentialException` and
+  `GetCredentialException` and falling back to the offline path.
+- Reminder cancellation now persists the armed time labels, so editing a reminder time cannot leave an
+  orphaned alarm behind.
+
 ### Medicine reminders (T-034) — manifest debt cleared
 - `MedicineReminders` uses **AlarmManager** (exact when the platform allows it, inexact otherwise),
   one alarm per reminder time, re-armed after firing and skipped past the course end date.

@@ -43,23 +43,48 @@ class MedicineReminders(private val context: Context) {
         cancel(medicine.id)
         if (!medicine.reminderEnabled || !medicine.isActive) return
         ensureChannel()
+        val scheduled = mutableListOf<String>()
         medicine.reminderTimes.mapNotNull(::parseTime).forEach { time ->
-            setAlarm(medicine.id, time, nextTrigger(medicine, time))
+            val label = time.toString()
+            val trigger = nextTrigger(medicine, time)
+            if (trigger != Long.MAX_VALUE) {
+                setAlarm(medicine.id, label, trigger)
+                scheduled += label
+            }
         }
+        if (scheduled.isNotEmpty()) storeScheduled(medicine.id, scheduled)
     }
 
+    /**
+     * Cancels the alarms that are actually armed for this medicine. The labels are persisted, because
+     * an edit can change the reminder times and the old request codes would otherwise leak.
+     */
     fun cancel(medicineId: Long) {
         val alarmManager = context.getSystemService(AlarmManager::class.java) ?: return
-        listOf("08:00", "13:00", "18:00", "21:00", "09:00", "20:00").forEach { label ->
-            alarmManager.cancel(pendingIntent(medicineId, label))
-        }
+        val labels = scheduledLabels(medicineId)
+        labels.forEach { label -> alarmManager.cancel(pendingIntent(medicineId, label)) }
+        prefs.edit().remove(KEY_PREFIX + medicineId).apply()
+    }
+
+    private fun storeScheduled(medicineId: Long, labels: List<String>) {
+        prefs.edit().putString(KEY_PREFIX + medicineId, labels.joinToString(",")).apply()
+    }
+
+    private fun scheduledLabels(medicineId: Long): List<String> =
+        prefs.getString(KEY_PREFIX + medicineId, null)
+            ?.split(',')
+            ?.filter { it.isNotBlank() }
+            .orEmpty()
+
+    private val prefs by lazy {
+        context.getSharedPreferences("medicine_reminders", Context.MODE_PRIVATE)
     }
 
     fun scheduleAll(medicines: List<Medicine>) = medicines.forEach(::schedule)
 
-    private fun setAlarm(medicineId: Long, time: LocalTime, triggerAt: Long) {
+    private fun setAlarm(medicineId: Long, timeLabel: String, triggerAt: Long) {
         val alarmManager = context.getSystemService(AlarmManager::class.java) ?: return
-        val pending = pendingIntent(medicineId, time.toString())
+        val pending = pendingIntent(medicineId, timeLabel)
         val exactAllowed = Build.VERSION.SDK_INT < Build.VERSION_CODES.S || alarmManager.canScheduleExactAlarms()
         runCatching {
             if (exactAllowed) {
@@ -110,6 +135,7 @@ class MedicineReminders(private val context: Context) {
 
     companion object {
         const val CHANNEL_ID = "medicine_reminders"
+        private const val KEY_PREFIX = "scheduled_"
 
         /** Posts the reminder notification for one medicine. Called by the receiver. */
         fun notify(context: Context, medicineId: Long, medicineName: String?, strength: String?, timeLabel: String) {

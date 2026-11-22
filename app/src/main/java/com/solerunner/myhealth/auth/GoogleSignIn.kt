@@ -4,6 +4,8 @@ import android.content.Context
 import androidx.credentials.CredentialManager
 import androidx.credentials.CustomCredential
 import androidx.credentials.GetCredentialRequest
+import androidx.credentials.exceptions.GetCredentialException
+import androidx.credentials.exceptions.NoCredentialException
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import com.solerunner.myhealth.BuildConfig
@@ -38,7 +40,13 @@ class GoogleSignIn(private val context: Context) {
             .build()
         val request = GetCredentialRequest.Builder().addCredentialOption(option).build()
         val manager = CredentialManager.create(context)
-        val result = manager.getCredential(context, request)
+        val result = try {
+            manager.getCredential(context, request)
+        } catch (_: NoCredentialException) {
+            return@withContext null
+        } catch (_: GetCredentialException) {
+            return@withContext null
+        }
         val credential = result.credential
         if (credential is CustomCredential && credential.type == GoogleIdTokenCredential.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL) {
             val token = GoogleIdTokenCredential.createFrom(credential.data)

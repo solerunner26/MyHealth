@@ -1,0 +1,6 @@
+This app's visual language is inspired by Rare UI (https://rareui.com),
+Copyright (c) 2026 Swami Malode, licensed under MIT + Commons Clause + Attribution.
+No Rare UI source code is included: the design rules were reimplemented natively in Jetpack Compose
+for Android. The attribution appears in the app under Settings > About.
+
+The full license text is in RARE-UI-LICENSE.txt next to this notice.

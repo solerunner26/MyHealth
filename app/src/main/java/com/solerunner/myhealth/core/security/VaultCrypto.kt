@@ -58,7 +58,9 @@ class VaultCrypto(context: Context) {
             .setKeySize(256)
             .setRandomizedEncryptionRequired(true)
 
-        if (appContext.packageManager.hasSystemFeature(PackageManager.FEATURE_STRONGBOX_KEYSTORE)) {
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.P &&
+            appContext.packageManager.hasSystemFeature(PackageManager.FEATURE_STRONGBOX_KEYSTORE)
+        ) {
             try {
                 generator.init(builder.setIsStrongBoxBacked(true).build())
                 return generator.generateKey()

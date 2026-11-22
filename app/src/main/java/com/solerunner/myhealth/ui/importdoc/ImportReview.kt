@@ -95,7 +95,7 @@ fun ImportReview(state: ImportUiState.Review, viewModel: ImportViewModel, onBack
 
             Spacer(Modifier.height(spacing.lg))
             Text(
-                stringResource(R.string.import_results, state.rows.size) + " · " + stringResource(R.string.import_review_title),
+                stringResource(R.string.import_results, state.rows.size),
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )

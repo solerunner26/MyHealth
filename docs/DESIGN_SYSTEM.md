@@ -23,8 +23,9 @@ reinterprets its rules:
 | Press feedback on physical controls | `Modifier.pressScale` (0.97 spring) on buttons, keys, chips |
 | Respect reduced motion | Looping animations are confined to the PIN caret and loading skeletons |
 
-Attribution is shown in the app under **Settings → About** with a link to rareui.com, and the source
-notice lives in `docs/licenses/` alongside the Inter OFL text.
+Attribution is shown in the app under **Settings → About** with a link to rareui.com. The license
+and a written notice live in `docs/licenses/RARE-UI-LICENSE.txt` and `docs/licenses/RARE-UI-NOTICE.txt`,
+next to the Inter OFL text (`docs/licenses/INTER-OFL.txt`).
 
 ## Tokens
 
