@@ -45,3 +45,11 @@ data-extraction rules, locale config); app-private crash log; EN/HI/GU strings.
 - Onboarding (welcome + own profile) and the member editor are in place. Cold start now reaches onboarding.
 - Not run here: ML Kit OCR on a real image and the camera capture (needs a device); PdfBox rendering for the OCR
   fallback (slow under Robolectric).
+
+## Phase 5: trends, focus engine, health score (done)
+- `./gradlew assembleDebug testDebugUnitTest :domain:test lintDebug` → BUILD SUCCESSFUL; lint 0 errors
+- New domain tests: TrendEngineTest 5 (delta, %, rate/month, direction semantics, window, critical status, CSV),
+  FocusEngineTest 7 (every rule family, severity tiers, evidence, deterministic order), HealthScoreTest 3
+  (insufficient data, weighting/renormalisation worked example, scoring curves).
+- E2E extended: after import → review → edit → save, the edited HbA1c is the latest point of its trend series with
+  the printed band and a High status.

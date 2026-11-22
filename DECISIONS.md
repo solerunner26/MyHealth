@@ -117,3 +117,34 @@ salted PBKDF2 hash.
   reports print English test names, so Hindi/Gujarati use common transliterations, often with the English
   abbreviation (e.g. "HbA1c (3 महीने की औसत शुगर)").
 - If the title is left blank, the report gets the localised document-type label, so ViewModels never hold a Context.
+
+## D-016 Trend semantics
+- Latest vs previous: absolute change, % change, and rate per month (canonical units and %, using 30.4375-day months).
+  A rate needs two readings on different days.
+- Direction is judged against the analyte's direction of improvement. If either reading is out of range, the
+  direction is decided by whether the value moves closer to or further from the band. If both are in range, only
+  lower-/higher-is-better analytes get a direction, and only for moves ≥ 10%. Moves under 2% are Stable.
+- The band shown is the latest printed range, else the catalogue range for the member's sex and age.
+- The history window (default 5 years, configurable 1–30) filters views and analytics only. Older data is never
+  deleted.
+- CSV export is RFC 4180 with CRLF. Cells starting with = + - @ that aren't numbers get a leading apostrophe
+  (CSV-injection guard).
+
+## D-017 Focus engine (deterministic; emits typed items, never free text)
+| Rule | Trigger | Severity |
+|---|---|---|
+| Out of range | latest value outside band | High if beyond critical limit; Moderate if ≥ 25% past the bound; else Low |
+| Rapid change | worsening, readings ≥ 14 days apart, \|%/month\| ≥ analyte threshold (default 10, Hb/HbA1c 5, eGFR 5) | Moderate at 2× threshold, else Low |
+| Overdue monitoring | last test older than the re-test interval (shorter if the last value was abnormal) | Moderate if last value abnormal, else Low |
+| Vital alert (last 90 days) | BP ACC/AHA categories, SpO₂, pulse, BMI (derived from weight + height), temperature, home glucose | High/Moderate/Low by band |
+| Data gap | no labs ever / none in 12 months; adults without BP in 12 months; no weight in 6 months | Info |
+| Medicine issue | same medicine active twice; ≥ 3 missed reminder doses in 7 days; course end passed but not marked finished; active without reminders | Moderate / Low / Info |
+| Follow-up | treatment follow-up overdue or due within 14 days | Moderate / Low |
+| Wearable trend | 7-day steps < 70% of the prior 4-week baseline; resting HR +7 bpm; sleep < 6 h | Low / Info |
+Items are sorted by severity, then date, then key. Every item carries its evidence (dates, values, units, ranges).
+
+## D-018 Health score
+Weights: lab key markers 40, vitals 30, monitoring up to date 15, activity 15. Missing components are excluded and
+the remaining weights are renormalised, so missing data never counts as good or bad. If less than 40% of the
+weight has data, no score is shown ("not enough data"), and the components still explain what is missing. Per-input
+points are shown so the user can see why the score is what it is.
