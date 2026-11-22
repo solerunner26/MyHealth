@@ -5,6 +5,8 @@ import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
+import androidx.compose.ui.draw.clip
+import app.myhealth.core.designsystem.components.appear
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -155,8 +157,16 @@ fun ImportScreen(
 ) {
     val c = MyHealthTheme.colors
     Column(Modifier.fillMaxSize().testTag("import")) {
-        val title = if (state.phase is ImportPhase.Review || state.phase is ImportPhase.Saving) stringResource(R.string.review_title) else stringResource(R.string.import_title)
-        MyHealthTopBar(title, subtitle = state.member?.let { stringResource(R.string.import_for_member, it.name) }, onBack = onBack, backLabel = stringResource(R.string.action_back))
+        val batchList = state.phase == ImportPhase.Batch || (state.draft == null && state.batch.isNotEmpty())
+        val title = when {
+            batchList -> stringResource(R.string.batch_title)
+            state.phase is ImportPhase.Review || state.phase is ImportPhase.Saving -> stringResource(R.string.review_title)
+            else -> stringResource(R.string.import_title)
+        }
+        // inside a batch, back returns to the list of reports instead of leaving the import
+        val back = if (state.inBatch) ({ onEvent(ImportEvent.BackToBatch) }) else onBack
+        androidx.activity.compose.BackHandler(enabled = state.inBatch) { onEvent(ImportEvent.BackToBatch) }
+        MyHealthTopBar(title, subtitle = if (batchList) null else state.member?.let { stringResource(R.string.import_for_member, it.name) }, onBack = back, backLabel = stringResource(R.string.action_back))
         when (val p = state.phase) {
             ImportPhase.Choose -> ChooseSource(onPickFile, onTakePhoto, { onEvent(ImportEvent.Manual) }, cameraMissing)
             is ImportPhase.Reading -> Box(Modifier.fillMaxSize().padding(MyHealthTheme.spacing.xl), contentAlignment = Alignment.Center) {
@@ -167,7 +177,10 @@ fun ImportScreen(
             }
             is ImportPhase.Failed -> FailedState(p.error, { onEvent(ImportEvent.Reset) }, { onEvent(ImportEvent.Manual) })
             is ImportPhase.ChooseMember -> ChooseMemberContent(p, onEvent)
-            ImportPhase.Review, ImportPhase.Saving, is ImportPhase.Saved -> state.draft?.let { ReviewContent(state, it, onEvent, onAddPageFile, onAddPagePhoto) }
+            ImportPhase.Batch -> BatchContent(state, onEvent)
+            ImportPhase.Review, ImportPhase.Saving, is ImportPhase.Saved ->
+                if (state.draft == null && state.batch.isNotEmpty()) BatchContent(state, onEvent)
+                else state.draft?.let { ReviewContent(state, it, onEvent, onAddPageFile, onAddPagePhoto) }
         }
     }
 }
@@ -457,6 +470,78 @@ private fun ChooseMemberContent(p: ImportPhase.ChooseMember, onEvent: (ImportEve
         }
         if (clean.isNotBlank()) item {
             MyHealthPrimaryButton(stringResource(R.string.choose_member_add, clean), { onEvent(ImportEvent.AddMemberFromReport(clean)) }, Modifier.fillMaxWidth().testTag("addFromReport"), icon = MyHealthIcons.Add)
+        }
+    }
+}
+
+/** Item 14: one card per test date, oldest last; each opens the normal review, ready ones can be saved together. */
+@Composable
+private fun BatchContent(state: ImportUiState, onEvent: (ImportEvent) -> Unit) {
+    val sp = MyHealthTheme.spacing
+    val fallbackTitle = label(ReportType.LabReport)
+    val ready = state.batch.count { it.ready }
+    androidx.compose.foundation.lazy.LazyColumn(Modifier.fillMaxSize().testTag("batch"), contentPadding = androidx.compose.foundation.layout.PaddingValues(sp.gutter),
+        verticalArrangement = Arrangement.spacedBy(sp.md)) {
+        item {
+            app.myhealth.core.designsystem.components.MyHealthCard(emphasis = app.myhealth.core.designsystem.components.Emphasis.Strong) {
+                Text(stringResource(R.string.batch_banner_title).uppercase(), style = MyHealthTheme.typography.overline, color = MyHealthTheme.colors.textSecondary)
+                Text(stringResource(R.string.batch_banner_body), style = MyHealthTheme.typography.subtitle, color = MyHealthTheme.colors.textPrimary, modifier = Modifier.padding(top = 4.dp))
+            }
+        }
+        if (state.batchFailedFiles > 0) item { MyHealthInfoBanner(pluralStringResource(R.plurals.batch_failed, state.batchFailedFiles, state.batchFailedFiles), icon = MyHealthIcons.StatusWarning) }
+        if (state.saveFailed) item { MyHealthInfoBanner(stringResource(R.string.import_save_failed), icon = MyHealthIcons.StatusError) }
+        items(state.batch.size) { i -> BatchCard(state.batch[i], onEvent, Modifier.appear(i)) }
+        if (state.batch.any { it.date == null }) item { MyHealthInfoBanner(stringResource(R.string.batch_undated_note)) }
+        if (ready > 0) item {
+            MyHealthPrimaryButton(if (state.phase == ImportPhase.Saving) stringResource(R.string.saving) else pluralStringResource(R.plurals.batch_save_all, ready, ready),
+                { onEvent(ImportEvent.SaveAllReady(fallbackTitle)) }, Modifier.fillMaxWidth().testTag("saveAllReady"), icon = MyHealthIcons.Check,
+                enabled = state.phase != ImportPhase.Saving)
+        }
+    }
+}
+
+@Composable
+private fun BatchCard(item: BatchItem, onEvent: (ImportEvent) -> Unit, modifier: Modifier = Modifier) {
+    val c = MyHealthTheme.colors
+    val sp = MyHealthTheme.spacing
+    app.myhealth.core.designsystem.components.MyHealthCard(modifier.testTag("batch_${item.index}"), onClick = if (item.saved) null else ({ onEvent(ImportEvent.ReviewGroup(item.index)) })) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            // date block: day + month, like a calendar leaf
+            Column(
+                Modifier.size(width = 54.dp, height = 58.dp).clip(MyHealthTheme.radii.mdShape)
+                    .background(if (item.saved) c.surfaceSunken else c.hero),
+                horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center,
+            ) {
+                val fg = if (item.saved) c.textSecondary else c.onHero
+                if (item.date != null) {
+                    Text(item.date.dayOfMonth.toString().padStart(2, '0'), style = MyHealthTheme.typography.title, color = fg)
+                    Text(item.date.month.getDisplayName(java.time.format.TextStyle.SHORT, androidx.compose.ui.platform.LocalConfiguration.current.locales[0]).uppercase(), style = MyHealthTheme.typography.overline, color = fg)
+                } else Icon(MyHealthIcons.Help, null, tint = fg)
+            }
+            Spacer(Modifier.width(sp.md))
+            Column(Modifier.weight(1f)) {
+                Text(item.title.ifBlank { label(item.type) }, style = MyHealthTheme.typography.subtitle, color = c.textPrimary, maxLines = 2)
+                val meta = listOfNotNull(
+                    item.date?.let { app.myhealth.ui.common.formatDate(it) } ?: stringResource(R.string.batch_no_date),
+                    item.lab.takeIf { it.isNotBlank() },
+                    pluralStringResource(R.plurals.batch_values, item.values, item.values),
+                ).joinToString(" · ")
+                Text(meta, style = MyHealthTheme.typography.bodySmall, color = c.textSecondary)
+                Text(item.memberName?.let { stringResource(R.string.batch_for, it) } ?: stringResource(R.string.batch_choose), style = MyHealthTheme.typography.caption,
+                    color = if (item.memberName == null) c.accent else c.textSecondary)
+            }
+        }
+        Text(pluralStringResource(R.plurals.batch_files, item.files.size, item.files.size) + ": " + item.files.joinToString(", "),
+            style = MyHealthTheme.typography.caption, color = c.textTertiary, maxLines = 2, modifier = Modifier.padding(top = sp.sm))
+        Row(Modifier.padding(top = sp.sm), verticalAlignment = Alignment.CenterVertically) {
+            when {
+                item.saved -> MyHealthStatusBadge(stringResource(R.string.batch_saved), app.myhealth.core.designsystem.components.StatusKind.Normal)
+                item.ready -> MyHealthStatusBadge(stringResource(R.string.batch_ready), app.myhealth.core.designsystem.components.StatusKind.Normal)
+                else -> MyHealthStatusBadge(if (item.issues > 0) pluralStringResource(R.plurals.batch_to_check, item.issues, item.issues) else stringResource(R.string.batch_choose),
+                    app.myhealth.core.designsystem.components.StatusKind.Worsening)
+            }
+            Spacer(Modifier.weight(1f))
+            if (!item.saved) MyHealthTextButton(stringResource(R.string.batch_review), { onEvent(ImportEvent.ReviewGroup(item.index)) }, Modifier.testTag("reviewGroup_${item.index}"))
         }
     }
 }

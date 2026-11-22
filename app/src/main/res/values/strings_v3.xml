@@ -3,7 +3,37 @@
     <string name="home_action_report">Add report</string>
     <string name="dash_log_short">Log</string>
     <string name="join_comma">%1$s, %2$s</string>
+    <string name="batch_title">Reports found</string>
+    <string name="batch_banner_title">Sorted by test date</string>
+    <string name="batch_banner_body">Files from the same test date became one report. Different dates stay separate.</string>
+    <string name="batch_no_date">No date found</string>
+    <string name="batch_ready">Ready</string>
+    <string name="batch_saved">Saved</string>
+    <string name="batch_choose">Choose who it is for</string>
+    <string name="batch_for">For %1$s</string>
+    <string name="batch_review">Review</string>
+    <string name="batch_undated_note">A file without a date is kept as its own report; set the date while reviewing.</string>
     <string name="home_action_visit">Visit prep</string>
+    <plurals name="batch_values">
+        <item quantity="one">%1$d value</item>
+        <item quantity="other">%1$d values</item>
+    </plurals>
+    <plurals name="batch_to_check">
+        <item quantity="one">%1$d to check</item>
+        <item quantity="other">%1$d to check</item>
+    </plurals>
+    <plurals name="batch_save_all">
+        <item quantity="one">Save %1$d report</item>
+        <item quantity="other">Save %1$d reports</item>
+    </plurals>
+    <plurals name="batch_failed">
+        <item quantity="one">%1$d file could not be read</item>
+        <item quantity="other">%1$d files could not be read</item>
+    </plurals>
+    <plurals name="batch_files">
+        <item quantity="one">%1$d file</item>
+        <item quantity="other">%1$d files</item>
+    </plurals>
     <plurals name="records_out_of_range">
         <item quantity="one">%1$d not in range</item>
         <item quantity="other">%1$d not in range</item>

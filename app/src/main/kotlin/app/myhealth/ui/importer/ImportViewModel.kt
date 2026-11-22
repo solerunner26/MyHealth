@@ -42,6 +42,8 @@ sealed interface ImportPhase {
     data class ChooseMember(val printedName: String, val ranked: List<app.myhealth.domain.importing.MemberMatch>) : ImportPhase
     data object Saving : ImportPhase
     data class Saved(val reportId: String, val memberName: String) : ImportPhase
+    /** Several files with different test dates: one report per date, listed for review (item 14). */
+    data object Batch : ImportPhase
     data class Failed(val error: IngestError) : ImportPhase
 }
 
@@ -59,9 +61,23 @@ data class ImportUiState(
     val autoMatchedName: String? = null,
     /** An extra page could not be read (the record keeps everything else). */
     val pageFailed: IngestError? = null,
+    /** Reports found in a multi-file pick, one per test date (empty for a single report). */
+    val batch: List<BatchItem> = emptyList(),
+    /** Files of a multi-file pick that could not be read (the others are kept). */
+    val batchFailedFiles: Int = 0,
+    /** True while reviewing one report of a batch (back returns to the list). */
+    val inBatch: Boolean = false,
 ) {
     val ocrUsed get() = (draft?.source?.ocrPages ?: 0) > 0
     fun issuesFor(key: String?) = if (showIssues) issues.filter { it.rowKey == key } else emptyList()
+}
+
+/** One report of a multi-file import. */
+data class BatchItem(
+    val index: Int, val date: LocalDate?, val title: String, val type: ReportType, val lab: String, val files: List<String>,
+    val values: Int, val issues: Int, val memberName: String?, val saved: Boolean,
+) {
+    val ready get() = !saved && issues == 0 && memberName != null && date != null
 }
 
 sealed interface ImportEvent {
@@ -85,6 +101,9 @@ sealed interface ImportEvent {
     data object Reset : ImportEvent
     data class ChooseMember(val id: String) : ImportEvent
     data class AddMemberFromReport(val name: String) : ImportEvent
+    data class ReviewGroup(val index: Int) : ImportEvent
+    data object BackToBatch : ImportEvent
+    data class SaveAllReady(val fallbackTitle: String) : ImportEvent
 }
 
 const val MAX_FILES = 20
@@ -117,7 +136,10 @@ class ImportViewModel(
     fun onEvent(e: ImportEvent) {
         when (e) {
             is ImportEvent.PickUri -> read(e.uri, e.fallbackName)
-            is ImportEvent.PickUris -> if (e.uris.isNotEmpty()) read(e.uris.first(), e.fallbackName, more = e.uris.drop(1).take(MAX_FILES - 1))
+            is ImportEvent.PickUris -> when {
+                e.uris.size == 1 -> read(e.uris.first(), e.fallbackName)
+                e.uris.size > 1 -> readBatch(e.uris.take(MAX_FILES), e.fallbackName)
+            }
             is ImportEvent.AddPage -> addPages(listOf(e.uri), e.fallbackName)
             ImportEvent.Manual -> _state.value.member?.let { m -> document = null; setDraft(ImportDrafts.emptyManual(m, today)); _state.update { it.copy(phase = ImportPhase.Review) } }
             is ImportEvent.SetMember -> {
@@ -135,14 +157,125 @@ class ImportViewModel(
             is ImportEvent.AddLab -> if (AnalyteCatalogue.byId(e.analyteId) != null) mutate { d -> d.copy(labRows = d.labRows + ImportDrafts.newLabRow("add${addCounter++}", e.analyteId)) }
             is ImportEvent.RemoveLab -> mutate { d -> d.copy(labRows = d.labRows.filterNot { it.key == e.key }) }
             is ImportEvent.Save -> save(e.fallbackTitle)
-            ImportEvent.Reset -> { document = null; _state.update { ImportUiState(member = it.member, members = it.members) } }
+            ImportEvent.Reset -> { document = null; groups.clear(); current = null; _state.update { ImportUiState(member = it.member, members = it.members) } }
             is ImportEvent.ChooseMember -> {
                 val m = _state.value.members.firstOrNull { it.id == e.id } ?: return
                 _state.update { it.copy(member = m, phase = ImportPhase.Review, autoMatchedName = null) }
                 _state.value.draft?.let { setDraft(it.copy(memberId = m.id)) }
             }
             is ImportEvent.AddMemberFromReport -> addMember(e.name)
+            is ImportEvent.ReviewGroup -> openGroup(e.index)
+            ImportEvent.BackToBatch -> backToBatch()
+            is ImportEvent.SaveAllReady -> saveAllReady(e.fallbackTitle)
         }
+    }
+
+    // ---- multi-file import: one report per test date ------------------------------------------------------------
+
+    private data class Group(val draft: ImportDraft, val docs: List<PickedDocument>, val memberId: String?, val saved: Boolean = false, val reportId: String? = null)
+    private val groups = mutableListOf<Group>()
+    private var current: Int? = null
+
+    private fun readBatch(uris: List<Uri>, fallbackName: String) {
+        val member = _state.value.member ?: return
+        _state.update { it.copy(phase = ImportPhase.Reading(0, uris.size), saveFailed = false) }
+        viewModelScope.launch(Safe.handler) {
+            val read = mutableListOf<Pair<ImportDraft, PickedDocument>>()
+            var firstError: IngestError? = null; var failed = 0
+            uris.forEachIndexed { i, u ->
+                _state.update { it.copy(phase = ImportPhase.Reading(i, uris.size)) }
+                try {
+                    val doc = withContext(Dispatchers.IO) { reader.read(u, fallbackName) }
+                    val prepared = withContext(Dispatchers.Default) { pipeline.prepare(doc, member, today, "", ExtractionProgress { _, _ -> }) }
+                    read += prepared.draft to doc
+                } catch (ex: IngestException) { failed++; firstError = firstError ?: ex.error } catch (ex: Exception) { failed++; firstError = firstError ?: IngestError.Unreadable }
+            }
+            if (read.isEmpty()) { _state.update { it.copy(phase = ImportPhase.Failed(firstError ?: IngestError.Unreadable)) }; return@launch }
+            val grouped = ImportDrafts.groupByDate(read)
+            if (grouped.size == 1) {
+                // everything is one test date: one record, exactly like adding pages
+                val (d, docs) = grouped.single()
+                documents.clear(); documents += docs
+                _state.update { it.copy(batchFailedFiles = failed, pageFailed = firstError.takeIf { failed > 0 }) }
+                setDraft(d)
+                routeByName(d.patientName)
+                return@launch
+            }
+            groups.clear()
+            grouped.forEach { (d, docs) -> groups += Group(d, docs, memberFor(d.patientName)) }
+            current = null
+            _state.update { it.copy(phase = ImportPhase.Batch, batchFailedFiles = failed, inBatch = false, draft = null) }
+            publishBatch()
+        }
+    }
+
+    /** The member a report belongs to: the printed name's clear match, the active member when no name is printed, else unknown. */
+    private fun memberFor(printed: String?): String? {
+        val s = _state.value
+        if (printed.isNullOrBlank()) return s.member?.id
+        return app.myhealth.domain.importing.NameMatcher.best(printed, s.members)?.member?.id
+    }
+
+    private fun publishBatch() {
+        val members = _state.value.members
+        _state.update { st ->
+            st.copy(batch = groups.mapIndexed { i, g ->
+                val d = g.draft.copy(memberId = g.memberId ?: g.draft.memberId)
+                BatchItem(i, d.reportDate, d.title, d.type, d.labName, g.docs.map { it.displayName }, d.includedCount,
+                    ImportDrafts.validate(d, today).size, members.firstOrNull { it.id == g.memberId }?.name, g.saved)
+            })
+        }
+    }
+
+    private fun openGroup(i: Int) {
+        val g = groups.getOrNull(i) ?: return
+        if (g.saved) return
+        current = i
+        documents.clear(); documents += g.docs
+        val m = _state.value.members.firstOrNull { it.id == g.memberId }
+        _state.update { it.copy(inBatch = true, member = m ?: it.member, autoMatchedName = null, showIssues = false) }
+        setDraft(g.draft.copy(memberId = m?.id ?: g.draft.memberId))
+        if (m == null) routeByName(g.draft.patientName) else _state.update { it.copy(phase = ImportPhase.Review) }
+    }
+
+    private fun backToBatch() {
+        val i = current ?: return
+        _state.value.draft?.let { d -> groups[i] = groups[i].copy(draft = d, memberId = _state.value.member?.id?.takeIf { _state.value.phase !is ImportPhase.ChooseMember } ?: groups[i].memberId) }
+        current = null
+        _state.update { it.copy(phase = ImportPhase.Batch, inBatch = false, draft = null, showIssues = false) }
+        publishBatch()
+    }
+
+    private fun saveAllReady(fallbackTitle: String) {
+        if (_state.value.phase == ImportPhase.Saving) return
+        _state.update { it.copy(phase = ImportPhase.Saving, saveFailed = false) }
+        viewModelScope.launch(Safe.handler) {
+            var failed = false
+            groups.forEachIndexed { i, g ->
+                val memberId = g.memberId ?: return@forEachIndexed
+                val d = g.draft.copy(memberId = memberId)
+                if (g.saved || d.reportDate == null || ImportDrafts.validate(d, today).isNotEmpty()) return@forEachIndexed
+                try { groups[i] = g.copy(saved = true, reportId = persist(d, g.docs, fallbackTitle)) } catch (ex: Exception) { failed = true }
+            }
+            finishBatchStep(failed)
+        }
+    }
+
+    private fun finishBatchStep(failed: Boolean) {
+        publishBatch()
+        if (groups.all { it.saved }) {
+            val last = groups.first { it.reportId != null }
+            val name = _state.value.members.firstOrNull { it.id == last.memberId }?.name.orEmpty()
+            last.memberId?.let { session.select(it) }
+            _state.update { it.copy(phase = ImportPhase.Saved(last.reportId!!, name), inBatch = false) }
+        } else _state.update { it.copy(phase = ImportPhase.Batch, inBatch = false, draft = null, saveFailed = failed) }
+    }
+
+    private suspend fun persist(d: ImportDraft, docs: List<PickedDocument>, fallbackTitle: String): String {
+        val (bundle, attachments) = ImportDrafts.toBundle(d, ids, clock.instant(), clock.zone, today, fallbackTitle)
+        val files = attachments.zip(docs).map { (a, doc) -> NewAttachment(a, doc.bytes) }
+        session.stack.records.saveImport(bundle, files)
+        return bundle.report.id
     }
 
     /** Entry point for tests and the camera path: a document already in memory. */
@@ -259,6 +392,14 @@ class ImportViewModel(
         _state.update { it.copy(phase = ImportPhase.Saving, saveFailed = false) }
         viewModelScope.launch(Safe.handler) {
             try {
+                val i = current
+                if (i != null) {
+                    // one report of a batch: mark it saved and go back to the list (or finish when it was the last)
+                    groups[i] = groups[i].copy(draft = d, memberId = d.memberId, saved = true, reportId = persist(d, documents.toList(), fallbackTitle))
+                    current = null
+                    finishBatchStep(false)
+                    return@launch
+                }
                 val (bundle, attachments) = ImportDrafts.toBundle(d, ids, clock.instant(), clock.zone, today, fallbackTitle)
                 // attachments are in the same order as the documents that produced them
                 val files = attachments.zip(documents).map { (a, doc) -> NewAttachment(a, doc.bytes) }

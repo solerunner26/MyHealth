@@ -187,6 +187,40 @@ class ImportFlowTest {
         assertEquals(11.2, runBlocking { s.stack.records.results("m1") }.first { it.analyteId == "hb" }.value, 1e-9)
     }
 
+    @Test fun filesPickedTogetherAreSplitByTestDateAndSavedAsSeparateReports() {
+        val s = session()
+        runBlocking { s.stack.members.upsert(FamilyMember("m1", "Ravi Shah", Relationship.Self)); ctx.container.preferences.setActiveMember("m1") }
+        val vm = ImportViewModel(s, DocumentReader(ctx.contentResolver), ImportPipeline(AndroidTextExtractor(ctx, failingOcr), s.stack.records), ctx.container.clock)
+        waitFor(5_000) { vm.state.value.member != null && vm.state.value.members.isNotEmpty() }
+        fun file(name: String, lines: List<String>) = android.net.Uri.fromFile(java.io.File(ctx.cacheDir, name).apply { writeBytes(pdf(lines)) })
+        val a = file("nov_a.pdf", listOf("Sunrise Lab", "Patient Name : Ravi Shah", "Date: 16/11/2024", "LDL Cholesterol 165 mg/dL 0 - 100"))
+        val b = file("jul.pdf", listOf("City Lab", "Patient Name : Ravi Shah", "Date: 22/07/2024", "Haemoglobin 13.1 g/dL 13.0 - 17.0"))
+        val c = file("nov_b.pdf", listOf("Sunrise Lab page 2", "Patient Name : Ravi Shah", "Date: 16/11/2024", "HbA1c 5.4 % 4.0 - 5.6"))
+        vm.onEvent(ImportEvent.PickUris(listOf(a, b, c), "Report"))
+        waitFor(30_000) { vm.state.value.phase == ImportPhase.Batch }
+        val batch = vm.state.value.batch
+        assertEquals(2, batch.size)
+        assertEquals(java.time.LocalDate.of(2024, 11, 16), batch[0].date); assertEquals(2, batch[0].files.size) // file:// URIs have no display name in tests
+        assertEquals(java.time.LocalDate.of(2024, 7, 22), batch[1].date); assertEquals(1, batch[1].files.size)
+        assertTrue(batch.all { it.memberName == "Ravi Shah" })
+        // review one, go back (edits kept), then save the rest together
+        vm.onEvent(ImportEvent.ReviewGroup(1))
+        waitFor(5_000) { vm.state.value.phase == ImportPhase.Review && vm.state.value.inBatch }
+        vm.onEvent(ImportEvent.SetTitle("Blood count July"))
+        vm.onEvent(ImportEvent.BackToBatch)
+        waitFor(5_000) { vm.state.value.phase == ImportPhase.Batch }
+        assertEquals("Blood count July", vm.state.value.batch[1].title)
+        vm.onEvent(ImportEvent.SaveAllReady("Lab report"))
+        waitFor(15_000) { vm.state.value.phase is ImportPhase.Saved }
+        val reports = runBlocking { s.stack.records.observeReports("m1").first() }.sortedBy { it.reportDate }
+        assertEquals(listOf(java.time.LocalDate.of(2024, 7, 22), java.time.LocalDate.of(2024, 11, 16)), reports.map { it.reportDate })
+        assertEquals(listOf(1, 2), reports.map { it.attachments.size })
+        assertEquals("Blood count July", reports[0].title)
+        val results = runBlocking { s.stack.records.results("m1") }
+        assertEquals(setOf("hb"), results.filter { it.reportId == reports[0].id }.map { it.analyteId }.toSet())
+        assertEquals(setOf("ldl", "hba1c"), results.filter { it.reportId == reports[1].id }.map { it.analyteId }.toSet())
+    }
+
     @Test fun savedReportIsVisibleInRecordsList() {
         val s = session()
         runBlocking {

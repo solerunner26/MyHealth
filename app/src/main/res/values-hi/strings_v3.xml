@@ -3,7 +3,37 @@
     <string name="home_action_report">रिपोर्ट जोड़ें</string>
     <string name="dash_log_short">दर्ज करें</string>
     <string name="join_comma">%1$s, %2$s</string>
+    <string name="batch_title">मिली रिपोर्ट</string>
+    <string name="batch_banner_title">जाँच की तारीख़ से छाँटी गई</string>
+    <string name="batch_banner_body">एक ही जाँच-तारीख़ की फ़ाइलें एक रिपोर्ट बनीं। अलग तारीख़ों की रिपोर्ट अलग रहती हैं।</string>
+    <string name="batch_no_date">तारीख़ नहीं मिली</string>
+    <string name="batch_ready">तैयार</string>
+    <string name="batch_saved">सहेजी गई</string>
+    <string name="batch_choose">चुनें कि यह किसकी है</string>
+    <string name="batch_for">%1$s के लिए</string>
+    <string name="batch_review">जाँचें</string>
+    <string name="batch_undated_note">बिना तारीख़ वाली फ़ाइल अलग रिपोर्ट रहती है; जाँचते समय तारीख़ डालें।</string>
     <string name="home_action_visit">विज़िट तैयारी</string>
+    <plurals name="batch_values">
+        <item quantity="one">%1$d मान</item>
+        <item quantity="other">%1$d मान</item>
+    </plurals>
+    <plurals name="batch_to_check">
+        <item quantity="one">%1$d जाँचना है</item>
+        <item quantity="other">%1$d जाँचने हैं</item>
+    </plurals>
+    <plurals name="batch_save_all">
+        <item quantity="one">%1$d रिपोर्ट सहेजें</item>
+        <item quantity="other">%1$d रिपोर्ट सहेजें</item>
+    </plurals>
+    <plurals name="batch_failed">
+        <item quantity="one">%1$d फ़ाइल पढ़ी नहीं जा सकी</item>
+        <item quantity="other">%1$d फ़ाइलें पढ़ी नहीं जा सकीं</item>
+    </plurals>
+    <plurals name="batch_files">
+        <item quantity="one">%1$d फ़ाइल</item>
+        <item quantity="other">%1$d फ़ाइलें</item>
+    </plurals>
     <plurals name="records_out_of_range">
         <item quantity="one">%1$d सीमा से बाहर</item>
         <item quantity="other">%1$d सीमा से बाहर</item>
