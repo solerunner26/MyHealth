@@ -17,6 +17,8 @@ import app.myhealth.domain.model.AttachmentKind
 import app.myhealth.domain.model.FamilyMember
 import app.myhealth.domain.model.Relationship
 import app.myhealth.domain.model.Sex
+import app.myhealth.domain.analytics.RangeStatus
+import app.myhealth.domain.analytics.TrendEngine
 import app.myhealth.ingest.AndroidTextExtractor
 import app.myhealth.ingest.DocumentReader
 import app.myhealth.ingest.ImportPipeline
@@ -121,9 +123,9 @@ class ImportFlowTest {
         assertEquals(6.2, results.first { it.analyteId == "hba1c" }.value, 1e-9)
         assertEquals("13.0 - 17.0", results.first { it.analyteId == "hb" }.printedRange)
         // visible in trends: the saved value is the latest point of the HbA1c series, with the printed band
-        val trend = app.myhealth.domain.analytics.TrendEngine.trend(results, "hba1c", LocalDate.now(), 5)!!
+        val trend = TrendEngine.trend(results, "hba1c", LocalDate.now(), 5)!!
         assertEquals(6.2, trend.latest.value, 1e-9); assertEquals(5.6, trend.bandHigh!!, 1e-9)
-        assertEquals(app.myhealth.domain.analytics.RangeStatus.High, trend.latest.status)
+        assertEquals(RangeStatus.High, trend.latest.status)
         val report = runBlocking { s.stack.records.observeReports("m1").first() }.single()
         assertEquals("SUNRISE DIAGNOSTIC LABORATORY", report.labName)
         // the original PDF is stored encrypted and decrypts byte-for-byte
