@@ -113,7 +113,7 @@ fun ReportDetailScreen(
 ) {
     var confirm by rememberSaveable { mutableStateOf(false) }
     val sp = MyHealthTheme.spacing
-    Column(Modifier.fillMaxSize().background(MyHealthTheme.colors.background).testTag("reportDetail")) {
+    Column(Modifier.fillMaxSize().testTag("reportDetail")) {
         val r = state.report
         MyHealthTopBar(r?.title ?: stringResource(R.string.records_tab_reports), subtitle = r?.let { stringResource(R.string.join_dot, label(it.type), formatDate(it.reportDate)) },
             onBack = onBack, backLabel = stringResource(R.string.action_back)) {
@@ -202,7 +202,7 @@ class AttachmentViewerViewModel(private val session: Session, private val attach
 
 @Composable
 fun AttachmentViewerScreen(state: AttachmentViewerViewModel.State, title: String, onBack: () -> Unit) {
-    Column(Modifier.fillMaxSize().background(MyHealthTheme.colors.background).testTag("viewer")) {
+    Column(Modifier.fillMaxSize().testTag("viewer")) {
         MyHealthTopBar(title, onBack = onBack, backLabel = stringResource(R.string.action_back))
         when {
             state.loading -> MyHealthLoadingState(stringResource(R.string.viewer_loading))

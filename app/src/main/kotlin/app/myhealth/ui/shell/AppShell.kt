@@ -36,7 +36,7 @@ fun topLevelItems(): List<NavItem> = listOf(
 @Composable
 fun AdaptiveNavScaffold(selected: TopLevel, onSelect: (TopLevel) -> Unit, content: @Composable () -> Unit) {
     val items = topLevelItems()
-    val bg = Modifier.fillMaxSize().background(MyHealthTheme.colors.background)
+    val bg = Modifier.fillMaxSize()
     androidx.compose.foundation.layout.BoxWithConstraints(Modifier.fillMaxSize()) {
     if (maxWidth.value < COMPACT_MAX_WIDTH_DP) {
         Column(bg) {

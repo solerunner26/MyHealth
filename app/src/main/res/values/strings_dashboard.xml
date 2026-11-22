@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="focus_steady_up_title">%1$s has gone up in each of the last %2$d results</string>
+    <string name="focus_steady_down_title">%1$s has gone down in each of the last %2$d results</string>
+    <string name="focus_steady_body">%1$s (change %2$s). %3$s</string>
+    <string name="focus_steady_in_range">It is still within the normal range, but the direction is worth acting on early.</string>
+    <string name="rule_steady">Rule: each of the last results moved further in the less healthy direction (by more than 1%% each time).</string>
+    <string name="guide_sugar">To keep sugar in check: regular activity, fewer sweets and refined carbs, and ask your doctor how often to test.</string>
+    <string name="guide_lipids">Blood fats respond to diet, activity and weight; ask your doctor whether more is needed.</string>
+    <string name="guide_kidney">Drink enough water unless told otherwise, and review painkillers and other medicines with your doctor.</string>
+    <string name="guide_liver">Limit alcohol and fatty food, and tell your doctor about all medicines and supplements.</string>
+    <string name="guide_thyroid">Thyroid levels change slowly; your doctor may want to re-check or adjust treatment.</string>
+    <string name="guide_blood">Blood counts change with diet, iron, infections and medicines; discuss this with your doctor.</string>
+    <string name="guide_vitamins">Sunlight, food and supplements affect vitamin levels; ask your doctor about the right dose.</string>
+    <string name="guide_bp">Less salt, daily activity, good sleep and calm help blood pressure; measure at the same time each day.</string>
+    <string name="guide_weight">Small daily habits such as portions, walking and sleep make the biggest difference to weight.</string>
+    <string name="guide_spo2">Oxygen readings that keep falling should be discussed with a doctor soon.</string>
+    <string name="guide_general">Discuss this direction with your doctor at your next visit.</string>
+    <string name="dash_greeting_morning">Good morning</string>
+    <string name="dash_greeting_afternoon">Good afternoon</string>
+    <string name="dash_greeting_evening">Good evening</string>
+    <string name="dash_swipe_hint">Swipe down on the photo to switch profile</string>
+    <string name="dash_switch_cd">%1$s. Swipe down to switch to the next family member, or double-tap to choose.</string>
+    <string name="dash_vitals">Latest vitals</string>
+    <string name="dash_tests">Latest tests</string>
+    <string name="dash_since">%1$s since %2$s</string>
+    <string name="dash_no_previous">First reading</string>
+    <string name="dash_sys">SYS</string>
+    <string name="dash_dia">DIA</string>
+    <string name="dash_bmi">BMI %1$s</string>
+    <string name="dash_tile_cd">%1$s: %2$s, %3$s, %4$s.</string>
+    <string name="dash_all_tests">See all test results</string>
+    <string name="dash_score_short">%1$d%% data</string>
+</resources>

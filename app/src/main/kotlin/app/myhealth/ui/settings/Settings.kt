@@ -3,6 +3,16 @@ package app.myhealth.ui.settings
 import android.app.Activity
 import android.os.Build
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.unit.dp
+import app.myhealth.core.designsystem.tokens.toColors
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -50,10 +60,18 @@ fun SettingsScreen(onBack: () -> Unit, onErased: () -> Unit) {
     var pinSetup by rememberSaveable { mutableStateOf(false) }
     var confirmErase by rememberSaveable { mutableStateOf(false) }
     val chooser = stringResource(R.string.share_chooser)
-    Column(Modifier.fillMaxSize().background(MyHealthTheme.colors.background).testTag("settings")) {
+    Column(Modifier.fillMaxSize().testTag("settings")) {
         MyHealthTopBar(stringResource(R.string.more_settings), onBack = onBack, backLabel = stringResource(R.string.action_back))
         Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).navigationBarsPadding().padding(horizontal = sp.gutter), verticalArrangement = Arrangement.spacedBy(sp.sm)) {
             MyHealthSectionHeader(stringResource(R.string.settings_appearance))
+            Text(stringResource(R.string.settings_color_theme), style = MyHealthTheme.typography.label, color = MyHealthTheme.colors.textSecondary)
+            app.myhealth.core.designsystem.tokens.MyHealthThemeId.entries.forEach { t ->
+                ThemeCard(t, selected = t == prefs.colorTheme, dark = MyHealthTheme.colors.isDark) {
+                    c.preferences.setColorTheme(t)
+                    app.myhealth.core.LauncherIcons.apply(context, t)
+                }
+            }
+            Text(stringResource(R.string.settings_color_theme_note), style = MyHealthTheme.typography.caption, color = MyHealthTheme.colors.textSecondary)
             Text(stringResource(R.string.settings_theme), style = MyHealthTheme.typography.label, color = MyHealthTheme.colors.textSecondary)
             MyHealthChipRow(ThemeMode.entries, prefs.theme, { stringResource(when (it) { ThemeMode.System -> R.string.theme_system; ThemeMode.Light -> R.string.theme_light; ThemeMode.Dark -> R.string.theme_dark }) },
                 { c.preferences.setTheme(it) }, Modifier.testTag("themeChips"))
@@ -98,4 +116,34 @@ fun SettingsScreen(onBack: () -> Unit, onErased: () -> Unit) {
     if (pinSetup) PinSetupDialog(onDone = { pin -> c.lock.setPin(pin); pinSetup = false }, onCancel = { pinSetup = false })
     if (confirmErase) MyHealthDialog(stringResource(R.string.storage_erase_title), stringResource(R.string.storage_erase_body), stringResource(R.string.storage_erase_confirm),
         { confirmErase = false; app.myhealth.ui.common.SecureErase.run(context, onErased) }, stringResource(R.string.action_cancel), { confirmErase = false }, icon = MyHealthIcons.Erase)
+}
+
+/** Live preview of a theme: its own colours, logo, name and mood line. Selection = border weight + check + text. */
+@Composable
+private fun ThemeCard(t: app.myhealth.core.designsystem.tokens.MyHealthThemeId, selected: Boolean, dark: Boolean, onClick: () -> Unit) {
+    val p = app.myhealth.core.designsystem.tokens.MyHealthColorRoles.roles(t, dark).toColors(dark, t)
+    val shape = MyHealthTheme.radii.lgShape
+    val selectedCd = stringResource(R.string.theme_selected, stringResource(app.myhealth.ui.common.Branding.name(t)))
+    androidx.compose.foundation.layout.Row(
+        Modifier.fillMaxWidth().clip(shape)
+            .background(androidx.compose.ui.graphics.Brush.linearGradient(listOf(p.background, p.accentSoft, p.backgroundAlt)))
+            .border(if (selected) 2.5.dp else 1.dp, if (selected) p.accent else p.outline, shape)
+            .selectable(selected = selected, role = androidx.compose.ui.semantics.Role.RadioButton, onClick = onClick)
+            .then(if (selected) Modifier.semantics { contentDescription = selectedCd } else Modifier)
+            .padding(MyHealthTheme.spacing.md).testTag("theme_${t.name}"),
+        verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
+    ) {
+        app.myhealth.ui.common.MyHealthLogo(52.dp, theme = t, alive = selected)
+        androidx.compose.foundation.layout.Spacer(Modifier.width(MyHealthTheme.spacing.md))
+        Column(Modifier.weight(1f)) {
+            Text(stringResource(app.myhealth.ui.common.Branding.name(t)), style = MyHealthTheme.typography.subtitle, color = p.textPrimary)
+            Text(stringResource(app.myhealth.ui.common.Branding.description(t)), style = MyHealthTheme.typography.caption, color = p.textSecondary)
+            androidx.compose.foundation.layout.Row(Modifier.padding(top = 6.dp), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                listOf(p.accent, p.accentBright, p.accentContainer, p.surfaceRaised).forEach { sw ->
+                    androidx.compose.foundation.layout.Box(Modifier.size(16.dp).clip(androidx.compose.foundation.shape.CircleShape).background(sw).border(1.dp, p.outline, androidx.compose.foundation.shape.CircleShape))
+                }
+            }
+        }
+        if (selected) androidx.compose.material3.Icon(MyHealthIcons.StatusNormal, null, tint = p.accent, modifier = Modifier.size(28.dp))
+    }
 }

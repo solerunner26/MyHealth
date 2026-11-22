@@ -122,7 +122,7 @@ fun BackupScreen(onBack: () -> Unit) {
     val create = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/octet-stream")) { uri -> if (uri != null) { restoring = false; vm.export(uri, pw.toCharArray()) } }
     val open = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri -> if (uri != null) { restoring = true; vm.restore(uri, restorePw.toCharArray()) } }
     LaunchedEffect(phase) { if (phase is BackupPhase.Exported || phase is BackupPhase.Restored) { pw = ""; pw2 = ""; restorePw = "" } }
-    Column(Modifier.fillMaxSize().background(MyHealthTheme.colors.background).testTag("backup")) {
+    Column(Modifier.fillMaxSize().testTag("backup")) {
         MyHealthTopBar(stringResource(R.string.backup_title), onBack = onBack, backLabel = stringResource(R.string.action_back))
         Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).imePadding().navigationBarsPadding().padding(horizontal = sp.gutter), verticalArrangement = Arrangement.spacedBy(sp.md)) {
             MyHealthInfoBanner(stringResource(R.string.backup_intro), icon = MyHealthIcons.Lock)
@@ -210,7 +210,7 @@ fun HealthConnectScreen(onBack: () -> Unit, sourceOverride: HealthSource? = null
     val request = rememberLauncherForActivityResult(androidx.health.connect.client.PermissionController.createRequestPermissionResultContract()) { vm.onPermissionsResult(it) }
     val names = mapOf(HcData.Steps to R.string.hc_data_steps, HcData.HeartRate to R.string.hc_data_hr, HcData.RestingHeartRate to R.string.hc_data_rhr,
         HcData.Sleep to R.string.hc_data_sleep, HcData.Weight to R.string.hc_data_weight).mapValues { stringResource(it.value) }
-    Column(Modifier.fillMaxSize().background(MyHealthTheme.colors.background).testTag("healthConnect")) {
+    Column(Modifier.fillMaxSize().testTag("healthConnect")) {
         MyHealthTopBar(stringResource(R.string.hc_title), onBack = onBack, backLabel = stringResource(R.string.action_back))
         when (s.status) {
             HcStatus.NotInstalled, HcStatus.UpdateRequired, HcStatus.Unsupported -> {

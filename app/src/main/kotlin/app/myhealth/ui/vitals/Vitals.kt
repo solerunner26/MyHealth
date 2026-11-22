@@ -148,7 +148,7 @@ fun VitalsSection(state: VitalsState, onAdd: () -> Unit, onOpen: (VitalType) -> 
 fun VitalDetailScreen(state: VitalsState, type: VitalType, zone: ZoneId, onBack: () -> Unit, onAdd: () -> Unit, onDelete: (String) -> Unit) {
     val sp = MyHealthTheme.spacing
     var confirm by rememberSaveable { mutableStateOf<String?>(null) }
-    Column(Modifier.fillMaxSize().background(MyHealthTheme.colors.background).testTag("vitalDetail")) {
+    Column(Modifier.fillMaxSize().testTag("vitalDetail")) {
         MyHealthTopBar(label(type), onBack = onBack, backLabel = stringResource(R.string.action_back)) { MyHealthIconButton(MyHealthIcons.Add, stringResource(R.string.vitals_add), onAdd) }
         if (state.loading) { MyHealthLoadingState(stringResource(R.string.state_loading)); return@Column }
         val series = state.series(type)
@@ -224,7 +224,7 @@ fun VitalEditorScreen(state: VitalEditorState, onEdit: ((VitalForm) -> VitalForm
     fun err(k: String) = state.errors[k]?.let { e -> when (e) {
         VitalEntryError.Missing -> R.string.vital_err_missing; VitalEntryError.NotANumber -> R.string.vital_err_number; VitalEntryError.OutOfBounds -> R.string.vital_err_bounds
         VitalEntryError.DiastolicNotBelowSystolic -> R.string.vital_err_diastolic; VitalEntryError.CustomNameMissing -> R.string.vital_err_name } }
-    Column(Modifier.fillMaxSize().background(MyHealthTheme.colors.background).testTag("vitalEditor")) {
+    Column(Modifier.fillMaxSize().testTag("vitalEditor")) {
         MyHealthTopBar(stringResource(R.string.vital_editor_title), onBack = onBack, backLabel = stringResource(R.string.action_back))
         Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).imePadding().navigationBarsPadding().padding(horizontal = sp.gutter), verticalArrangement = Arrangement.spacedBy(sp.md)) {
             Text(stringResource(R.string.vital_type), style = MyHealthTheme.typography.label, color = MyHealthTheme.colors.textSecondary)

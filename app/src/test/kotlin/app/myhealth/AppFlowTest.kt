@@ -10,6 +10,8 @@ import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.performTextReplacement
+import androidx.compose.ui.test.performTouchInput
+import androidx.compose.ui.test.swipeDown
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import app.myhealth.domain.model.FamilyMember
@@ -67,7 +69,7 @@ class AppFlowTest {
         seed(self.id)
         waitTag("scoreCard")
         // focus: LDL 65 % above range → shown on the dashboard with its rationale
-        waitText(str(R.string.focus_high_title, str(R.string.analyte_ldl)))
+        rule.onNodeWithTag("home").performScrollToNode(hasText(str(R.string.focus_high_title, str(R.string.analyte_ldl))))
         rule.onNodeWithTag("home").performScrollToNode(hasTestTag("tile_ldl"))
         rule.onNodeWithTag("tile_ldl").performClick()
 
@@ -100,10 +102,14 @@ class AppFlowTest {
         // Meera is now active and has no records: her dashboard is empty, Ravi's data is not shown
         waitTag("homeEmpty")
         rule.onNodeWithText(str(R.string.home_empty_title, "Meera")).assertExists()
-        // switch back to Ravi
-        rule.onNodeWithTag("memberSwitcher").performClick()
-        rule.onNodeWithTag("member_${self.id}").performClick()
+        // swipe DOWN on the profile photo → next member (Ravi) with his data
+        rule.onNodeWithTag("swipeAvatar").performTouchInput { swipeDown(startY = top, endY = top + 400f, durationMillis = 300) }
         waitTag("scoreCard")
+        rule.onNodeWithText("Ravi").assertExists()
+        // tap the photo → picker → choose Meera again
+        rule.onNodeWithTag("swipeAvatar").performClick()
+        rule.onNodeWithTag("member_${runBlocking { ctx.container.stackOrNull!!.members.all() }.first { it.name == "Meera" }.id}").performClick()
+        waitTag("homeEmpty")
     }
 }
 

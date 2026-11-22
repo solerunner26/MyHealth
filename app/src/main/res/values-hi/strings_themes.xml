@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="settings_color_theme">रंग थीम</string>
+    <string name="settings_color_theme_note">होम स्क्रीन पर ऐप का आइकन भी उसी हिसाब से बदलता है। कुछ लॉन्चर में इसमें थोड़ा समय लगता है।</string>
+    <string name="theme_aurora">ऑरोरा</string>
+    <string name="theme_aurora_desc">गहरे रात के आसमान पर चमकती पुदीना रोशनी</string>
+    <string name="theme_crystal">क्रिस्टल</string>
+    <string name="theme_crystal_desc">हल्की चमक वाला धुंधला बैंगनी काँच</string>
+    <string name="theme_botanical">बॉटनिकल</string>
+    <string name="theme_botanical_desc">गर्म काग़ज़ पर शांत हरी पत्तियाँ</string>
+    <string name="theme_precision">प्रिसिज़न</string>
+    <string name="theme_precision_desc">लैब उपकरण जैसा साफ़ बिजली-नीला</string>
+    <string name="theme_pulse">पल्स</string>
+    <string name="theme_pulse_desc">हल्की चमक के साथ नियॉन धड़कन गुलाबी</string>
+    <string name="theme_selected">%1$s थीम, चुनी हुई</string>
+    <string name="logo_cd">MyHealth लोगो</string>
+</resources>

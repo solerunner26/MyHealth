@@ -121,9 +121,35 @@ fun focusText(item: FocusItem): FocusText = when (item) {
     }
     is FocusItem.FollowUp -> FocusText(stringResource(R.string.followup_title, item.name),
         stringResource(if (item.daysUntil < 0) R.string.followup_overdue_body else R.string.followup_soon_body, formatDate(item.dueDate)))
+    is FocusItem.SteadyTrend -> {
+        val name = item.analyteId?.let { analyteName(it) } ?: label(item.vitalType!!)
+        val seq = item.evidence.joinToString(" → ") { e -> item.analyteId?.let { ValueFormat.withComparator(e.value, AnalyteCatalogue.byId(it)?.decimals ?: 1, Comparator.Eq) }
+            ?: vitalValue(item.vitalType!!, e.value, e.value2, "") }
+        val unit = item.analyteId?.let { AnalyteCatalogue.byId(it)?.canonicalUnit?.takeIf { u -> u != "ratio" } } ?: item.vitalType?.canonicalUnit.orEmpty()
+        val change = ValueFormat.signed(item.totalChange, item.analyteId?.let { AnalyteCatalogue.byId(it)?.decimals } ?: 1) + (if (unit.isBlank()) "" else " $unit")
+        val guide = stringResource(guidance(item.analyteId, item.vitalType))
+        FocusText(
+            stringResource(if (item.rising) R.string.focus_steady_up_title else R.string.focus_steady_down_title, name, item.steps + 1),
+            stringResource(R.string.focus_steady_body, seq, change, guide) + if (item.inRange) " " + stringResource(R.string.focus_steady_in_range) else "",
+        )
+    }
     is FocusItem.Wearable -> when (item.kind) {
         FocusItem.WearableKind.StepsDrop -> FocusText(stringResource(R.string.wear_steps_title), stringResource(R.string.wear_steps_body, ValueFormat.number(item.recent, 0), ValueFormat.number(item.baseline, 0)))
         FocusItem.WearableKind.RestingHeartRateRise -> FocusText(stringResource(R.string.wear_rhr_title), stringResource(R.string.wear_rhr_body, ValueFormat.number(item.recent, 0), ValueFormat.number(item.baseline, 0)))
         FocusItem.WearableKind.ShortSleep -> FocusText(stringResource(R.string.wear_sleep_title), stringResource(R.string.wear_sleep_body, ValueFormat.number(item.recent / 60, 1)))
     }
+}
+
+/** Gentle, non-diagnostic next-step wording by topic. */
+fun guidance(analyteId: String?, vital: VitalType?): Int = when {
+    vital == VitalType.BloodPressure -> R.string.guide_bp
+    vital == VitalType.Weight || vital == VitalType.Bmi -> R.string.guide_weight
+    vital == VitalType.BloodGlucose -> R.string.guide_sugar
+    vital == VitalType.SpO2 -> R.string.guide_spo2
+    analyteId != null -> when (AnalyteCatalogue.byId(analyteId)?.panel) {
+        Panel.Diabetes -> R.string.guide_sugar; Panel.Lipids -> R.string.guide_lipids; Panel.Kidney, Panel.Electrolytes -> R.string.guide_kidney
+        Panel.Liver -> R.string.guide_liver; Panel.Thyroid -> R.string.guide_thyroid; Panel.Blood, Panel.Iron -> R.string.guide_blood
+        Panel.Vitamins -> R.string.guide_vitamins; else -> R.string.guide_general
+    }
+    else -> R.string.guide_general
 }

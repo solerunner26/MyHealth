@@ -42,7 +42,8 @@ class MainActivity : FragmentActivity() {
             val storage by c.storage.collectAsStateWithLifecycle()
             val locked by c.lock.locked.collectAsStateWithLifecycle()
             LaunchedEffect(prefs.blockScreenshots) { applySecureFlag(prefs.blockScreenshots) }
-            MyHealthTheme(prefs.theme) {
+            MyHealthTheme(prefs.theme, prefs.colorTheme) {
+                app.myhealth.core.designsystem.components.MyHealthAmbientBackground {
                 // The lock is an opaque overlay: the app underneath keeps its navigation and unsaved input, but is
                 // hidden from the screen and from accessibility services while locked.
                 Box(Modifier.fillMaxSize()) {
@@ -53,6 +54,7 @@ class MainActivity : FragmentActivity() {
                         }
                     }
                     if (locked) LockScreen(c.lock, prefs.biometricEnabled, onForgot = { SecureErase.run(this@MainActivity) })
+                }
                 }
             }
         }

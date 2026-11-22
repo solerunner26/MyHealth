@@ -55,7 +55,17 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
     buildFeatures { compose = true }
-    testOptions { unitTests.isIncludeAndroidResources = true }
+    testOptions {
+        unitTests.isIncludeAndroidResources = true
+        unitTests.all { t ->
+            // Opt-in design screenshots: -Pscreenshots [-Pthemes=Aurora,Crystal] [-Pmodes=Dark,Light]
+            if (project.hasProperty("screenshots")) {
+                t.systemProperty("screenshots", "1")
+                t.systemProperty("screenshotDir", layout.buildDirectory.dir("screenshots").get().asFile.absolutePath)
+                listOf("themes", "modes").forEach { k -> project.findProperty(k)?.let { v -> t.systemProperty(k, v.toString()) } }
+            }
+        }
+    }
     lint {
         abortOnError = true
         checkReleaseBuilds = true

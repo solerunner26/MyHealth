@@ -1,6 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="window_background">#FFFAFAFA</color>
-    <color name="brand_accent">#FF1D7C72</color>
-    <color name="brand_on_accent">#FFFFFFFF</color>
+    <color name="window_background">#FFF2F4F4</color>
 </resources>

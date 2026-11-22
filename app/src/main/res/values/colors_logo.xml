@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Launcher/logo colours: each theme uses only its own accent hue. -->
+<resources>
+    <color name="logo_aurora_deep">#FF0F6151</color>
+    <color name="logo_aurora_mid">#FF10A889</color>
+    <color name="logo_aurora_bright">#FF23F6CC</color>
+    <color name="logo_crystal_deep">#FF201060</color>
+    <color name="logo_crystal_mid">#FF2F11A6</color>
+    <color name="logo_crystal_bright">#FF4E25F4</color>
+    <color name="logo_botanical_deep">#FF274938</color>
+    <color name="logo_botanical_mid">#FF3C7B5C</color>
+    <color name="logo_botanical_bright">#FF61B88C</color>
+    <color name="logo_precision_deep">#FF0D3263</color>
+    <color name="logo_precision_mid">#FF0D51AA</color>
+    <color name="logo_precision_bright">#FF1F7EF9</color>
+    <color name="logo_pulse_deep">#FF601138</color>
+    <color name="logo_pulse_mid">#FFA5135C</color>
+    <color name="logo_pulse_bright">#FFF1278C</color>
+</resources>

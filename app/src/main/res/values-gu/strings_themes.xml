@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="settings_color_theme">રંગ થીમ</string>
+    <string name="settings_color_theme_note">હોમ સ્ક્રીન પર એપનો આઇકન પણ તે મુજબ બદલાય છે. કેટલાક લૉન્ચરમાં તેમાં થોડો સમય લાગે છે.</string>
+    <string name="theme_aurora">ઓરોરા</string>
+    <string name="theme_aurora_desc">ઘેરા રાત્રિ આકાશ પર ચમકતો ફુદીના રંગનો પ્રકાશ</string>
+    <string name="theme_crystal">ક્રિસ્ટલ</string>
+    <string name="theme_crystal_desc">હળવી ચમકવાળો ધૂંધળો જાંબલી કાચ</string>
+    <string name="theme_botanical">બોટનિકલ</string>
+    <string name="theme_botanical_desc">ગરમ કાગળ પર શાંત લીલાં પાન</string>
+    <string name="theme_precision">પ્રિસિઝન</string>
+    <string name="theme_precision_desc">લેબ સાધન જેવો સ્પષ્ટ વીજળી-વાદળી</string>
+    <string name="theme_pulse">પલ્સ</string>
+    <string name="theme_pulse_desc">હળવી ચમક સાથે નિયોન ધબકાર ગુલાબી</string>
+    <string name="theme_selected">%1$s થીમ, પસંદ કરેલી</string>
+    <string name="logo_cd">MyHealth લોગો</string>
+</resources>

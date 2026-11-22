@@ -21,7 +21,7 @@ data class MyHealthSpacing(
 
 @Immutable
 data class MyHealthRadii(
-    val sm: Dp = 8.dp, val md: Dp = 12.dp, val lg: Dp = 16.dp, val xl: Dp = 24.dp, val pill: Dp = 999.dp,
+    val sm: Dp = 10.dp, val md: Dp = 14.dp, val lg: Dp = 24.dp, val xl: Dp = 28.dp, val pill: Dp = 999.dp,
 ) {
     val smShape get() = RoundedCornerShape(sm)
     val mdShape get() = RoundedCornerShape(md)
@@ -36,6 +36,14 @@ data class MyHealthMotion(
     val mediumMillis: Int = 240,
     val longMillis: Int = 400,
     val shimmerMillis: Int = 1200,
+    /** Gauge fill / marker travel on first appearance. */
+    val gaugeMillis: Int = 1100,
+    /** Ambient aurora drift period (very slow, calming). */
+    val ambientMillis: Int = 18_000,
+    /** Soft "breathing" glow period on live tiles. */
+    val breatheMillis: Int = 3_200,
+    /** Delay between staggered list items appearing. */
+    val staggerMillis: Int = 45,
     val standard: Easing = CubicBezierEasing(0.2f, 0f, 0f, 1f),
     val emphasized: Easing = CubicBezierEasing(0.3f, 0f, 0f, 1f),
 )

@@ -3,6 +3,7 @@ package app.myhealth.core
 import android.content.Context
 import android.content.SharedPreferences
 import app.myhealth.core.designsystem.theme.ThemeMode
+import app.myhealth.core.designsystem.tokens.MyHealthThemeId
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -16,6 +17,7 @@ class Preferences(context: Context) {
 
     data class Snapshot(
         val theme: ThemeMode = ThemeMode.System,
+        val colorTheme: MyHealthThemeId = MyHealthThemeId.Aurora,
         val language: String = "", // "" = follow system
         val lockEnabled: Boolean = false,
         val biometricEnabled: Boolean = false,
@@ -31,6 +33,7 @@ class Preferences(context: Context) {
 
     private fun read() = Snapshot(
         theme = runCatching { ThemeMode.valueOf(prefs.getString("theme", ThemeMode.System.name)!!) }.getOrDefault(ThemeMode.System),
+        colorTheme = runCatching { MyHealthThemeId.valueOf(prefs.getString("color_theme", MyHealthThemeId.Aurora.name)!!) }.getOrDefault(MyHealthThemeId.Aurora),
         language = prefs.getString("language", "") ?: "",
         lockEnabled = prefs.getBoolean("lock", false),
         biometricEnabled = prefs.getBoolean("biometric", false),
@@ -49,6 +52,7 @@ class Preferences(context: Context) {
     }
 
     fun setTheme(t: ThemeMode) = update { putString("theme", t.name) }
+    fun setColorTheme(t: MyHealthThemeId) = update { putString("color_theme", t.name) }
     fun setLanguage(tag: String) = update { putString("language", tag) }
     fun setLock(enabled: Boolean) = update { putBoolean("lock", enabled); if (!enabled) { putBoolean("biometric", false); remove("pin_hash"); remove("pin_salt") } }
     fun setOnboardedMember(id: String) = update { putBoolean("onboarded", true); putString("active_member", id) }

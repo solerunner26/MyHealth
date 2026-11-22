@@ -1,7 +1,13 @@
 package app.myhealth.ui.home
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import app.myhealth.core.designsystem.components.appear
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -53,10 +59,19 @@ import kotlinx.coroutines.flow.stateIn
 data class HomeState(
     val loading: Boolean = true,
     val member: FamilyMember? = null,
+    /** Latest and previous reading per vital type, in display order. */
+    val vitals: List<Triple<app.myhealth.domain.model.VitalType, app.myhealth.domain.model.Vital, app.myhealth.domain.model.Vital?>> = emptyList(),
+    val allTests: List<AnalyteTrend> = emptyList(),
     val hasData: Boolean = false,
     val score: HealthScore? = null,
     val focus: List<FocusItem> = emptyList(),
     val latest: List<AnalyteTrend> = emptyList(),
+)
+
+val VITAL_ORDER = listOf(
+    app.myhealth.domain.model.VitalType.BloodPressure, app.myhealth.domain.model.VitalType.Pulse, app.myhealth.domain.model.VitalType.SpO2,
+    app.myhealth.domain.model.VitalType.Weight, app.myhealth.domain.model.VitalType.Bmi, app.myhealth.domain.model.VitalType.Temperature,
+    app.myhealth.domain.model.VitalType.BloodGlucose, app.myhealth.domain.model.VitalType.RespiratoryRate,
 )
 
 class HomeViewModel(session: Session) : ViewModel() {
@@ -69,6 +84,11 @@ class HomeViewModel(session: Session) : ViewModel() {
             score = HealthScoreCalculator.calculate(inputs),
             focus = FocusEngine.evaluate(inputs),
             // abnormal first, then key markers, then most recent
+            vitals = VITAL_ORDER.mapNotNull { t ->
+                val list = s.vitals.filter { it.type == t }.sortedByDescending { it.measuredAt }
+                list.firstOrNull()?.let { Triple(t, it, list.getOrNull(1)) }
+            },
+            allTests = trends.sortedWith(compareByDescending<AnalyteTrend> { it.latest.status.isAbnormal }.thenByDescending { it.analyte.keyMarker }.thenByDescending { it.latest.date }),
             latest = trends.sortedWith(compareByDescending<AnalyteTrend> { it.latest.status.isAbnormal }.thenByDescending { it.analyte.keyMarker }.thenByDescending { it.latest.date }).take(6),
         )
     }.flowOn(kotlinx.coroutines.Dispatchers.Default).stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), HomeState())
@@ -82,17 +102,45 @@ fun HomeContent(
     onAddMedicine: () -> Unit,
     onOpenTrend: (String) -> Unit,
     onOpenInsights: () -> Unit,
+    onOpenVital: (app.myhealth.domain.model.VitalType) -> Unit = {},
+    onAllTests: () -> Unit = {},
+    header: @Composable () -> Unit = {},
 ) {
     val sp = MyHealthTheme.spacing
-    if (state.loading) { MyHealthLoadingState(stringResource(R.string.state_loading)); return }
+    if (state.loading) { Column { header(); MyHealthLoadingState(stringResource(R.string.state_loading)) }; return }
     val name = state.member?.name.orEmpty()
     if (!state.hasData) {
-        MyHealthEmptyState(MyHealthIcons.Document, stringResource(R.string.home_empty_title, name), stringResource(R.string.home_empty_body),
-            Modifier.testTag("homeEmpty"), actionLabel = stringResource(R.string.home_add_document), onAction = onAddDocument)
+        Column {
+            header()
+            MyHealthEmptyState(MyHealthIcons.Document, stringResource(R.string.home_empty_title, name), stringResource(R.string.home_empty_body),
+                Modifier.testTag("homeEmpty"), actionLabel = stringResource(R.string.home_add_document), onAction = onAddDocument)
+        }
         return
     }
-    LazyColumn(Modifier.fillMaxSize().testTag("home"), contentPadding = PaddingValues(horizontal = sp.gutter, vertical = sp.sm), verticalArrangement = Arrangement.spacedBy(sp.md)) {
+    val zone = java.time.ZoneId.systemDefault()
+    var index = 0
+    Column(Modifier.fillMaxSize()) {
+    header()
+    LazyColumn(Modifier.fillMaxSize().testTag("home"), contentPadding = PaddingValues(start = sp.gutter, end = sp.gutter, bottom = sp.xl), verticalArrangement = Arrangement.spacedBy(sp.md)) {
         item { ScoreCard(state.score, onOpenInsights) }
+        if (state.vitals.isNotEmpty()) {
+            item { MyHealthSectionHeader(stringResource(R.string.dash_vitals)) { MyHealthTextButton(stringResource(R.string.home_quick_vital), onLogVital, icon = MyHealthIcons.Add) } }
+            items(state.vitals.chunked(2)) { pair ->
+                TileRow { m ->
+                    pair.forEach { (t, latest, prev) -> VitalTile(t, latest, prev, state.member?.heightCm, zone, { onOpenVital(t) }, index++, m) }
+                    if (pair.size == 1) Spacer(m)
+                }
+            }
+        }
+        if (state.allTests.isNotEmpty()) {
+            item { MyHealthSectionHeader(stringResource(R.string.dash_tests)) { if (state.allTests.size > 8) MyHealthTextButton(stringResource(R.string.home_focus_all), onAllTests) } }
+            items(state.allTests.take(8).chunked(2)) { pair ->
+                TileRow { m ->
+                    pair.forEach { t -> TestTile(t, { onOpenTrend(t.analyte.id) }, index++, m) }
+                    if (pair.size == 1) Spacer(m)
+                }
+            }
+        }
         item {
             MyHealthSectionHeader(stringResource(R.string.home_focus_title)) {
                 if (state.focus.isNotEmpty()) MyHealthTextButton(stringResource(R.string.home_focus_all), onOpenInsights)
@@ -105,7 +153,7 @@ fun HomeContent(
                 Text(stringResource(R.string.home_focus_none_body), style = MyHealthTheme.typography.bodySmall, color = MyHealthTheme.colors.textSecondary)
             }
         }
-        items(top, key = { it.key }) { f -> FocusCard(f, onClick = onOpenInsights) }
+        items(top, key = { it.key }) { f -> FocusCard(f, onClick = onOpenInsights, modifier = Modifier.appear(3)) }
         item { MyHealthPrimaryButton(stringResource(R.string.home_add_document), onAddDocument, Modifier.fillMaxWidth().testTag("homeAdd"), icon = MyHealthIcons.Import) }
         item {
             Row(horizontalArrangement = Arrangement.spacedBy(sp.sm)) {
@@ -113,23 +161,8 @@ fun HomeContent(
                 MyHealthSecondaryButton(stringResource(R.string.home_quick_medicine), onAddMedicine, Modifier.weight(1f), icon = MyHealthIcons.Medicines)
             }
         }
-        if (state.latest.isNotEmpty()) {
-            item { MyHealthSectionHeader(stringResource(R.string.home_latest)) }
-            items(state.latest.chunked(2)) { pair ->
-                Row(horizontalArrangement = Arrangement.spacedBy(sp.sm)) {
-                    pair.forEach { t ->
-                        MyHealthMetricTile(
-                            label = analyteName(t.analyte.id), value = ValueFormat.withComparator(t.latest.value, t.analyte.decimals, t.latest.comparator),
-                            unit = t.analyte.canonicalUnit.takeIf { it != "ratio" }, status = label(t.latest.status) to t.latest.status.kind(),
-                            caption = app.myhealth.ui.common.formatDate(t.latest.date), onClick = { onOpenTrend(t.analyte.id) },
-                            modifier = Modifier.weight(1f).testTag("tile_${t.analyte.id}"),
-                        )
-                    }
-                    if (pair.size == 1) Spacer(Modifier.weight(1f))
-                }
-            }
-        }
         item { MyHealthDisclaimer(stringResource(R.string.disclaimer_short)) }
+    }
     }
 }
 
@@ -140,17 +173,27 @@ private fun ScoreCard(score: HealthScore?, onHow: () -> Unit) {
     val coverage = (s.coverage * 100).toInt()
     val caption = if (value == null) stringResource(R.string.home_score_none) else stringResource(R.string.home_score_caption)
     val coverageText = stringResource(R.string.home_score_coverage, coverage)
-    MyHealthCard(Modifier.testTag("scoreCard")) {
+    MyHealthCard(Modifier.testTag("scoreCard").appear(0), onClick = onHow, emphasis = app.myhealth.core.designsystem.components.Emphasis.Medium) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            MyHealthScoreRing(value, value?.toString() ?: stringResource(R.string.home_score_none_short), caption,
-                stringResource(R.string.home_score_cd, value?.toString() ?: caption, coverageText))
+            Box(Modifier.size(112.dp), contentAlignment = Alignment.Center) {
+                app.myhealth.core.designsystem.components.RingGauge((value ?: 0) / 100f, diameter = 112.dp)
+                // Only the number sits inside the ring; the caption lives beside it, so nothing can collide with the stroke.
+                Row(verticalAlignment = Alignment.Bottom) {
+                    Text(value?.toString() ?: stringResource(R.string.home_score_none_short), style = MyHealthTheme.typography.metric.copy(fontSize = 26.sp), color = MyHealthTheme.colors.textPrimary)
+                    if (value != null) Text("/100", style = MyHealthTheme.typography.caption, color = MyHealthTheme.colors.textSecondary, modifier = Modifier.padding(bottom = 4.dp))
+                }
+            }
             Spacer(Modifier.width(MyHealthTheme.spacing.lg))
             Column(Modifier.weight(1f)) {
                 Text(stringResource(R.string.home_score_title), style = MyHealthTheme.typography.title, color = MyHealthTheme.colors.textPrimary)
+                if (value == null) Text(caption, style = MyHealthTheme.typography.label, color = MyHealthTheme.colors.textPrimary)
                 Text(coverageText, style = MyHealthTheme.typography.bodySmall, color = MyHealthTheme.colors.textSecondary)
-                MyHealthTextButton(stringResource(R.string.home_score_how), onHow, icon = MyHealthIcons.Info)
+                Row(Modifier.padding(top = MyHealthTheme.spacing.sm), verticalAlignment = Alignment.CenterVertically) {
+                    androidx.compose.material3.Icon(MyHealthIcons.Info, null, tint = MyHealthTheme.colors.accent, modifier = Modifier.size(16.dp))
+                    Spacer(Modifier.width(6.dp))
+                    Text(stringResource(R.string.home_score_how), style = MyHealthTheme.typography.label, color = MyHealthTheme.colors.accent)
+                }
             }
         }
     }
 }
-

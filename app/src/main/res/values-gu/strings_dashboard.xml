@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="focus_steady_up_title">%1$s છેલ્લાં %2$d પરિણામમાં દર વખતે વધ્યું છે</string>
+    <string name="focus_steady_down_title">%1$s છેલ્લાં %2$d પરિણામમાં દર વખતે ઘટ્યું છે</string>
+    <string name="focus_steady_body">%1$s (ફેરફાર %2$s). %3$s</string>
+    <string name="focus_steady_in_range">તે હજી સામાન્ય રેન્જમાં છે, પણ આ દિશા પર વહેલું ધ્યાન આપવું સારું છે.</string>
+    <string name="rule_steady">નિયમ: છેલ્લાં દરેક પરિણામમાં મૂલ્ય ઓછી સ્વસ્થ દિશામાં (દર વખતે 1%% થી વધુ) ખસ્યું.</string>
+    <string name="guide_sugar">સુગર કાબૂમાં રાખવા: નિયમિત કસરત, મીઠાઈ અને મેંદો ઓછો કરો, અને ડૉક્ટરને પૂછો કે કેટલી વાર તપાસ કરાવવી.</string>
+    <string name="guide_lipids">લોહીની ચરબી ખોરાક, કસરત અને વજનથી બદલાય છે; ડૉક્ટરને પૂછો કે વધુ કંઈ જરૂરી છે કે નહીં.</string>
+    <string name="guide_kidney">મનાઈ ન હોય તો પૂરતું પાણી પીઓ, અને દુખાવાની તથા અન્ય દવાઓ વિશે ડૉક્ટર સાથે વાત કરો.</string>
+    <string name="guide_liver">દારૂ અને તળેલું ઓછું કરો, અને બધી દવાઓ તથા સપ્લિમેન્ટ ડૉક્ટરને જણાવો.</string>
+    <string name="guide_thyroid">થાઇરોઇડ ધીમે ધીમે બદલાય છે; ડૉક્ટર ફરી તપાસ કે સારવાર બદલવાનું કહી શકે.</string>
+    <string name="guide_blood">બ્લડ કાઉન્ટ ખોરાક, આયર્ન, ચેપ અને દવાઓથી બદલાય છે; ડૉક્ટર સાથે વાત કરો.</string>
+    <string name="guide_vitamins">તડકો, ખોરાક અને સપ્લિમેન્ટ વિટામિન પર અસર કરે છે; યોગ્ય ડોઝ ડૉક્ટરને પૂછો.</string>
+    <string name="guide_bp">ઓછું મીઠું, રોજ કસરત, સારી ઊંઘ અને શાંતિ BP માં મદદ કરે છે; રોજ એક જ સમયે માપો.</string>
+    <string name="guide_weight">ભાગનું ખાવાનું, ચાલવું અને ઊંઘ જેવી નાની ટેવો વજન પર સૌથી વધુ અસર કરે છે.</string>
+    <string name="guide_spo2">સતત ઘટતો ઓક્સિજન જલ્દી ડૉક્ટરને બતાવો.</string>
+    <string name="guide_general">આગલી મુલાકાતમાં ડૉક્ટર સાથે આ ફેરફાર વિશે વાત કરો.</string>
+    <string name="dash_greeting_morning">સુપ્રભાત</string>
+    <string name="dash_greeting_afternoon">નમસ્કાર</string>
+    <string name="dash_greeting_evening">શુભ સાંજ</string>
+    <string name="dash_swipe_hint">પ્રોફાઇલ બદલવા ફોટો પર નીચે સ્વાઇપ કરો</string>
+    <string name="dash_switch_cd">%1$s. આગલા સભ્ય પર જવા નીચે સ્વાઇપ કરો, અથવા પસંદ કરવા બે વાર ટૅપ કરો.</string>
+    <string name="dash_vitals">તાજાં વાઇટલ્સ</string>
+    <string name="dash_tests">તાજી તપાસ</string>
+    <string name="dash_since">%2$s થી %1$s</string>
+    <string name="dash_no_previous">પહેલું રીડિંગ</string>
+    <string name="dash_sys">ઉપર</string>
+    <string name="dash_dia">નીચે</string>
+    <string name="dash_bmi">BMI %1$s</string>
+    <string name="dash_tile_cd">%1$s: %2$s, %3$s, %4$s.</string>
+    <string name="dash_all_tests">બધાં તપાસ પરિણામ જુઓ</string>
+    <string name="dash_score_short">%1$d%% ડેટા</string>
+</resources>

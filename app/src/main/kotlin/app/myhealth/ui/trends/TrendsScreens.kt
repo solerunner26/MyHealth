@@ -115,7 +115,7 @@ class TrendDetailViewModel(session: Session, analyteId: String) : ViewModel() {
 fun TrendDetailScreen(state: TrendDetailState, analyteId: String, onBack: () -> Unit, onExport: (AnalyteTrend) -> Unit, onOpenReport: (String) -> Unit) {
     val sp = MyHealthTheme.spacing; val c = MyHealthTheme.colors
     val name = analyteName(analyteId)
-    Column(Modifier.fillMaxSize().background(c.background).testTag("trendDetail")) {
+    Column(Modifier.fillMaxSize().testTag("trendDetail")) {
         MyHealthTopBar(name, onBack = onBack, backLabel = stringResource(R.string.action_back)) {
             state.trend?.let { t -> MyHealthIconButton(MyHealthIcons.Csv, stringResource(R.string.trend_export), { onExport(t) }, Modifier.testTag("exportCsv")) }
         }

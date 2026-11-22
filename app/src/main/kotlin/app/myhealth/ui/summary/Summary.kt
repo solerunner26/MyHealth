@@ -165,7 +165,7 @@ fun SummaryScreen(onBack: () -> Unit) {
     val sp = MyHealthTheme.spacing
     val accent = MyHealthTheme.colors.accent
     val chooser = stringResource(R.string.share_chooser)
-    Column(Modifier.fillMaxSize().background(MyHealthTheme.colors.background).testTag("summary")) {
+    Column(Modifier.fillMaxSize().testTag("summary")) {
         MyHealthTopBar(stringResource(R.string.summary_title), onBack = onBack, backLabel = stringResource(R.string.action_back))
         val summary = s
         if (summary == null) { MyHealthLoadingState(stringResource(R.string.summary_preparing)); return@Column }

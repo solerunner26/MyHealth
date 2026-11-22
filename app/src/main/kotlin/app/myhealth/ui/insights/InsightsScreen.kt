@@ -55,7 +55,7 @@ fun InsightsRoute(onBack: () -> Unit, onOpenTrend: (String) -> Unit) {
     val vm = rememberVm { HomeViewModel(session) }
     val state by vm.state.collectAsStateWithLifecycle()
     val sp = MyHealthTheme.spacing
-    Column(Modifier.fillMaxSize().background(MyHealthTheme.colors.background).testTag("insights")) {
+    Column(Modifier.fillMaxSize().testTag("insights")) {
         MyHealthTopBar(stringResource(R.string.insights_title), onBack = onBack, backLabel = stringResource(R.string.action_back))
         if (state.loading) { MyHealthLoadingState(stringResource(R.string.state_loading)); return@Column }
         LazyColumn(Modifier.fillMaxSize().testTag("insightsList"), contentPadding = PaddingValues(sp.gutter), verticalArrangement = Arrangement.spacedBy(sp.md)) {
@@ -70,7 +70,7 @@ fun InsightsRoute(onBack: () -> Unit, onOpenTrend: (String) -> Unit) {
     }
 }
 
-private fun FocusItem.analyteId(): String? = when (this) { is FocusItem.OutOfRange -> analyteId; is FocusItem.RapidChange -> analyteId; is FocusItem.Overdue -> analyteId; else -> null }
+private fun FocusItem.analyteId(): String? = when (this) { is FocusItem.OutOfRange -> analyteId; is FocusItem.RapidChange -> analyteId; is FocusItem.Overdue -> analyteId; is FocusItem.SteadyTrend -> analyteId; else -> null }
 
 @Composable
 private fun InsightCard(f: FocusItem, onOpenTrend: (String) -> Unit) {
@@ -93,7 +93,7 @@ private fun InsightCard(f: FocusItem, onOpenTrend: (String) -> Unit) {
 private fun ruleText(f: FocusItem) = when (f) {
     is FocusItem.OutOfRange -> R.string.rule_range; is FocusItem.RapidChange -> R.string.rule_rapid; is FocusItem.Overdue -> R.string.rule_overdue
     is FocusItem.VitalAlert -> R.string.rule_vital; is FocusItem.DataGap -> R.string.rule_gap; is FocusItem.MedicineIssue -> R.string.rule_medicine
-    is FocusItem.FollowUp -> R.string.rule_followup; is FocusItem.Wearable -> R.string.rule_wearable
+    is FocusItem.FollowUp -> R.string.rule_followup; is FocusItem.Wearable -> R.string.rule_wearable; is FocusItem.SteadyTrend -> R.string.rule_steady
 }
 
 @Composable
@@ -103,6 +103,7 @@ private fun EvidenceRow(f: FocusItem, e: Evidence) {
     val value = when {
         a != null -> analyteValue(a, e.value)
         f is FocusItem.VitalAlert -> vitalValue(f.type, e.value, e.value2, e.unit)
+        f is FocusItem.SteadyTrend && f.vitalType != null -> vitalValue(f.vitalType!!, e.value, e.value2, e.unit)
         else -> ValueFormat.compact(e.value) + " " + e.unit
     }
     val range = if (a != null) analyteRange(a, e.refLow, e.refHigh) else ""

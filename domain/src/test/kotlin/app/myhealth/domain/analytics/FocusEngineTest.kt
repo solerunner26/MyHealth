@@ -97,3 +97,39 @@ class FocusEngineTest {
         assertEquals(a.map { it.key }, b.map { it.key })
     }
 }
+
+class SteadyTrendTest {
+    private val today = Fx.today
+
+    @Test fun hba1cRisingEveryTestIsFlaggedEvenInRange() {
+        val r = listOf(Fx.lab("hba1c", today.minusMonths(8), 4.5, 4.0, 5.6), Fx.lab("hba1c", today.minusMonths(4), 4.8, 4.0, 5.6), Fx.lab("hba1c", today.minusDays(3), 5.1, 4.0, 5.6))
+        val s = FocusEngine.evaluate(Fx.inputs(r)).filterIsInstance<FocusItem.SteadyTrend>().single()
+        assertEquals("hba1c", s.analyteId); assertTrue(s.rising); assertEquals(2, s.steps); assertTrue(s.inRange)
+        assertEquals(Severity.Low, s.severity); assertEquals(0.6, s.totalChange, 1e-9)
+        assertEquals(listOf(4.5, 4.8, 5.1), s.evidence.map { it.value })
+    }
+
+    @Test fun fourStepsOrOutOfRangeIsModerate() {
+        val v = listOf(4.5, 4.8, 5.1, 5.4)
+        val r = v.mapIndexed { k, x -> Fx.lab("hba1c", today.minusMonths((3 - k) * 3L), x, 4.0, 5.6) }
+        assertEquals(Severity.Moderate, FocusEngine.evaluate(Fx.inputs(r)).filterIsInstance<FocusItem.SteadyTrend>().single().severity)
+    }
+
+    @Test fun improvementsFlatAndBrokenRunsAreNotFlagged() {
+        fun run(vals: List<Double>, a: String = "hba1c", lo: Double? = 4.0, hi: Double? = 5.6) = FocusEngine.evaluate(Fx.inputs(vals.mapIndexed { k, x -> Fx.lab(a, today.minusMonths((vals.size - k) * 3L), x, lo, hi) })).filterIsInstance<FocusItem.SteadyTrend>()
+        assertTrue(run(listOf(5.4, 5.1, 4.8)).isEmpty())          // falling HbA1c = improving
+        assertTrue(run(listOf(4.8, 4.81, 4.82)).isEmpty())        // < 1 % moves are noise
+        assertTrue(run(listOf(4.5, 5.0, 4.9, 5.2)).isEmpty())     // run broken
+        assertEquals(1, run(listOf(40.0, 36.0, 33.0), "hdl", 40.0, null).size) // higher-is-better falling
+        assertEquals(1, run(listOf(2.0, 2.8, 3.6), "tsh", 0.27, 4.2).size)     // in-range analyte drifting to the upper limit
+    }
+
+    @Test fun weeklyBloodPressureRise() {
+        val v = listOf(122.0, 128.0, 133.0).mapIndexed { k, x -> Fx.vital(app.myhealth.domain.model.VitalType.BloodPressure, today.minusWeeks((2 - k) * 2L), x, 80.0) }
+        val s = FocusEngine.evaluate(Fx.inputs(vitals = v)).filterIsInstance<FocusItem.SteadyTrend>().single()
+        assertEquals(app.myhealth.domain.model.VitalType.BloodPressure, s.vitalType); assertEquals(11.0, s.totalChange, 1e-9)
+        // two readings the same week count once
+        val sameWeek = listOf(Fx.vital(app.myhealth.domain.model.VitalType.BloodPressure, today.minusDays(2), 120.0, 80.0), Fx.vital(app.myhealth.domain.model.VitalType.BloodPressure, today.minusDays(1), 125.0, 80.0), Fx.vital(app.myhealth.domain.model.VitalType.BloodPressure, today, 130.0, 80.0))
+        assertTrue(FocusEngine.evaluate(Fx.inputs(vitals = sameWeek)).none { it is FocusItem.SteadyTrend })
+    }
+}

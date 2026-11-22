@@ -26,7 +26,7 @@ class HealthPermissionsRationaleActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             MyHealthTheme {
-                Column(Modifier.fillMaxSize().background(MyHealthTheme.colors.background).safeDrawingPadding().verticalScroll(rememberScrollState()).padding(MyHealthTheme.spacing.xl)) {
+                Column(Modifier.fillMaxSize().safeDrawingPadding().verticalScroll(rememberScrollState()).padding(MyHealthTheme.spacing.xl)) {
                     Text(stringResource(R.string.hc_rationale_title), style = MyHealthTheme.typography.headline, color = MyHealthTheme.colors.textPrimary)
                     Text(stringResource(R.string.hc_intro), style = MyHealthTheme.typography.body, color = MyHealthTheme.colors.textSecondary, modifier = Modifier.padding(vertical = MyHealthTheme.spacing.lg))
                     Text(stringResource(R.string.about_body), style = MyHealthTheme.typography.bodySmall, color = MyHealthTheme.colors.textSecondary)

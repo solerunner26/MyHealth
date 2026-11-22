@@ -233,7 +233,7 @@ fun MedicineEditorScreen(state: MedicineEditorState, onEdit: ((MedicineFormState
     var notifDenied by rememberSaveable { mutableStateOf(false) }
     var confirmDelete by rememberSaveable { mutableStateOf(false) }
     val permission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted -> notifDenied = !granted }
-    Column(Modifier.fillMaxSize().background(MyHealthTheme.colors.background).testTag("medicineEditor")) {
+    Column(Modifier.fillMaxSize().testTag("medicineEditor")) {
         MyHealthTopBar(stringResource(if (state.isNew) R.string.med_editor_add else R.string.med_editor_edit), onBack = onBack, backLabel = stringResource(R.string.action_back))
         if (state.loading) { MyHealthLoadingState(stringResource(R.string.state_loading)); return@Column }
         Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).imePadding().navigationBarsPadding().padding(horizontal = sp.gutter), verticalArrangement = Arrangement.spacedBy(sp.md)) {
@@ -320,7 +320,7 @@ class TreatmentEditorViewModel(private val session: Session, private val id: Str
 fun TreatmentEditorScreen(state: TreatmentEditorState, onEdit: ((TreatmentForm) -> TreatmentForm) -> Unit, onSave: () -> Unit, onDelete: () -> Unit, onBack: () -> Unit) {
     val sp = MyHealthTheme.spacing; val f = state.form
     var confirm by rememberSaveable { mutableStateOf(false) }
-    Column(Modifier.fillMaxSize().background(MyHealthTheme.colors.background).testTag("treatmentEditor")) {
+    Column(Modifier.fillMaxSize().testTag("treatmentEditor")) {
         MyHealthTopBar(stringResource(if (state.isNew) R.string.treat_editor_add else R.string.treat_editor_edit), onBack = onBack, backLabel = stringResource(R.string.action_back))
         if (state.loading) { MyHealthLoadingState(stringResource(R.string.state_loading)); return@Column }
         Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).imePadding().navigationBarsPadding().padding(horizontal = sp.gutter), verticalArrangement = Arrangement.spacedBy(sp.md)) {

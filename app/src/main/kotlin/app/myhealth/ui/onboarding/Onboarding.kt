@@ -38,7 +38,7 @@ import app.myhealth.core.designsystem.theme.MyHealthTheme
 @Composable
 fun WelcomeScreen(onStart: () -> Unit) {
     val c = MyHealthTheme.colors; val sp = MyHealthTheme.spacing
-    Box(Modifier.fillMaxSize().background(c.background).safeDrawingPadding().testTag("welcome"), contentAlignment = Alignment.Center) {
+    Box(Modifier.fillMaxSize().safeDrawingPadding().testTag("welcome"), contentAlignment = Alignment.Center) {
         Column(
             Modifier.widthIn(max = 520.dp).verticalScroll(rememberScrollState()).padding(sp.xl),
             verticalArrangement = Arrangement.spacedBy(sp.lg),

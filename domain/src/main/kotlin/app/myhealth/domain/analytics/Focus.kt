@@ -58,6 +58,14 @@ sealed interface FocusItem {
         override val date get() = dueDate
         override val evidence get() = emptyList<Evidence>()
     }
+    /**
+     * The same analyte/vital moved in the less-healthy direction in each of the last [steps] measurements
+     * (e.g. HbA1c 4.5 → 4.8 → 5.1), even if every value is still inside the reference range.
+     */
+    data class SteadyTrend(val analyteId: String?, val vitalType: VitalType?, val rising: Boolean, val steps: Int, val totalChange: Double,
+                           val inRange: Boolean, override val severity: Severity, override val date: LocalDate, override val evidence: List<Evidence>) : FocusItem {
+        override val key get() = "steady:" + (analyteId ?: vitalType!!.name)
+    }
     enum class WearableKind { StepsDrop, RestingHeartRateRise, ShortSleep }
     data class Wearable(val kind: WearableKind, val recent: Double, val baseline: Double, override val severity: Severity, override val date: LocalDate) : FocusItem {
         override val key get() = "wear:${kind.name}"
@@ -84,7 +92,8 @@ object FocusEngine {
         val age = i.member.ageYears(i.today)
         val trends = TrendEngine.all(i.results, i.today, i.historyYears, i.member.sex, age)
         val out = mutableListOf<FocusItem>()
-        trends.forEach { t -> outOfRange(t)?.let(out::add); rapidChange(t)?.let(out::add); overdue(t, i.today)?.let(out::add) }
+        trends.forEach { t -> outOfRange(t)?.let(out::add); rapidChange(t)?.let(out::add); overdue(t, i.today)?.let(out::add); steadyTrend(t)?.let(out::add) }
+        out += steadyVitals(i)
         out += vitalAlerts(i)
         out += dataGaps(i)
         out += medicineIssues(i)
@@ -118,6 +127,59 @@ object FocusEngine {
         val sev = if (kotlin.math.abs(ppm) >= threshold * 2) Severity.Moderate else Severity.Low
         return FocusItem.RapidChange(t.analyte.id, ppm, t.percentChange!!, days / TrendEngine.DAYS_PER_MONTH, sev, t.latest.date, listOf(ev(t, prev), ev(t, t.latest)))
     }
+
+    /** Minimum consecutive unhealthy moves to report a steady trend (3 results = 2 moves is too noisy; we need 3 results AND 2 moves both > 1 %). */
+    const val STEADY_MIN_POINTS = 3
+
+    /** Which way is unhealthy for an analyte at its current position: up for lower-is-better, down for higher-is-better,
+     *  towards the nearer limit for in-range analytes. */
+    private fun unhealthyIsUp(t: AnalyteTrend): Boolean? = when (t.analyte.direction) {
+        app.myhealth.domain.catalogue.Direction.LowerIsBetter -> true
+        app.myhealth.domain.catalogue.Direction.HigherIsBetter -> false
+        app.myhealth.domain.catalogue.Direction.InRange -> {
+            val lo = t.latest.refLow; val hi = t.latest.refHigh
+            if (lo == null || hi == null) null else t.latest.value > (lo + hi) / 2
+        }
+    }
+
+    fun steadyTrend(t: AnalyteTrend): FocusItem.SteadyTrend? {
+        val up = unhealthyIsUp(t) ?: return null
+        val run = consecutiveRun(t.points.map { it.value }, up) ?: return null
+        val pts = t.points.takeLast(run)
+        val inRange = !t.latest.status.isAbnormal
+        val sev = if (!inRange || run >= 4) Severity.Moderate else Severity.Low
+        return FocusItem.SteadyTrend(t.analyte.id, null, up, run - 1, pts.last().value - pts.first().value, inRange, sev, t.latest.date,
+            pts.map { Evidence(it.date, it.value, unit = t.analyte.canonicalUnit, refLow = it.refLow, refHigh = it.refHigh) })
+    }
+
+    /**
+     * Length (in points) of the trailing run where every step moves in the unhealthy direction by more than 1 % of
+     * the value; null if shorter than [STEADY_MIN_POINTS]. Flat or tiny wiggles break the run.
+     */
+    fun consecutiveRun(values: List<Double>, unhealthyUp: Boolean): Int? {
+        var n = 1
+        for (k in values.size - 1 downTo 1) {
+            val d = values[k] - values[k - 1]
+            val significant = kotlin.math.abs(d) > kotlin.math.abs(values[k - 1]) * 0.01
+            if (significant && (d > 0) == unhealthyUp) n++ else break
+        }
+        return n.takeIf { it >= STEADY_MIN_POINTS }
+    }
+
+    /** Steady rises in blood pressure (systolic), weight and home glucose; steady falls in SpO2. Readings at least a week apart. */
+    fun steadyVitals(i: FocusInputs): List<FocusItem> = listOf(VitalType.BloodPressure to true, VitalType.Weight to true, VitalType.BloodGlucose to true, VitalType.SpO2 to false)
+        .mapNotNull { (type, up) ->
+            // one reading per week (the latest of that week) so a single anxious morning does not count as a trend
+            val weekly = i.vitals.filter { it.type == type }.sortedBy { it.measuredAt }
+                .groupBy { it.measuredAt.atZone(i.zone).toLocalDate().let { d -> d.toEpochDay() / 7 } }.values.map { it.last() }.takeLast(8)
+            val run = consecutiveRun(weekly.map { it.value }, up) ?: return@mapNotNull null
+            val pts = weekly.takeLast(run)
+            val last = pts.last()
+            val band = VitalRules.band(last)
+            val inRange = band == VitalBand.Normal || band == VitalBand.Unknown
+            FocusItem.SteadyTrend(null, type, up, run - 1, last.value - pts.first().value, inRange, if (!inRange || run >= 4) Severity.Moderate else Severity.Low,
+                last.measuredAt.atZone(i.zone).toLocalDate(), pts.map { Evidence(it.measuredAt.atZone(i.zone).toLocalDate(), it.value, it.value2, it.unit) })
+        }
 
     fun overdue(t: AnalyteTrend, today: LocalDate): FocusItem.Overdue? {
         val a = t.analyte

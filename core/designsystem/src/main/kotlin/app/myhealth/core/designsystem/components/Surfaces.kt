@@ -25,6 +25,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.heading
@@ -33,6 +34,10 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import app.myhealth.core.designsystem.theme.MyHealthTheme
 
+/**
+ * Frosted-glass card: translucent gradient over the ambient background, hairline edge in the accent's tint, large
+ * radius. Emphasis raises the edge weight and adds an accent glow (fill weight carries meaning, not colour alone).
+ */
 @Composable
 fun MyHealthCard(
     modifier: Modifier = Modifier,
@@ -42,24 +47,22 @@ fun MyHealthCard(
 ) {
     val c = MyHealthTheme.colors
     val shape = MyHealthTheme.radii.lgShape
-    val container = when (emphasis) {
-        Emphasis.Subtle -> c.surface
-        Emphasis.Medium -> c.accentSoft
-        Emphasis.Strong -> c.accentContainer
+    val fill = when (emphasis) {
+        Emphasis.Subtle -> androidx.compose.ui.graphics.Brush.verticalGradient(listOf(c.glassTop, c.glassBottom))
+        Emphasis.Medium -> androidx.compose.ui.graphics.Brush.verticalGradient(listOf(c.glassTop, c.accentSoft.copy(alpha = 0.92f)))
+        Emphasis.Strong -> androidx.compose.ui.graphics.Brush.verticalGradient(listOf(c.accentContainer, c.accentSoft))
     }
     val border = when (emphasis) {
-        Emphasis.Subtle -> BorderStroke(MyHealthTheme.stroke.hairline, c.outline)
-        Emphasis.Medium -> BorderStroke(MyHealthTheme.stroke.regular, c.accent)
+        Emphasis.Subtle -> BorderStroke(MyHealthTheme.stroke.hairline, c.glassBorder)
+        Emphasis.Medium -> BorderStroke(MyHealthTheme.stroke.regular, c.accent.copy(alpha = 0.75f))
         Emphasis.Strong -> BorderStroke(MyHealthTheme.stroke.strong, c.accent)
     }
-    val inner: @Composable () -> Unit = {
-        Column(Modifier.padding(MyHealthTheme.spacing.lg), content = content)
-    }
-    if (onClick != null) {
-        Surface(onClick = onClick, modifier = modifier.fillMaxWidth(), shape = shape, color = container, border = border, content = inner)
-    } else {
-        Surface(modifier = modifier.fillMaxWidth(), shape = shape, color = container, border = border, content = inner)
-    }
+    val glowElevation = when (emphasis) { Emphasis.Subtle -> 0.dp; Emphasis.Medium -> 10.dp; Emphasis.Strong -> 18.dp }
+    val base = modifier.fillMaxWidth()
+        .shadow(glowElevation, shape, ambientColor = c.glow, spotColor = c.glow)
+        .clip(shape).background(fill).border(border, shape)
+    val clickable = if (onClick != null) base.clickable(role = Role.Button, onClick = onClick) else base
+    Column(clickable.padding(MyHealthTheme.spacing.lg), content = content)
 }
 
 @Composable

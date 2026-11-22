@@ -121,7 +121,7 @@ fun LockScreen(lock: AppLock, biometricEnabled: Boolean, onForgot: () -> Unit) {
     val canBio = biometricEnabled && Biometrics.available(context)
     val showBio = { (context as? FragmentActivity)?.let { Biometrics.prompt(it, bioTitle, usePin) { lock.unlockedByBiometric() } } }
     LaunchedEffect(Unit) { if (canBio) showBio() }
-    Box(Modifier.fillMaxSize().background(c.background).pointerInput(Unit) { }.safeDrawingPadding().testTag("lockScreen"), contentAlignment = Alignment.Center) {
+    Box(Modifier.fillMaxSize().background(androidx.compose.ui.graphics.Brush.verticalGradient(listOf(c.background, c.backgroundAlt))).pointerInput(Unit) { }.safeDrawingPadding().testTag("lockScreen"), contentAlignment = Alignment.Center) {
         Column(Modifier.widthIn(max = 420.dp).verticalScroll(rememberScrollState()).padding(MyHealthTheme.spacing.xl), horizontalAlignment = Alignment.CenterHorizontally) {
             Icon(MyHealthIcons.Lock, null, tint = c.accent, modifier = Modifier.size(48.dp))
             Spacer(Modifier.height(MyHealthTheme.spacing.md))

@@ -18,6 +18,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.draw.shadow
+import androidx.compose.foundation.background
 import app.myhealth.core.designsystem.theme.MyHealthTheme
 
 /** The ONE primary action of a screen. */
@@ -30,14 +32,20 @@ fun MyHealthPrimaryButton(
     enabled: Boolean = true,
 ) {
     val c = MyHealthTheme.colors
+    val shape = MyHealthTheme.radii.pillShape
+    // Gradient of the single accent hue (deep → bright) with a soft neon glow underneath.
+    val bg = if (enabled) androidx.compose.ui.graphics.Brush.horizontalGradient(listOf(c.accent, androidx.compose.ui.graphics.lerp(c.accent, c.accentBright, if (c.isDark) 0.55f else 0.2f)))
+        else androidx.compose.ui.graphics.SolidColor(c.surfaceSunken)
     Button(
         onClick = onClick,
         enabled = enabled,
-        modifier = modifier.defaultMinSize(minHeight = MyHealthTheme.spacing.touchTarget),
-        shape = MyHealthTheme.radii.pillShape,
+        modifier = modifier.defaultMinSize(minHeight = 52.dp)
+            .shadow(if (enabled) 14.dp else 0.dp, shape, ambientColor = c.glow, spotColor = c.glow)
+            .background(bg, shape),
+        shape = shape,
         colors = ButtonDefaults.buttonColors(
-            containerColor = c.accent, contentColor = c.onAccent,
-            disabledContainerColor = c.surfaceSunken, disabledContentColor = c.textTertiary,
+            containerColor = androidx.compose.ui.graphics.Color.Transparent, contentColor = c.onAccent,
+            disabledContainerColor = androidx.compose.ui.graphics.Color.Transparent, disabledContentColor = c.textTertiary,
         ),
         contentPadding = PaddingValues(horizontal = MyHealthTheme.spacing.xl, vertical = MyHealthTheme.spacing.md),
     ) { ButtonContent(text, icon) }

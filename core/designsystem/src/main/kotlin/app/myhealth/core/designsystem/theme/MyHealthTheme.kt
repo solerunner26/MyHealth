@@ -12,6 +12,7 @@ import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.runtime.staticCompositionLocalOf
 import app.myhealth.core.designsystem.tokens.MyHealthColorRoles
 import app.myhealth.core.designsystem.tokens.MyHealthColors
+import app.myhealth.core.designsystem.tokens.MyHealthThemeId
 import app.myhealth.core.designsystem.tokens.MyHealthElevation
 import app.myhealth.core.designsystem.tokens.MyHealthMotion
 import app.myhealth.core.designsystem.tokens.MyHealthRadii
@@ -22,7 +23,10 @@ import app.myhealth.core.designsystem.tokens.toColors
 
 enum class ThemeMode { System, Light, Dark }
 
-val LocalMyHealthColors = staticCompositionLocalOf { MyHealthColorRoles.Light.toColors(false) }
+val LocalMyHealthColors = staticCompositionLocalOf { MyHealthColorRoles.roles(MyHealthThemeId.Aurora, false).toColors(false, MyHealthThemeId.Aurora) }
+
+/** True when the user turned animations off in system settings: decorative motion stops. */
+val LocalReduceMotion = staticCompositionLocalOf { false }
 val LocalMyHealthTypography = staticCompositionLocalOf { MyHealthTypography() }
 val LocalMyHealthSpacing = staticCompositionLocalOf { MyHealthSpacing() }
 val LocalMyHealthRadii = staticCompositionLocalOf { MyHealthRadii() }
@@ -33,6 +37,7 @@ val LocalMyHealthStroke = staticCompositionLocalOf { MyHealthStroke() }
 /** Token accessor: `MyHealthTheme.colors.accent`, `MyHealthTheme.spacing.lg`, ... */
 object MyHealthTheme {
     val colors: MyHealthColors @Composable @ReadOnlyComposable get() = LocalMyHealthColors.current
+    val reduceMotion: Boolean @Composable @ReadOnlyComposable get() = LocalReduceMotion.current
     val typography: MyHealthTypography @Composable @ReadOnlyComposable get() = LocalMyHealthTypography.current
     val spacing: MyHealthSpacing @Composable @ReadOnlyComposable get() = LocalMyHealthSpacing.current
     val radii: MyHealthRadii @Composable @ReadOnlyComposable get() = LocalMyHealthRadii.current
@@ -42,17 +47,22 @@ object MyHealthTheme {
 }
 
 @Composable
-fun MyHealthTheme(mode: ThemeMode = ThemeMode.System, content: @Composable () -> Unit) {
+fun MyHealthTheme(mode: ThemeMode = ThemeMode.System, theme: MyHealthThemeId = MyHealthThemeId.Aurora, content: @Composable () -> Unit) {
     val dark = when (mode) {
         ThemeMode.System -> isSystemInDarkTheme()
         ThemeMode.Light -> false
         ThemeMode.Dark -> true
     }
-    val colors = if (dark) MyHealthColorRoles.Dark.toColors(true) else MyHealthColorRoles.Light.toColors(false)
+    val colors = MyHealthColorRoles.roles(theme, dark).toColors(dark, theme)
+    val ctx = androidx.compose.ui.platform.LocalContext.current
+    val reduceMotion = androidx.compose.runtime.remember(ctx) {
+        runCatching { android.provider.Settings.Global.getFloat(ctx.contentResolver, android.provider.Settings.Global.ANIMATOR_DURATION_SCALE, 1f) == 0f }.getOrDefault(false)
+    }
     val typography = MyHealthTypography()
     CompositionLocalProvider(
         LocalMyHealthColors provides colors,
         LocalMyHealthTypography provides typography,
+        LocalReduceMotion provides reduceMotion,
     ) {
         // Material components used internally (text fields, dialogs) are fed ONLY our tokens,
         // so no default Material hue (including the red error role) can leak into the UI.

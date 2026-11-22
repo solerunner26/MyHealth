@@ -205,16 +205,20 @@ private fun MainTabs(nav: NavHostController) {
     val onImport = { nav.navigate(Routes.IMPORT) }
     AdaptiveNavScaffold(tab, { tab = it }) {
         Column(Modifier.fillMaxSize().testTag("shell")) {
-            val title = if (tab == TopLevel.Home) active?.let { stringResource(R.string.home_title, it.name) } ?: "" else topLevelItems()[tab.ordinal].label
-            MyHealthTopBar(title = title) {
+            var picker by rememberSaveable { mutableStateOf(false) }
+            if (tab != TopLevel.Home) MyHealthTopBar(title = topLevelItems()[tab.ordinal].label) {
                 MemberSwitcher(members.orEmpty(), active, session::select, onAdd = { nav.navigate(Routes.MEMBER_NEW) }, onEdit = { nav.navigate(Routes.memberEdit(it)) })
             }
+            if (picker) active?.let { a -> app.myhealth.ui.shell.MemberPickerDialog(members.orEmpty(), a, session::select, { nav.navigate(Routes.MEMBER_NEW) }, { nav.navigate(Routes.memberEdit(it)) }) { picker = false } }
             when (tab) {
                 TopLevel.Home -> {
                     val vm = rememberVm { HomeViewModel(session) }
                     val state by vm.state.collectAsStateWithLifecycle()
+                    val photo = app.myhealth.ui.member.rememberMemberPhoto(active)
                     HomeContent(state, onAddDocument = onImport, onLogVital = { nav.navigate(Routes.vitalNew()) }, onAddMedicine = { nav.navigate(Routes.MEDICINE_NEW) },
-                        onOpenTrend = { nav.navigate(Routes.trend(it)) }, onOpenInsights = { nav.navigate(Routes.INSIGHTS) })
+                        onOpenTrend = { nav.navigate(Routes.trend(it)) }, onOpenInsights = { nav.navigate(Routes.INSIGHTS) },
+                        onOpenVital = { nav.navigate(Routes.vital(it.name)) }, onAllTests = { tab = TopLevel.Records },
+                        header = { active?.let { a -> app.myhealth.ui.home.DashboardHeader(a, photo, members.orEmpty(), session::select) { picker = true } } })
                 }
                 TopLevel.Records -> {
                     val vm = rememberVm { RecordsViewModel(session) }

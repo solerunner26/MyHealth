@@ -172,7 +172,7 @@ fun MemberEditorScreen(
     intro: String? = null,
     lockRelationship: Boolean = false,
 ) {
-    Column(Modifier.fillMaxSize().background(MyHealthTheme.colors.background).testTag("memberEditor")) {
+    Column(Modifier.fillMaxSize().testTag("memberEditor")) {
         MyHealthTopBar(title = title, onBack = onBack, backLabel = stringResource(R.string.action_back))
         if (state.loading) { MyHealthLoadingState(stringResource(R.string.state_loading)); return@Column }
         MemberFormContent(state, onEvent, primaryLabel, intro, lockRelationship)

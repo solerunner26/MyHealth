@@ -63,9 +63,15 @@ fun MemberSwitcher(
             Icon(MyHealthIcons.Expand, null, tint = MyHealthTheme.colors.textSecondary)
         }
     }
-    if (open) {
+    if (open) MemberPickerDialog(members, active, onSelect, onAdd, onEdit) { open = false }
+}
+
+/** List of family members with add/edit actions; used by the top-bar chip and the dashboard avatar. */
+@Composable
+fun MemberPickerDialog(members: List<FamilyMember>, active: FamilyMember, onSelect: (String) -> Unit, onAdd: () -> Unit, onEdit: (String) -> Unit, onDismiss: () -> Unit) {
+    run {
         AlertDialog(
-            onDismissRequest = { open = false },
+            onDismissRequest = { onDismiss() },
             title = { Text(stringResource(R.string.switcher_title), style = MyHealthTheme.typography.title) },
             text = {
                 Column {
@@ -73,7 +79,7 @@ fun MemberSwitcher(
                         val selected = m.id == active.id
                         val selectedCd = stringResource(R.string.switcher_selected, m.name)
                         Row(
-                            Modifier.fillMaxWidth().heightIn(min = 56.dp).clickable(role = Role.RadioButton) { onSelect(m.id); open = false }
+                            Modifier.fillMaxWidth().heightIn(min = 56.dp).clickable(role = Role.RadioButton) { onSelect(m.id); onDismiss() }
                                 .semantics { this.selected = selected; if (selected) contentDescription = selectedCd }.testTag("member_${m.id}"),
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
@@ -87,11 +93,11 @@ fun MemberSwitcher(
                         }
                     }
                     MyHealthDivider(Modifier.padding(vertical = MyHealthTheme.spacing.sm))
-                    MyHealthListRow(stringResource(R.string.switcher_edit), leadingIcon = MyHealthIcons.Edit, onClick = { open = false; onEdit(active.id) })
-                    MyHealthListRow(stringResource(R.string.switcher_add), leadingIcon = MyHealthIcons.Family, onClick = { open = false; onAdd() }, modifier = Modifier.testTag("addMember"))
+                    MyHealthListRow(stringResource(R.string.switcher_edit), leadingIcon = MyHealthIcons.Edit, onClick = { onDismiss(); onEdit(active.id) })
+                    MyHealthListRow(stringResource(R.string.switcher_add), leadingIcon = MyHealthIcons.Family, onClick = { onDismiss(); onAdd() }, modifier = Modifier.testTag("addMember"))
                 }
             },
-            confirmButton = { MyHealthTextButton(stringResource(R.string.action_close), { open = false }) },
+            confirmButton = { MyHealthTextButton(stringResource(R.string.action_close), { onDismiss() }) },
             containerColor = MyHealthTheme.colors.surfaceRaised,
             shape = MyHealthTheme.radii.xlShape,
         )

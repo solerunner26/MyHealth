@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="focus_steady_up_title">%1$s पिछले %2$d नतीजों में हर बार बढ़ा है</string>
+    <string name="focus_steady_down_title">%1$s पिछले %2$d नतीजों में हर बार घटा है</string>
+    <string name="focus_steady_body">%1$s (बदलाव %2$s)। %3$s</string>
+    <string name="focus_steady_in_range">यह अभी सामान्य रेंज में है, पर इस दिशा पर जल्दी ध्यान देना अच्छा है।</string>
+    <string name="rule_steady">नियम: पिछले हर नतीजे में मान कम स्वस्थ दिशा में (हर बार 1%% से ज़्यादा) बढ़ा।</string>
+    <string name="guide_sugar">शुगर काबू में रखने के लिए: नियमित व्यायाम, मीठा और मैदा कम करें, और डॉक्टर से पूछें कि कितनी बार जाँच करानी है।</string>
+    <string name="guide_lipids">खून की चर्बी खान-पान, व्यायाम और वज़न से बदलती है; डॉक्टर से पूछें कि और कुछ ज़रूरी है या नहीं।</string>
+    <string name="guide_kidney">मना न हो तो पर्याप्त पानी पिएँ, और दर्द-निवारक व अन्य दवाइयों के बारे में डॉक्टर से बात करें।</string>
+    <string name="guide_liver">शराब और तली चीज़ें कम करें, और सभी दवाइयाँ व सप्लीमेंट डॉक्टर को बताएँ।</string>
+    <string name="guide_thyroid">थायरॉइड धीरे-धीरे बदलता है; डॉक्टर दोबारा जाँच या इलाज बदलना चाह सकते हैं।</string>
+    <string name="guide_blood">ब्लड काउंट खान-पान, आयरन, संक्रमण और दवाइयों से बदलता है; डॉक्टर से बात करें।</string>
+    <string name="guide_vitamins">धूप, खाना और सप्लीमेंट विटामिन पर असर डालते हैं; सही खुराक डॉक्टर से पूछें।</string>
+    <string name="guide_bp">कम नमक, रोज़ व्यायाम, अच्छी नींद और शांति BP में मदद करते हैं; रोज़ एक ही समय पर नापें।</string>
+    <string name="guide_weight">हिस्से का खाना, पैदल चलना और नींद जैसी छोटी आदतें वज़न पर सबसे ज़्यादा असर डालती हैं।</string>
+    <string name="guide_spo2">लगातार घटता ऑक्सीजन जल्द डॉक्टर को दिखाएँ।</string>
+    <string name="guide_general">अगली मुलाक़ात में डॉक्टर से इस बदलाव पर बात करें।</string>
+    <string name="dash_greeting_morning">सुप्रभात</string>
+    <string name="dash_greeting_afternoon">नमस्कार</string>
+    <string name="dash_greeting_evening">शुभ संध्या</string>
+    <string name="dash_swipe_hint">प्रोफ़ाइल बदलने के लिए फ़ोटो पर नीचे स्वाइप करें</string>
+    <string name="dash_switch_cd">%1$s। अगले सदस्य पर जाने के लिए नीचे स्वाइप करें, या चुनने के लिए दो बार टैप करें।</string>
+    <string name="dash_vitals">ताज़ा वाइटल्स</string>
+    <string name="dash_tests">ताज़ा जाँचें</string>
+    <string name="dash_since">%2$s से %1$s</string>
+    <string name="dash_no_previous">पहली रीडिंग</string>
+    <string name="dash_sys">ऊपर</string>
+    <string name="dash_dia">नीचे</string>
+    <string name="dash_bmi">BMI %1$s</string>
+    <string name="dash_tile_cd">%1$s: %2$s, %3$s, %4$s।</string>
+    <string name="dash_all_tests">सभी जाँच नतीजे देखें</string>
+    <string name="dash_score_short">%1$d%% डेटा</string>
+</resources>

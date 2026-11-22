@@ -27,7 +27,7 @@ import app.myhealth.data.security.SecureFailure
 fun StorageGate(state: StorageState, onRetry: () -> Unit, onErase: () -> Unit, content: @Composable (DataStack) -> Unit) {
     when (state) {
         is StorageState.Ready -> content(state.stack)
-        StorageState.Opening -> Box(Modifier.fillMaxSize().background(MyHealthTheme.colors.background).safeDrawingPadding().testTag("storageOpening")) {
+        StorageState.Opening -> Box(Modifier.fillMaxSize().safeDrawingPadding().testTag("storageOpening")) {
             MyHealthLoadingState(stringResource(R.string.storage_opening))
         }
         is StorageState.Failed -> StorageErrorScreen(state.failure, onRetry, onErase)
@@ -46,7 +46,7 @@ fun StorageErrorScreen(failure: SecureFailure, onRetry: () -> Unit, onErase: () 
     }
     // Erasing is offered only where the data can never be read again or the user cannot fix it otherwise.
     val canErase = failure != SecureFailure.NewerSchema
-    Box(Modifier.fillMaxSize().background(MyHealthTheme.colors.background).safeDrawingPadding().testTag("storageError")) {
+    Box(Modifier.fillMaxSize().safeDrawingPadding().testTag("storageError")) {
         MyHealthErrorState(
             title = stringResource(title), message = stringResource(body),
             actionLabel = stringResource(R.string.action_retry), onAction = onRetry,

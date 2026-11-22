@@ -141,7 +141,7 @@ fun ImportScreen(
     cameraMissing: Boolean = false,
 ) {
     val c = MyHealthTheme.colors
-    Column(Modifier.fillMaxSize().background(c.background).testTag("import")) {
+    Column(Modifier.fillMaxSize().testTag("import")) {
         val title = if (state.phase is ImportPhase.Review || state.phase is ImportPhase.Saving) stringResource(R.string.review_title) else stringResource(R.string.import_title)
         MyHealthTopBar(title, subtitle = state.member?.let { stringResource(R.string.import_for_member, it.name) }, onBack = onBack, backLabel = stringResource(R.string.action_back))
         when (val p = state.phase) {

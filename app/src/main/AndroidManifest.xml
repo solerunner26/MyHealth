@@ -39,12 +39,72 @@
             android:name=".MainActivity"
             android:exported="true"
             android:windowSoftInputMode="adjustResize"
-            android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize|keyboardHidden">
+            android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize|keyboardHidden" />
+        <!-- Launcher entry for the Aurora theme; the app enables exactly one (see LauncherIcons). -->
+        <activity-alias
+            android:name="app.myhealth.LauncherAurora"
+            android:exported="true"
+            android:enabled="true"
+            android:icon="@mipmap/ic_launcher_aurora"
+            android:roundIcon="@mipmap/ic_launcher_aurora"
+            android:targetActivity=".MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
-        </activity>
+        </activity-alias>
+        <!-- Launcher entry for the Crystal theme; the app enables exactly one (see LauncherIcons). -->
+        <activity-alias
+            android:name="app.myhealth.LauncherCrystal"
+            android:exported="true"
+            android:enabled="false"
+            android:icon="@mipmap/ic_launcher_crystal"
+            android:roundIcon="@mipmap/ic_launcher_crystal"
+            android:targetActivity=".MainActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+        <!-- Launcher entry for the Botanical theme; the app enables exactly one (see LauncherIcons). -->
+        <activity-alias
+            android:name="app.myhealth.LauncherBotanical"
+            android:exported="true"
+            android:enabled="false"
+            android:icon="@mipmap/ic_launcher_botanical"
+            android:roundIcon="@mipmap/ic_launcher_botanical"
+            android:targetActivity=".MainActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+        <!-- Launcher entry for the Precision theme; the app enables exactly one (see LauncherIcons). -->
+        <activity-alias
+            android:name="app.myhealth.LauncherPrecision"
+            android:exported="true"
+            android:enabled="false"
+            android:icon="@mipmap/ic_launcher_precision"
+            android:roundIcon="@mipmap/ic_launcher_precision"
+            android:targetActivity=".MainActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+        <!-- Launcher entry for the Pulse theme; the app enables exactly one (see LauncherIcons). -->
+        <activity-alias
+            android:name="app.myhealth.LauncherPulse"
+            android:exported="true"
+            android:enabled="false"
+            android:icon="@mipmap/ic_launcher_pulse"
+            android:roundIcon="@mipmap/ic_launcher_pulse"
+            android:targetActivity=".MainActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
 
         <activity android:name=".health.HealthPermissionsRationaleActivity" android:exported="true">
             <intent-filter>
