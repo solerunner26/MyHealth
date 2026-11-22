@@ -126,3 +126,16 @@ property). It was fixed forward in `63e5952`. Since then every commit runs only 
 - CI: `.github/workflows/android.yml` (gate + no-network check, release build signed from secrets, instrumented
   tests on an API 35 emulator). **Not executed here** (no GitHub Actions run from this container).
 - Not run here: the release (R8) build on a device; instrumented tests; TalkBack with a real screen reader.
+
+## 0.2.0: redesign and feedback round (done)
+- UI: five themes with matching logos/launcher icons, glass surfaces, animated background, gauge tiles for the latest
+  vitals and tests on the dashboard and in Trends, single-line units, consistent controls. Checked with Robolectric
+  screenshots (`./gradlew :app:testDebugUnitTest --tests '*DesignPreview*' -Pscreenshots`), mainly Precision dark.
+- Swipe down on the profile photo switches member; tapping it opens the member picker. Profile photos per member.
+- Import: patient-name routing, multi-file records (PDF/JPG/PNG/WebP/HEIC), compact review with details on demand.
+- Steady-trend alerts (3+ consecutive rises/falls) with evidence and guidance.
+- Security self-audit: see D-034; new tests for the lockout clock, the locked UI, crafted backups and share names.
+- Gate → exit 0 (131 app/data unit tests plus domain tests, lint 0 errors).
+- Not verified here: every theme on a physical phone, launcher-icon switching on real launchers, HEIC decoding on
+  devices without a HEIF codec, TalkBack with the new gauges.
+

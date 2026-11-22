@@ -261,3 +261,57 @@ key.
 `TrustAllX509TrustManager` ×3 come from Bouncy Castle inside the PdfBox dependency. That code can never run with
 network access (no INTERNET permission). `ObsoleteSdkInt` refers to the `mipmap-anydpi-v26` folder; removing the
 qualifier made aapt2 lose the adaptive icon, so it stays.
+
+## D-030 Redesign: five themes, glass surfaces, gauge tiles (dependency: Manrope font, OFL)
+- Five colour themes (Aurora, Crystal, Botanical, Precision, Pulse), each still **one accent hue** plus low-chroma
+  neutrals, generated from HSL with a contrast solver so every text/background pair meets WCAG AA in light and dark
+  (`PaletteTest` checks all ten combinations).
+- Glass cards over a slowly drifting accent "aurora" background; motion is off when the system animator scale is 0.
+- Dashboard shows the latest vitals and tests as gauge tiles (ladder, vial, zone track, ring, dial, twin rail): the
+  gauge type follows the measurement, the number and status label are always printed (colour is never the only cue).
+- Manrope variable font bundled (`res/font/manrope.ttf`, licence in `third_party/fonts/Manrope-OFL.txt`).
+- Each theme has its own logo; the launcher icon follows the theme through five `<activity-alias>` entries, exactly
+  one enabled (`LauncherIcons`). MainActivity itself is not exported.
+
+## D-031 Import: name routing, multi-file records, compact review
+- The patient name printed on a report is matched against family members (`NameMatcher`: token overlap, titles
+  stripped). A confident unique match routes the report automatically and says so; otherwise the user chooses a member
+  or adds the printed name as a new member. Nothing is saved without the review step.
+- One record can hold up to 20 files (PDF, JPEG, PNG, WebP, HEIC), e.g. every page of a hospital file; text from all
+  files is merged into one draft. New report type "Hospital file".
+- Review shows a short summary and one compact row per value; the full editor opens on tap or with "Show full details".
+
+## D-032 Steady-trend alerts
+- A value that moves the same way in at least 3 consecutive results (each step > 1 %) is flagged even while still in
+  range (e.g. HbA1c 4.5 → 4.8 → 5.1), with the readings as evidence, guidance text per analyte and the usual
+  "not a diagnosis" disclaimer. Weekly averages are used for BP, weight, glucose (rising) and SpO2 (falling).
+
+## D-033 Profile photos (dependency: androidx.exifinterface 1.4.2)
+- Picked with the system photo picker (no storage permission), decoded with bounded size, rotated per EXIF, cropped to
+  a 512 px square and re-encoded as JPEG, which drops all metadata (GPS, device, time). Stored encrypted in the vault
+  as `photo-<memberId>`, included in backups, deleted with the member.
+
+## D-034 Security self-audit (attacker's view)
+Findings and fixes:
+1. **PIN lockout used the wall clock** → moving the date forward skipped the wait. Now measured with elapsed time
+   since boot plus a boot id; a reboot restarts the wait. The background re-lock uses the same source.
+2. **Dialogs could float above the lock overlay** (a dialog is its own window). While locked the app's screens are now
+   not composed at all; navigation and input are restored on unlock through a saveable state holder.
+3. **Tapjacking** on the PIN pad: touches through another app's overlay are ignored while locked.
+4. **Recents thumbnail** showed data when screenshot blocking was off: with a PIN set, the recents card is blank (API 33+).
+5. **MainActivity exported** without need → not exported; only the launcher aliases and the Health Connect rationale
+   screen are reachable.
+6. **Backup restore** (an attacker can hand over a file *and* its password): entry count and sizes are bounded
+   (no zip bomb), attachment names are plain ids, JSON keys must be SQL identifiers before they become column names.
+7. **Decode bombs**: PDF pages with a huge media box are rendered at a reduced DPI (long edge ≤ 3000 px); profile
+   photos bound the long edge too.
+8. **Share file names**: leading dots removed ("..", hidden files).
+9. **Release logcat**: `Log.v/d/i/w` stripped by R8; the local, redacted error report is the only diagnostic.
+Reviewed and unchanged: no network permission; OS backup and device transfer excluded; FileProvider limited to two
+cache folders that are wiped on start; reminder receivers not exported; the exported reschedule receiver only rebuilds
+alarms from the database; CSV export neutralises formula injection; PIN hashed with salted PBKDF2; backup format is
+authenticated AES-GCM per chunk with truncation detection.
+Accepted risks: the PIN gates the UI only (data keys are Keystore-bound, not PIN-bound, so reminders work after
+reboot, see D-012); a rooted device or one unlocked by an attacker with adb is out of scope; shared copies are
+plaintext by nature and stay until the next app start.
+

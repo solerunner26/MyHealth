@@ -1,7 +1,7 @@
 # MyHealth
 
 A private, offline-first health record for you and your family. Add lab reports, prescriptions, pharmacy bills and
-scans (PDF/JPG/PNG); MyHealth reads them **on the phone**, lets you check every value, and turns the record into
+scans (PDF/JPG/PNG/WebP/HEIC); MyHealth reads them **on the phone**, lets you check every value, and turns the record into
 trends and an explainable "what should I focus on" list to discuss with your doctor. It is a record and a
 conversation starter, **never a diagnosis**.
 
@@ -9,7 +9,11 @@ conversation starter, **never a diagnosis**.
 - **Encrypted at rest.** SQLCipher database and AES-GCM attachment vault, with keys wrapped by the Android Keystore.
   OS backup is disabled.
 - **Family members.** Every screen is scoped to the selected member.
-- **English, हिन्दी, ગુજરાતી**, light and dark themes, one accent colour; status is shown by icon, label and fill weight.
+- **English, हिन्दी, ગુજરાતી**, light and dark modes and five colour themes (each with its own app icon); status is
+  shown by icon, label and fill weight, never by colour alone.
+- **Smart import.** The patient name on a report picks the family member; several files (e.g. a photographed hospital
+  file) become one record; every value is reviewed before saving.
+- **Trend alerts.** Values that keep rising or falling across visits are flagged early, with the readings as evidence.
 
 ## Build and test
 
