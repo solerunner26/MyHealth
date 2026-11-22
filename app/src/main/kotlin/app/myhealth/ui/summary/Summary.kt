@@ -154,7 +154,7 @@ object SummaryPdf {
 }
 
 @Composable
-fun SummaryScreen(onBack: () -> Unit) {
+fun SummaryScreen(onBack: () -> Unit, onVisitPrep: () -> Unit = {}) {
     val session = LocalSession.current
     val vm = rememberVm { SummaryViewModel(session) }
     val s by vm.summary.collectAsStateWithLifecycle()
@@ -176,6 +176,9 @@ fun SummaryScreen(onBack: () -> Unit) {
                 androidx.compose.material3.Text(stringResource(R.string.summary_intro, summary.member.name), style = MyHealthTheme.typography.body, color = MyHealthTheme.colors.textSecondary)
                 summary.labs.firstOrNull()?.let { androidx.compose.material3.Text(text.sections.first().second.first(), style = MyHealthTheme.typography.caption, color = MyHealthTheme.colors.textTertiary) }
             }
+            // On demand only: the visit page is built when the user opens it.
+            app.myhealth.core.designsystem.components.MyHealthSecondaryButton(stringResource(R.string.visit_prepare), onVisitPrep,
+                Modifier.fillMaxWidth().testTag("openVisitFromSummary"), icon = MyHealthIcons.Document)
             if (busy) MyHealthProgress(stringResource(R.string.summary_preparing), null)
             if (failed) MyHealthInfoBanner(stringResource(R.string.export_failed), icon = MyHealthIcons.StatusError)
             MyHealthPrimaryButton(stringResource(R.string.summary_pdf), {

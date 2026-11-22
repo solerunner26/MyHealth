@@ -88,6 +88,7 @@ class RescheduleReceiver : BroadcastReceiver() {
             val c = context.container
             val stack = c.openNow() ?: return@guarded
             ReminderScheduler(context, c.clock).rescheduleAll(stack)
+            VaccineReminders(context, c.clock).rescheduleAll(stack)
         }
     }
 

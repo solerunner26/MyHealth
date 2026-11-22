@@ -86,6 +86,10 @@ object Routes {
     const val TREATMENT = "treatment/{id}"
     const val SETTINGS = "settings"
     const val SUMMARY = "summary"
+    const val VACCINES = "vaccines"
+    const val CARDS = "cards"
+    const val FAMILY = "family"
+    const val VISIT_PREP = "visit"
     const val BACKUP = "backup"
     const val HEALTH_CONNECT = "healthconnect"
     fun vitalNew(type: String? = null) = if (type == null) "vital/new" else "vital/new?type=$type"
@@ -212,7 +216,11 @@ fun AppNavGraph(nav: NavHostController) {
         composable(Routes.SETTINGS) { app.myhealth.ui.settings.SettingsScreen(onBack = { nav.popBackStack() }, onErased = {}) }
         composable(Routes.BACKUP) { app.myhealth.ui.backup.BackupScreen(onBack = { nav.popBackStack() }) }
         composable(Routes.HEALTH_CONNECT) { app.myhealth.ui.backup.HealthConnectScreen(onBack = { nav.popBackStack() }) }
-        composable(Routes.SUMMARY) { app.myhealth.ui.summary.SummaryScreen(onBack = { nav.popBackStack() }) }
+        composable(Routes.SUMMARY) { app.myhealth.ui.summary.SummaryScreen(onBack = { nav.popBackStack() }, onVisitPrep = { nav.navigate(Routes.VISIT_PREP) }) }
+        composable(Routes.VACCINES) { app.myhealth.ui.family.VaccinationsScreen(onBack = { nav.popBackStack() }) }
+        composable(Routes.CARDS) { app.myhealth.ui.family.HealthCardsScreen(onBack = { nav.popBackStack() }) }
+        composable(Routes.FAMILY) { app.myhealth.ui.family.FamilyHistoryScreen(onBack = { nav.popBackStack() }) }
+        composable(Routes.VISIT_PREP) { app.myhealth.ui.family.VisitPrepScreen(onBack = { nav.popBackStack() }) }
         composable(Routes.INSIGHTS) {
             app.myhealth.ui.insights.InsightsRoute(onBack = { nav.popBackStack() }, onOpenTrend = { nav.navigate(Routes.trend(it)) })
         }
@@ -247,7 +255,7 @@ private fun MainTabs(nav: NavHostController) {
                     val vm = rememberVm { HomeViewModel(session) }
                     val state by vm.state.collectAsStateWithLifecycle()
                     val photo = app.myhealth.ui.member.rememberMemberPhoto(active)
-                    HomeContent(state, onAddDocument = onImport, onVisitPrep = { nav.navigate(Routes.SUMMARY) }, onLogVitalType = { nav.navigate(Routes.vitalNew(it.name)) }, onLogVital = { nav.navigate(Routes.vitalNew()) }, onAddMedicine = { nav.navigate(Routes.MEDICINE_NEW) },
+                    HomeContent(state, onAddDocument = onImport, onVisitPrep = { nav.navigate(Routes.VISIT_PREP) }, onLogVitalType = { nav.navigate(Routes.vitalNew(it.name)) }, onLogVital = { nav.navigate(Routes.vitalNew()) }, onAddMedicine = { nav.navigate(Routes.MEDICINE_NEW) },
                         onOpenTrend = { nav.navigate(Routes.trend(it)) }, onOpenInsights = { nav.navigate(Routes.INSIGHTS) },
                         onOpenVital = { nav.navigate(Routes.vital(it.name)) }, onAllTests = { tab = TopLevel.Records },
                         header = { active?.let { a -> app.myhealth.ui.home.DashboardHeader(a, photo, members.orEmpty(), session::select) { picker = true } } })
@@ -275,6 +283,7 @@ private fun MainTabs(nav: NavHostController) {
                 TopLevel.More -> app.myhealth.ui.more.MoreContent(members.orEmpty(), app.myhealth.ui.more.MoreActions(
                     insights = { nav.navigate(Routes.INSIGHTS) }, profile = { active?.let { nav.navigate(Routes.memberEdit(it.id)) } },
                     editMember = { nav.navigate(Routes.memberEdit(it)) }, addMember = { nav.navigate(Routes.MEMBER_NEW) }, summary = { nav.navigate(Routes.SUMMARY) },
+                    vaccines = { nav.navigate(Routes.VACCINES) }, cards = { nav.navigate(Routes.CARDS) }, family = { nav.navigate(Routes.FAMILY) }, visitPrep = { nav.navigate(Routes.VISIT_PREP) },
                     settings = { nav.navigate(Routes.SETTINGS) }, backup = { nav.navigate(Routes.BACKUP) }, healthConnect = { nav.navigate(Routes.HEALTH_CONNECT) },
                 ))
             }

@@ -146,7 +146,7 @@ class SettingsAndInsightsFlowTest {
         rule.activityRule.scenario.onActivity { it.onBackPressedDispatcher.onBackPressed() }
 
         // Doctor summary screen offers PDF and CSV
-        waitTag("more"); rule.onNodeWithTag("openSummary").performClick()
+        waitTag("more"); rule.onNodeWithTag("more").performScrollToNode(hasTestTag("openSummary")); rule.onNodeWithTag("openSummary").performClick()
         waitTag("sharePdf"); rule.onNodeWithTag("shareCsv").assertExists()
         rule.activityRule.scenario.onActivity { it.onBackPressedDispatcher.onBackPressed() }
 

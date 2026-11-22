@@ -40,4 +40,26 @@ object Images {
     }.getOrNull()
 
     private const val MAX_EDGE = 4096
+
+    /**
+     * Card / certificate photo: upright, long edge at most [maxEdge] px, JPEG. Re-encoding drops all metadata
+     * (location, device). Null if it is not a decodable image.
+     */
+    fun documentPhoto(bytes: ByteArray, maxEdge: Int = 2000): ByteArray? = runCatching {
+        val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+        BitmapFactory.decodeByteArray(bytes, 0, bytes.size, bounds)
+        if (bounds.outWidth <= 0 || bounds.outHeight <= 0) return null
+        var sample = 1
+        while (maxOf(bounds.outWidth, bounds.outHeight) / (sample * 2) >= maxEdge) sample *= 2
+        val src = BitmapFactory.decodeByteArray(bytes, 0, bytes.size, BitmapFactory.Options().apply { inSampleSize = sample }) ?: return null
+        val rotation = runCatching {
+            when (ExifInterface(ByteArrayInputStream(bytes)).getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL)) {
+                ExifInterface.ORIENTATION_ROTATE_90 -> 90f; ExifInterface.ORIENTATION_ROTATE_180 -> 180f; ExifInterface.ORIENTATION_ROTATE_270 -> 270f; else -> 0f
+            }
+        }.getOrDefault(0f)
+        val scale = minOf(1f, maxEdge.toFloat() / maxOf(src.width, src.height))
+        val m = Matrix().apply { postRotate(rotation); postScale(scale, scale) }
+        val out = Bitmap.createBitmap(src, 0, 0, src.width, src.height, m, true)
+        ByteArrayOutputStream().also { out.compress(Bitmap.CompressFormat.JPEG, 88, it); if (out !== src) out.recycle(); src.recycle() }.toByteArray()
+    }.getOrNull()
 }

@@ -29,6 +29,7 @@ import app.myhealth.ui.common.label
 data class MoreActions(
     val insights: () -> Unit, val profile: () -> Unit, val editMember: (String) -> Unit, val addMember: () -> Unit, val summary: () -> Unit,
     val settings: () -> Unit, val backup: (() -> Unit)?, val healthConnect: (() -> Unit)?,
+    val vaccines: () -> Unit = {}, val cards: () -> Unit = {}, val family: () -> Unit = {}, val visitPrep: () -> Unit = {},
 )
 
 @Composable
@@ -38,6 +39,10 @@ fun MoreContent(members: List<FamilyMember>, a: MoreActions) {
     val version = BuildInfo.versionName(LocalContext.current)
     LazyColumn(Modifier.fillMaxSize().testTag("more"), contentPadding = PaddingValues(sp.gutter), verticalArrangement = Arrangement.spacedBy(sp.sm)) {
         item { MyHealthCard { MyHealthListRow(stringResource(R.string.more_insights), subtitle = stringResource(R.string.more_insights_sub), leadingIcon = MyHealthIcons.Insights, onClick = a.insights) } }
+        item { MyHealthCard { MyHealthListRow(stringResource(R.string.more_visit), subtitle = stringResource(R.string.more_visit_sub), leadingIcon = MyHealthIcons.Document, onClick = a.visitPrep, modifier = Modifier.testTag("openVisitPrep")) } }
+        item { MyHealthCard { MyHealthListRow(stringResource(R.string.more_vaccines), subtitle = stringResource(R.string.more_vaccines_sub), leadingIcon = MyHealthIcons.Medicines, onClick = a.vaccines, modifier = Modifier.testTag("openVaccines")) } }
+        item { MyHealthCard { MyHealthListRow(stringResource(R.string.more_cards), subtitle = stringResource(R.string.more_cards_sub), leadingIcon = MyHealthIcons.Lock, onClick = a.cards, modifier = Modifier.testTag("openCards")) } }
+        item { MyHealthCard { MyHealthListRow(stringResource(R.string.more_family_history), subtitle = stringResource(R.string.more_family_history_sub), leadingIcon = MyHealthIcons.Family, onClick = a.family, modifier = Modifier.testTag("openFamilyHistory")) } }
         item { MyHealthCard { MyHealthListRow(stringResource(R.string.more_summary), subtitle = stringResource(R.string.more_summary_sub), leadingIcon = MyHealthIcons.Pdf, onClick = a.summary,
             modifier = Modifier.testTag("openSummary")) } }
         item { MyHealthCard { MyHealthListRow(stringResource(R.string.more_profile), subtitle = stringResource(R.string.more_profile_sub), leadingIcon = MyHealthIcons.Profile, onClick = a.profile) } }
