@@ -68,7 +68,8 @@ class MedicinesViewModel(private val container: AppContainer) : ViewModel() {
     fun save(medicine: Medicine) {
         viewModelScope.launch {
             runCatching { container.medicines.save(medicine) }
-                .onSuccess {
+                .onSuccess { id ->
+                    container.reminders.schedule(medicine.copy(id = id))
                     container.audit.log("medicine.save", medicine.name)
                     message.value = "saved"
                     dismissForm()
@@ -80,6 +81,7 @@ class MedicinesViewModel(private val container: AppContainer) : ViewModel() {
     fun delete(medicine: Medicine) {
         viewModelScope.launch {
             container.medicines.delete(medicine.id)
+            container.reminders.cancel(medicine.id)
             container.audit.log("medicine.delete", medicine.name)
             dismissForm()
         }

@@ -5,6 +5,72 @@ what is left, gotchas. Keep it short and factual; the code is the source of trut
 
 ---
 
+## 2026-11-22 — cline (session 3) — CHECKPOINT: Rare UI redesign + reminders + hi/gu
+
+### Verified state (evidence)
+- `:app:assembleDebug` → **BUILD SUCCESSFUL**; `app/build/outputs/apk/debug/app-debug.apk` (79.8 MB).
+- `:app:testDebugUnitTest` → **BUILD SUCCESSFUL, 42 tests, 0 failures** (adds `VitalExtractorTest`,
+  `PinHasherTest`, `I18nParityTest` to the earlier six classes).
+- Still **no device/emulator**: the redesign is verified by compilation and unit tests only.
+
+### Design system: Rare UI, reimplemented natively
+- Source inspected: `https://github.com/swamimalode07/rare-ui` (Next.js/shadcn/Tailwind). License is
+  **MIT + Commons Clause + Attribution**. No code was copied, because it is a web library; the visual and
+  interaction rules were reimplemented in Compose. Attribution is now visible in **Settings → About**
+  (link to rareui.com), in `README.md`, and in `docs/DESIGN_SYSTEM.md`.
+- **Tokens** (`design/theme`): new warm-neutral `Palette.Ink*` scale, pine accent kept (the product's
+  single-hue rule outranks Rare's orange), radii 6/8/10/14/20, hairline 1dp, motion 120/200/320ms,
+  Inter bundled (`res/font/inter.ttf`, OFL text in `docs/licenses/INTER-OFL.txt`), mono digits.
+- **Primitives** (`design/rare`): `RareCard`, `RareInset`, `RareSectionLabel`, `RareButton` (4 styles),
+  `RareIconButton`, `RareTextField`, `RareSearchField`, `RareSwitch`, `RareCheckbox`, `RareChip`,
+  `RareSegmented` (sliding pill), `RareBadge`, `RareStat`, `RareListRow`, `RareTaskRow`, `RareKeyValue`,
+  `RareAvatar`, `RareEmptyState`, `RareProgressRing`, `AnimatedCounter`, `RareSnackbarHost`,
+  `RareLinearProgress`, `RareScrollProgress`, `RareSkeleton`, `RareSpinner`, `RareSheet`,
+  `RareConfirmDialog`, `RareChoiceDialog`, `RareBanner`, `RarePinEntry`, `RareTopBar`, `RarePageHeader`,
+  `RareBottomBar`, `RareNavRail`, `Modifier.pressScale`.
+- **Screens redesigned**: dashboard (bento hero score + animated counter + focus + vitals + meds + reports),
+  records (sticky search, chips, grouped hairline card), trends list + detail, vitals, medicines, insights
+  (score domain bars), settings, profile, import picker + review, report detail, trend detail, doctor
+  summary, onboarding, unlock (OTP-style PIN slots).
+- Old `design/components` names are thin aliases over the Rare primitives, so the whole product inherited
+  the new language in one step; `PinPad.kt` was deleted.
+
+### Medicine reminders (T-034) — manifest debt cleared
+- `MedicineReminders` uses **AlarmManager** (exact when the platform allows it, inexact otherwise),
+  one alarm per reminder time, re-armed after firing and skipped past the course end date.
+- `MedicineReminderReceiver` posts the notification and reschedules; `BootCompletedReceiver` re-arms all
+  reminders after reboot or app update. `POST_NOTIFICATIONS` is requested from the medicines screen;
+  `SCHEDULE_EXACT_ALARM` added to the manifest; channel created at startup.
+- Deviation from the task text: WorkManager was not used. A dose is a precise single moment, and alarms
+  survive Doze without keeping the process alive. The dependency remains for future sync work.
+
+### Localisation (T-035) — complete
+- `values-hi` and `values-gu` now hold all 439 translatable keys; `I18nParityTest` enforces key and
+  format-placeholder parity, so no screen can fall back silently.
+
+### Gotchas
+- `compileSdkMinor = 2` is still required (Compose 1.13 metadata needs 37.1+).
+- Never add `org.jetbrains.kotlin.android`; AGP 9 has built-in Kotlin.
+- `RareSegmented` and `RareChoiceDialog` take **@Composable** label lambdas. `RarePageHeader` takes
+  `onBack`; screens with a back arrow use it instead of hand-rolling a header row.
+- Keep new UI on the `design/rare` names; the aliases in `design/components` exist only for older screens.
+- Background builds only (`setsid nohup ... &`), one at a time.
+
+### Resume here
+1. **T-031** Health Connect sync, **T-033** encrypted backup/restore, **T-042** report page viewer/edit.
+2. **T-038** instrumented/Compose tests, then a real-device pass (no emulator here).
+3. **T-039** remaining docs (ARCHITECTURE, DATA_MODEL, PRIVACY, SECURITY, TESTING), **T-040** CI,
+   **T-041** store readiness.
+
+### Resume commands
+```bash
+source tools/env.sh
+./gradlew :app:assembleDebug
+./gradlew :app:testDebugUnitTest
+```
+
+---
+
 ## 2026-11-22 — cline (session 2) — CHECKPOINT: full UI slice + verified build
 
 ### Verified state (evidence, not assumption)

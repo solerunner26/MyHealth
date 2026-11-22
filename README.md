@@ -14,6 +14,9 @@ years, and turned into explainable trends, focus cards and a health score.
   `TASKS.md` T-035).
 * **Medical safety** — extraction is reviewed by the user before saving; every insight carries its
   rationale and a "discuss with your doctor" disclaimer. Not a medical device.
+* **Design language** — layout, surfaces and motion follow [Rare UI](https://rareui.com) (MIT + Commons
+  Clause + Attribution, © Swami Malode), reimplemented natively in Compose under the single-hue rule.
+  See [`docs/DESIGN_SYSTEM.md`](docs/DESIGN_SYSTEM.md).
 
 ## Build
 

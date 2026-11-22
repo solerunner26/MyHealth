@@ -39,14 +39,11 @@ fun DoctorSummaryScreen(container: AppContainer, onBack: () -> Unit) {
     }
 
     Column(Modifier.fillMaxSize().padding(horizontal = spacing.screenPadding)) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            TextButton(onClick = onBack) { Text(stringResource(R.string.common_back)) }
-            Text(
-                stringResource(R.string.doctor_title),
-                style = MaterialTheme.typography.titleLarge,
-                modifier = Modifier.weight(1f),
-            )
-        }
+        com.solerunner.myhealth.design.rare.RarePageHeader(
+            title = stringResource(R.string.doctor_title),
+            onBack = onBack,
+            modifier = Modifier.padding(vertical = spacing.md),
+        )
 
         val summary = state.summary
         if (summary == null) {
@@ -74,10 +71,11 @@ fun DoctorSummaryScreen(container: AppContainer, onBack: () -> Unit) {
                 stringResource(R.string.doctor_questions),
                 summary.questions,
             )
-            Button(
+            com.solerunner.myhealth.design.rare.RareButton(
+                text = stringResource(R.string.doctor_generate),
                 onClick = viewModel::generatePdf,
                 modifier = Modifier.fillMaxWidth().padding(vertical = spacing.md),
-            ) { Text(stringResource(R.string.doctor_generate)) }
+            )
             Text(
                 stringResource(R.string.insight_disclaimer),
                 style = MaterialTheme.typography.bodySmall,

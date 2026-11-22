@@ -1,12 +1,19 @@
 package com.solerunner.myhealth.ui.records
 
 import androidx.compose.foundation.horizontalScroll
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.material3.Button
-import androidx.compose.material3.FilterChip
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -16,11 +23,15 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.solerunner.myhealth.R
-import com.solerunner.myhealth.design.components.EmptyState
-import com.solerunner.myhealth.design.components.LabeledValue
-import com.solerunner.myhealth.design.components.ListRow
-import com.solerunner.myhealth.design.components.SearchField
-import com.solerunner.myhealth.design.components.SectionHeader
+import com.solerunner.myhealth.design.rare.RareCard
+import com.solerunner.myhealth.design.rare.RareChip
+import com.solerunner.myhealth.design.rare.RareDivider
+import com.solerunner.myhealth.design.rare.RareEmptyState
+import com.solerunner.myhealth.design.rare.RareIconButton
+import com.solerunner.myhealth.design.rare.RareListRow
+import com.solerunner.myhealth.design.rare.RarePageHeader
+import com.solerunner.myhealth.design.rare.RareSearchField
+import com.solerunner.myhealth.design.rare.RareSectionLabel
 import com.solerunner.myhealth.design.theme.MyHealthTokens
 import com.solerunner.myhealth.di.AppContainer
 import com.solerunner.myhealth.domain.model.ReportKind
@@ -28,8 +39,8 @@ import com.solerunner.myhealth.ui.common.label
 import com.solerunner.myhealth.ui.containerViewModel
 
 /**
- * Records timeline. Filters are local and instantaneous: search matches title, lab and doctor; the kind
- * chips cover the four kinds people actually import; years come from the record itself, never a fixed list.
+ * Records timeline. Search and filters are local and instant; the list is grouped by year inside one
+ * hairline card so the rare "one record, one row" rhythm survives dense data.
  */
 @Composable
 fun RecordsScreen(
@@ -42,94 +53,107 @@ fun RecordsScreen(
     val spacing = MyHealthTokens.spacing
     val kinds = listOf(null, ReportKind.LAB, ReportKind.PRESCRIPTION, ReportKind.PHARMACY_BILL, ReportKind.IMAGING)
 
-    Column(Modifier.fillMaxSize().padding(horizontal = spacing.screenPadding)) {
-        Spacer(Modifier.height(spacing.md))
-        Text(stringResource(R.string.records_title), style = MaterialTheme.typography.headlineMedium)
-        Spacer(Modifier.height(spacing.md))
-        SearchField(
-            query = state.filter.query,
-            onQueryChange = viewModel::setQuery,
-            placeholder = stringResource(R.string.records_search_hint),
+    Column(Modifier.fillMaxSize()) {
+        RarePageHeader(
+            title = stringResource(R.string.records_title),
+            eyebrow = if (state.all.isEmpty()) null else stringResource(R.string.records_count, state.all.size),
+            modifier = Modifier.padding(horizontal = spacing.screenPadding, vertical = spacing.md),
+            actions = {
+                RareIconButton(
+                    icon = Icons.Filled.Add,
+                    contentDescription = stringResource(R.string.import_pick_file),
+                    onClick = onImport,
+                )
+            },
         )
-        Spacer(Modifier.height(spacing.sm))
-        Row(
-            modifier = Modifier.horizontalScroll(rememberScrollState()),
-            horizontalArrangement = Arrangement.spacedBy(spacing.sm),
-        ) {
-            FilterChip(
-                selected = state.filter.year == null,
-                onClick = { viewModel.setYear(null) },
-                label = { Text(stringResource(R.string.common_all)) },
+        Column(Modifier.padding(horizontal = spacing.screenPadding)) {
+            RareSearchField(
+                query = state.filter.query,
+                onQueryChange = viewModel::setQuery,
+                placeholder = stringResource(R.string.records_search_hint),
             )
-            state.years.forEach { year ->
-                FilterChip(
-                    selected = state.filter.year == year,
-                    onClick = { viewModel.setYear(year) },
-                    label = { Text(year.toString()) },
+            Spacer(Modifier.height(spacing.sm))
+            Row(
+                modifier = Modifier.horizontalScroll(rememberScrollState()),
+                horizontalArrangement = Arrangement.spacedBy(spacing.sm),
+            ) {
+                RareChip(
+                    text = stringResource(R.string.common_all),
+                    selected = state.filter.year == null && state.filter.kind == null,
+                    onClick = {
+                        viewModel.setYear(null)
+                        viewModel.setKind(null)
+                    },
                 )
+                state.years.forEach { year ->
+                    RareChip(
+                        text = year.toString(),
+                        selected = state.filter.year == year,
+                        onClick = { viewModel.setYear(if (state.filter.year == year) null else year) },
+                    )
+                }
             }
-        }
-        Spacer(Modifier.height(spacing.xs))
-        Row(
-            modifier = Modifier.horizontalScroll(rememberScrollState()),
-            horizontalArrangement = Arrangement.spacedBy(spacing.sm),
-        ) {
-            kinds.forEach { kind ->
-                FilterChip(
-                    selected = state.filter.kind == kind,
-                    onClick = { viewModel.setKind(kind) },
-                    label = { Text(kind?.label() ?: stringResource(R.string.common_all)) },
-                )
+            Spacer(Modifier.height(spacing.sm))
+            Row(
+                modifier = Modifier.horizontalScroll(rememberScrollState()),
+                horizontalArrangement = Arrangement.spacedBy(spacing.sm),
+            ) {
+                kinds.forEach { kind ->
+                    RareChip(
+                        text = kind?.label() ?: stringResource(R.string.common_all),
+                        selected = state.filter.kind == kind,
+                        onClick = { viewModel.setKind(kind) },
+                    )
+                }
             }
+            Spacer(Modifier.height(spacing.md))
         }
-        Spacer(Modifier.height(spacing.sm))
 
-        if (!state.loading && state.all.isEmpty()) {
-            EmptyState(
+        when {
+            !state.loading && state.all.isEmpty() -> RareEmptyState(
                 title = stringResource(R.string.records_empty_title),
                 body = stringResource(R.string.records_empty_body),
                 actionLabel = stringResource(R.string.import_pick_file),
                 onAction = onImport,
             )
-        } else if (!state.loading && state.visible.isEmpty()) {
-            EmptyState(
+
+            !state.loading && state.visible.isEmpty() -> RareEmptyState(
                 title = stringResource(R.string.records_no_results),
                 body = stringResource(R.string.records_search_hint),
             )
-        } else {
-            LazyColumn(
-                contentPadding = PaddingValues(bottom = spacing.xxxl),
-                verticalArrangement = Arrangement.spacedBy(spacing.xs),
+
+            else -> LazyColumn(
+                contentPadding = PaddingValues(start = spacing.screenPadding, end = spacing.screenPadding, bottom = spacing.xxxl),
             ) {
                 state.visible.groupBy { it.sampleDate.year }.forEach { (year, reports) ->
                     item(key = "year-$year") {
-                        SectionHeader(
-                            title = year.toString(),
-                            subtitle = stringResource(R.string.records_count, reports.size),
-                        )
+                        RareSectionLabel(text = year.toString())
                     }
-                    items(reports, key = { it.id }) { report ->
-                        ListRow(
-                            title = report.title,
-                            subtitle = "${report.sampleDate} · ${report.kind.label()}",
-                            trailing = report.labName,
-                            onClick = { onOpenReport(report.id) },
-                        )
+                    item(key = "card-$year") {
+                        RareCard(contentPadding = 0.dp) {
+                            reports.forEachIndexed { index, report ->
+                                Column(Modifier.padding(horizontal = 14.dp)) {
+                                    RareListRow(
+                                        title = report.title,
+                                        subtitle = "${report.sampleDate} · ${report.kind.label()}",
+                                        trailing = report.labName,
+                                        onClick = { onOpenReport(report.id) },
+                                    )
+                                }
+                                if (index != reports.lastIndex) RareDivider(Modifier.padding(horizontal = 14.dp))
+                            }
+                        }
+                        Spacer(Modifier.height(spacing.sm))
                     }
                 }
-            }
-        }
-        if (!state.loading) {
-            Button(onClick = onImport, modifier = Modifier.fillMaxWidth().padding(bottom = spacing.md)) {
-                Text(stringResource(R.string.import_pick_file))
             }
         }
     }
 }
 
-/** Display-only metadata block reused by the report detail screen. */
+/** Display-only metadata block used by the report detail screen. */
 @Composable
 fun ReportMeta(label: String, value: String?) {
     if (value.isNullOrBlank()) return
-    LabeledValue(label = label, value = value)
+    com.solerunner.myhealth.design.rare.RareKeyValue(label = label, value = value)
 }

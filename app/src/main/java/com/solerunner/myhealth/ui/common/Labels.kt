@@ -118,3 +118,13 @@ fun Measurement.displayWithUnit(): String {
     val unit = unit ?: kind.defaultUnit()
     return if (unit != null) "${displayValue()} $unit" else displayValue()
 }
+
+
+@Composable
+fun com.solerunner.myhealth.domain.model.ScoreBand.label(): String = when (this) {
+    com.solerunner.myhealth.domain.model.ScoreBand.EXCELLENT -> stringResource(R.string.home_score_band_excellent)
+    com.solerunner.myhealth.domain.model.ScoreBand.GOOD -> stringResource(R.string.home_score_band_good)
+    com.solerunner.myhealth.domain.model.ScoreBand.FAIR -> stringResource(R.string.home_score_band_fair)
+    com.solerunner.myhealth.domain.model.ScoreBand.NEEDS_ATTENTION -> stringResource(R.string.home_score_band_attention)
+    com.solerunner.myhealth.domain.model.ScoreBand.INSUFFICIENT_DATA -> stringResource(R.string.home_score_band_insufficient)
+}

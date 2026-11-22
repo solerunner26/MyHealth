@@ -40,15 +40,18 @@ fun TrendDetailScreen(container: AppContainer, analyteKey: String, onBack: () ->
 
     val series = state.series
     Column(Modifier.fillMaxSize()) {
-        Row(Modifier.padding(horizontal = spacing.screenPadding), verticalAlignment = Alignment.CenterVertically) {
-            IconButton(onClick = onBack) {
-                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.common_back))
-            }
-            Text(series?.displayName ?: "", style = MaterialTheme.typography.titleLarge, modifier = Modifier.weight(1f))
-            IconButton(onClick = viewModel::exportCsv) {
-                Icon(Icons.Filled.Share, contentDescription = stringResource(R.string.trends_export_csv))
-            }
-        }
+        com.solerunner.myhealth.design.rare.RarePageHeader(
+            title = series?.displayName ?: "",
+            onBack = onBack,
+            modifier = Modifier.padding(horizontal = spacing.screenPadding, vertical = spacing.md),
+            actions = {
+                com.solerunner.myhealth.design.rare.RareIconButton(
+                    icon = Icons.Filled.Share,
+                    contentDescription = stringResource(R.string.trends_export_csv),
+                    onClick = viewModel::exportCsv,
+                )
+            },
+        )
 
         if (series == null) {
             if (!state.loading) {

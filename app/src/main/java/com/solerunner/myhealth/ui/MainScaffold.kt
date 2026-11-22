@@ -1,7 +1,18 @@
 package com.solerunner.myhealth.ui
 
-import androidx.compose.foundation.layout.*
-import androidx.compose.material3.*
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.VerticalDivider
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -18,6 +29,9 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import androidx.navigation.NavType
 import com.solerunner.myhealth.R
+import com.solerunner.myhealth.design.rare.RareBottomBar
+import com.solerunner.myhealth.design.rare.RareNavItem
+import com.solerunner.myhealth.design.rare.RareNavRail
 import com.solerunner.myhealth.design.theme.MyHealthTokens
 import com.solerunner.myhealth.di.AppContainer
 import com.solerunner.myhealth.domain.model.Profile
@@ -47,38 +61,33 @@ fun MainScaffold(container: AppContainer, profile: Profile) {
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = backStackEntry?.destination?.route
     val showBars = topDestinations.any { it.route == currentRoute }
+    val items = topDestinations.map {
+        RareNavItem(route = it.route, label = stringResource(it.labelRes), icon = it.icon)
+    }
 
     BoxWithConstraints(Modifier.fillMaxSize()) {
         val wide = maxWidth >= 840.dp
         Scaffold(
+            containerColor = MaterialTheme.colorScheme.background,
+            contentWindowInsets = WindowInsets.safeDrawing,
             bottomBar = {
                 if (!wide && showBars) {
-                    NavigationBar {
-                        topDestinations.forEach { destination ->
-                            NavigationBarItem(
-                                selected = currentRoute == destination.route,
-                                onClick = { navController.navigateTop(destination.route) },
-                                icon = { Icon(destination.icon, contentDescription = null) },
-                                label = { Text(stringResource(destination.labelRes)) },
-                            )
-                        }
-                    }
+                    RareBottomBar(
+                        items = items,
+                        currentRoute = currentRoute,
+                        onNavigate = { navController.navigateTop(it) },
+                    )
                 }
             },
         ) { padding ->
             Row(Modifier.fillMaxSize().padding(padding)) {
                 if (wide) {
-                    NavigationRail {
-                        Spacer(Modifier.height(MyHealthTokens.spacing.md))
-                        topDestinations.forEach { destination ->
-                            NavigationRailItem(
-                                selected = currentRoute == destination.route,
-                                onClick = { navController.navigateTop(destination.route) },
-                                icon = { Icon(destination.icon, contentDescription = null) },
-                                label = { Text(stringResource(destination.labelRes)) },
-                            )
-                        }
-                    }
+                    RareNavRail(
+                        items = items,
+                        currentRoute = currentRoute,
+                        onNavigate = { navController.navigateTop(it) },
+                    )
+                    VerticalDivider(color = MaterialTheme.colorScheme.outlineVariant)
                 }
                 AppNavHost(
                     container = container,

@@ -2,7 +2,12 @@ package com.solerunner.myhealth.design.components
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.gestures.detectTapGestures
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -15,6 +20,8 @@ import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.PathEffect
+import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.res.stringResource
@@ -28,11 +35,9 @@ import com.solerunner.myhealth.domain.model.SeriesPoint
 import java.util.Locale
 
 /**
- * Line chart with a reference band, drawn with the single accent hue.
- *
- * Tap anywhere to select the nearest result; the selected point gets a ring and its exact date and
- * value are printed underneath. The same numbers are exposed through semantics, so the chart is
- * readable by a screen reader.
+ * Line chart with a reference band. The Rare treatment: a thin line, dashed grid, no area fill, a
+ * small ring on the selected point and a faint crosshair. Tap to select; the exact date and value are
+ * printed underneath and exposed through semantics.
  */
 @Composable
 fun LineChart(
@@ -61,12 +66,13 @@ fun LineChart(
     val high = maxOf(values.max(), referenceHigh ?: values.max())
     val span = (high - low).takeIf { it > 0.0 } ?: 1.0
     var selected by remember(points) { mutableIntStateOf(points.lastIndex) }
+    val dash = PathEffect.dashPathEffect(floatArrayOf(2f, 6f), 0f)
 
     Column(modifier = modifier) {
         Canvas(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(170.dp)
+                .height(172.dp)
                 .semantics { contentDescription?.let { this.contentDescription = it } }
                 .pointerInput(points) {
                     detectTapGestures { offset ->
@@ -77,10 +83,9 @@ fun LineChart(
         ) {
             val chartHeight = size.height
             val chartWidth = size.width
-            fun x(index: Int): Float =
-                if (points.size == 1) chartWidth / 2f else chartWidth * index / (points.size - 1)
+            fun x(index: Int): Float = if (points.size == 1) chartWidth / 2f else chartWidth * index / (points.size - 1)
             fun y(value: Double): Float =
-                (chartHeight - ((value - low) / span * chartHeight * 0.88f)).toFloat() + chartHeight * 0.06f
+                (chartHeight - ((value - low) / span * chartHeight * 0.86f)).toFloat() + chartHeight * 0.07f
 
             if (referenceLow != null && referenceHigh != null) {
                 val top = y(referenceHigh)
@@ -88,25 +93,46 @@ fun LineChart(
                 drawRoundRect(
                     color = colors.referenceBand,
                     topLeft = Offset(0f, top),
-                    size = Size(chartWidth, (bottom - top).coerceAtLeast(1f)),
-                    cornerRadius = CornerRadius(6f, 6f),
+                    size = Size(chartWidth, (bottom - top).coerceAtLeast(2f)),
+                    cornerRadius = CornerRadius(8f, 8f),
                 )
             }
             repeat(3) { line ->
                 val gy = chartHeight * line / 2f
-                drawLine(color = colors.grid, start = Offset(0f, gy), end = Offset(chartWidth, gy), strokeWidth = 1f)
+                drawLine(
+                    color = colors.grid,
+                    start = Offset(0f, gy),
+                    end = Offset(chartWidth, gy),
+                    strokeWidth = 1f,
+                    pathEffect = dash,
+                )
+            }
+            points.getOrNull(selected)?.let { point ->
+                drawLine(
+                    color = colors.point.copy(alpha = 0.18f),
+                    start = Offset(x(selected), 0f),
+                    end = Offset(x(selected), chartHeight),
+                    strokeWidth = 1f,
+                )
+                drawCircle(
+                    color = colors.line.copy(alpha = 0.12f),
+                    radius = 12f,
+                    center = Offset(x(selected), y(point.value)),
+                )
             }
             val path = Path()
             points.forEachIndexed { index, point ->
                 if (index == 0) path.moveTo(x(index), y(point.value)) else path.lineTo(x(index), y(point.value))
             }
-            drawPath(path, color = colors.line, style = Stroke(width = 3f))
+            drawPath(path, color = colors.line, style = Stroke(width = 2.5f, cap = StrokeCap.Round))
             points.forEachIndexed { index, point ->
-                drawCircle(
-                    color = if (index == selected) colors.pointSelected else colors.point,
-                    radius = if (index == selected) 5.5f else 3f,
-                    center = Offset(x(index), y(point.value)),
-                )
+                if (index != selected) {
+                    drawCircle(color = colors.point, radius = 2.6f, center = Offset(x(index), y(point.value)))
+                }
+            }
+            points.getOrNull(selected)?.let { point ->
+                drawCircle(color = colors.pointSelected, radius = 4.5f, center = Offset(x(selected), y(point.value)))
+                drawCircle(color = colors.referenceBand, radius = 2f, center = Offset(x(selected), y(point.value)))
             }
         }
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
@@ -115,12 +141,18 @@ fun LineChart(
         }
         val point = points.getOrNull(selected)
         if (point != null) {
-            Text(
-                "${Dates.format(point.date, locale)} — ${formatValue(point.value, decimals)} ${unit ?: ""}".trim(),
-                style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(top = 4.dp),
-            )
+            Row(Modifier.padding(top = 4.dp), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                Text(
+                    Dates.format(point.date, locale),
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                Text(
+                    "${formatValue(point.value, decimals)} ${unit.orEmpty()}".trim(),
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurface,
+                )
+            }
         }
     }
 }

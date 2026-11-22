@@ -18,7 +18,7 @@ import com.solerunner.myhealth.design.theme.MyHealthTokens
 import com.solerunner.myhealth.di.AppContainer
 import com.solerunner.myhealth.domain.model.AuthProvider
 import com.solerunner.myhealth.domain.model.Profile
-import com.solerunner.myhealth.ui.auth.PinPad
+import com.solerunner.myhealth.design.rare.RarePinEntry
 import kotlinx.coroutines.launch
 import java.time.Instant
 
@@ -110,7 +110,7 @@ fun OnboardingScreen(container: AppContainer) {
                 onBack = { step = OnboardingStep.WELCOME },
             )
 
-            OnboardingStep.PIN -> PinPad(
+            OnboardingStep.PIN -> RarePinEntry(
                 pin = pin,
                 onPinChange = { pin = it },
                 title = stringResource(R.string.auth_setup_title),
@@ -122,7 +122,7 @@ fun OnboardingScreen(container: AppContainer) {
                 },
             )
 
-            OnboardingStep.CONFIRM -> PinPad(
+            OnboardingStep.CONFIRM -> RarePinEntry(
                 pin = confirm,
                 onPinChange = { confirm = it },
                 title = stringResource(R.string.auth_confirm_title),

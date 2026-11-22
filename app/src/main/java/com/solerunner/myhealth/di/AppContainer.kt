@@ -13,6 +13,7 @@ import com.solerunner.myhealth.data.import.DocumentReader
 import com.solerunner.myhealth.data.import.ImportService
 import com.solerunner.myhealth.data.prefs.SecureSettingsRepository
 import com.solerunner.myhealth.data.prefs.SettingsRepository
+import com.solerunner.myhealth.reminders.MedicineReminders
 import com.solerunner.myhealth.data.repository.AttachmentRepositoryImpl
 import com.solerunner.myhealth.data.repository.AuditRepositoryImpl
 import com.solerunner.myhealth.data.repository.DeviceRepositoryImpl
@@ -71,6 +72,7 @@ class AppContainer(context: Context) {
     val importer = ImportService(database, documentReader, vault, reports, medicines, profiles, audit)
     val exporter = ExportService(appContext)
     val doctorSummaryPdf = DoctorSummaryPdf(appContext)
+    val reminders = MedicineReminders(appContext)
 
     private val readyState = MutableStateFlow(false)
     val ready: StateFlow<Boolean> = readyState.asStateFlow()

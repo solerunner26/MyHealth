@@ -1,9 +1,10 @@
 package com.solerunner.myhealth.ui.vitals
 
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -14,6 +15,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.solerunner.myhealth.R
+import com.solerunner.myhealth.design.rare.RareDivider
 import com.solerunner.myhealth.domain.model.Measurement
 import com.solerunner.myhealth.ui.common.displayWithUnit
 import com.solerunner.myhealth.ui.common.label
@@ -22,7 +24,7 @@ import com.solerunner.myhealth.ui.common.label
 fun VitalsHistory(measurements: List<Measurement>, onDelete: (Measurement) -> Unit) {
     measurements.forEachIndexed { index, measurement ->
         Row(
-            Modifier.fillMaxWidth().padding(vertical = 8.dp),
+            Modifier.padding(horizontal = 14.dp).padding(vertical = 10.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Column(Modifier.weight(1f)) {
@@ -40,13 +42,11 @@ fun VitalsHistory(measurements: List<Measurement>, onDelete: (Measurement) -> Un
                     )
                 }
             }
-            Text(measurement.recordedDay.toString(), style = MaterialTheme.typography.bodySmall)
+            Text(measurement.recordedDay.toString(), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
             IconButton(onClick = { onDelete(measurement) }) {
-                Icon(Icons.Filled.Delete, contentDescription = stringResource(R.string.common_delete))
+                Icon(Icons.Filled.Delete, contentDescription = stringResource(R.string.common_delete), tint = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         }
-        if (index != measurements.lastIndex) {
-            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-        }
+        if (index != measurements.lastIndex) RareDivider(Modifier.padding(horizontal = 14.dp))
     }
 }

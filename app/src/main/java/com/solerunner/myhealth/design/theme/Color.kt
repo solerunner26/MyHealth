@@ -3,15 +3,15 @@ package com.solerunner.myhealth.design.theme
 import androidx.compose.ui.graphics.Color
 
 /**
- * My Health uses a deliberately *monochrome* palette: a single deep-pine accent family plus a
- * warm-neutral surface scale. There is exactly one hue in the product.
+ * Palette: one hue, many weights.
  *
- * Why: clinical data is dense, and competing colours make trend reading harder. A single accent
- * also keeps status communication colour-blind safe — "out of range" is expressed with icon,
- * label, fill weight and position, never with colour alone.
+ * The geometry and surface treatment follow the Rare UI design language (near-black and porcelain
+ * neutrals, hairline borders, small radii, high contrast type). The product rule still wins: there is
+ * exactly one hue in the app, a deep pine accent. Severity is carried by icon, label and fill weight,
+ * never by a second colour, so the palette stays colour-blind safe.
  */
 internal object Palette {
-    // ---- Accent (the one hue) -------------------------------------------------------------
+    // Accent: deep pine, 05 (darkest) to 99 (lightest).
     val Pine05 = Color(0xFF02110E)
     val Pine10 = Color(0xFF04231E)
     val Pine20 = Color(0xFF0B3B33)
@@ -25,27 +25,26 @@ internal object Palette {
     val Pine95 = Color(0xFFE3F8F2)
     val Pine99 = Color(0xFFF3FCF9)
 
-    // ---- Neutrals (warm porcelain → ink) ---------------------------------------------------
-    val Neutral0 = Color(0xFF000000)
-    val Neutral6 = Color(0xFF0C100F)
-    val Neutral10 = Color(0xFF161A19)
-    val Neutral12 = Color(0xFF1B1F1E)
-    val Neutral17 = Color(0xFF242928)
-    val Neutral20 = Color(0xFF2C3231)
-    val Neutral22 = Color(0xFF313635)
-    val Neutral24 = Color(0xFF363B3A)
-    val Neutral30 = Color(0xFF454B4A)
-    val Neutral40 = Color(0xFF5D6462)
-    val Neutral50 = Color(0xFF767C7A)
-    val Neutral60 = Color(0xFF909695)
-    val Neutral70 = Color(0xFFACB2B0)
-    val Neutral80 = Color(0xFFC8CECB)
-    val Neutral87 = Color(0xFFDDE2DF)
-    val Neutral90 = Color(0xFFE3E7E4)
-    val Neutral92 = Color(0xFFE9EDEA)
-    val Neutral94 = Color(0xFFEFF2F0)
-    val Neutral96 = Color(0xFFF4F6F4)
-    val Neutral98 = Color(0xFFF9FAF9)
-    val Neutral99 = Color(0xFFFCFDFC)
-    val Neutral100 = Color(0xFFFFFFFF)
+    // Warm neutral scale. Slightly green-warm so it sits with the accent without a second hue.
+    val Ink0 = Color(0xFF000000)
+    val Ink3 = Color(0xFF050606)
+    val Ink7 = Color(0xFF0A0B0B)
+    val Ink10 = Color(0xFF101211)
+    val Ink14 = Color(0xFF161817)
+    val Ink18 = Color(0xFF1C1E1D)
+    val Ink22 = Color(0xFF222524)
+    val Ink26 = Color(0xFF2A2D2C)
+    val Ink32 = Color(0xFF343836)
+    val Ink40 = Color(0xFF454A47)
+    val Ink52 = Color(0xFF5E635F)
+    val Ink64 = Color(0xFF7C817D)
+    val Ink72 = Color(0xFF949994)
+    val Ink80 = Color(0xFFC4C8C3)
+    val Ink88 = Color(0xFFDDE0DB)
+    val Ink92 = Color(0xFFE9EBE7)
+    val Ink94 = Color(0xFFEFF0ED)
+    val Ink96 = Color(0xFFF4F5F2)
+    val Ink98 = Color(0xFFFAFAF8)
+    val Ink99 = Color(0xFFFDFDFB)
+    val White = Color(0xFFFFFFFF)
 }

@@ -2,7 +2,12 @@ package com.solerunner.myhealth.ui.auth
 
 import androidx.biometric.BiometricManager
 import androidx.biometric.BiometricPrompt
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
@@ -18,16 +23,18 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.FragmentActivity
 import com.solerunner.myhealth.R
-import com.solerunner.myhealth.di.AppContainer
+import com.solerunner.myhealth.design.rare.RarePinEntry
 import com.solerunner.myhealth.design.theme.MyHealthTokens
+import com.solerunner.myhealth.di.AppContainer
 
 /**
- * The lock screen. Biometric unlock is offered only when the user enabled it *and* the device reports a
- * usable sensor; otherwise the PIN is the only path — there is no "forgot PIN" that bypasses the gate,
- * because the data key lives in hardware and cannot be re-derived from an email address.
+ * The lock screen. Biometric unlock is offered only when the user enabled it and the device reports a
+ * usable sensor; the PIN is always the fallback. There is no reset path that bypasses the gate, because
+ * the data key lives in hardware.
  */
 @Composable
 fun UnlockScreen(container: AppContainer, onUnlocked: () -> Unit) {
@@ -87,12 +94,12 @@ fun UnlockScreen(container: AppContainer, onUnlocked: () -> Unit) {
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Text(
-            stringResource(R.string.app_name),
+            stringResource(R.string.app_name).uppercase(),
             style = MaterialTheme.typography.labelLarge,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            color = MaterialTheme.colorScheme.primary,
         )
         Spacer(Modifier.height(MyHealthTokens.spacing.xl))
-        PinPad(
+        RarePinEntry(
             pin = pin,
             onPinChange = {
                 pin = it
@@ -112,11 +119,12 @@ fun UnlockScreen(container: AppContainer, onUnlocked: () -> Unit) {
                 }
             },
             onBiometric = if (prompt != null) ({ askBiometric() }) else null,
+            note = stringResource(R.string.auth_privacy_note),
         )
         Spacer(Modifier.height(MyHealthTokens.spacing.xl))
         Text(
-            stringResource(R.string.auth_privacy_note),
-            style = MaterialTheme.typography.bodySmall,
+            stringResource(R.string.settings_design_credit),
+            style = MaterialTheme.typography.labelSmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center,
         )

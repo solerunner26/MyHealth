@@ -1,65 +1,48 @@
 package com.solerunner.myhealth.design.components
 
 import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.size
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
+import com.solerunner.myhealth.design.rare.RareProgressRing
 import com.solerunner.myhealth.design.theme.NumericTextStyle
 
-/** Health-score ring: one arc, one number, one band label. Empty when there is nothing to score. */
+/** Score ring: thin arc, large mono number, band label. */
 @Composable
 fun RingGauge(
     score: Int?,
     bandLabel: String,
     modifier: Modifier = Modifier,
-    size: Int = 132,
+    size: Int = 120,
 ) {
-    val track = MaterialTheme.colorScheme.surfaceContainerHighest
-    val accent = MaterialTheme.colorScheme.primary
     Box(
         modifier = modifier
             .size(size.dp)
             .semantics { contentDescription = if (score == null) bandLabel else "$score, $bandLabel" },
         contentAlignment = Alignment.Center,
     ) {
-        Canvas(Modifier.fillMaxSize()) {
-            val stroke = 10.dp.toPx()
-            val inset = stroke / 2
-            drawArc(
-                color = track,
-                startAngle = -90f,
-                sweepAngle = 360f,
-                useCenter = false,
-                topLeft = Offset(inset, inset),
-                size = Size(this.size.width - stroke, this.size.height - stroke),
-                style = Stroke(width = stroke, cap = StrokeCap.Round),
-            )
-            if (score != null) {
-                drawArc(
-                    color = accent,
-                    startAngle = -90f,
-                    sweepAngle = 360f * (score.coerceIn(0, 100) / 100f),
-                    useCenter = false,
-                    topLeft = Offset(inset, inset),
-                    size = Size(this.size.width - stroke, this.size.height - stroke),
-                    style = Stroke(width = stroke, cap = StrokeCap.Round),
-                )
-            }
-        }
+        RareProgressRing(progress = (score ?: 0) / 100f, size = size, stroke = 5)
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Text(
                 score?.toString() ?: "—",
-                style = MaterialTheme.typography.displaySmall.copy(fontFamily = NumericTextStyle.fontFamily),
+                style = MaterialTheme.typography.headlineLarge.copy(fontFamily = NumericTextStyle.fontFamily),
             )
             Text(
                 bandLabel,
@@ -70,41 +53,41 @@ fun RingGauge(
     }
 }
 
-/** Small trend line without axes — used inside tiles where space is tight. */
+/** Small trend line without axes, used where space is tight. */
 @Composable
-fun Sparkline(values: List<Double>, modifier: Modifier = Modifier, height: Int = 36) {
+fun Sparkline(values: List<Double>, modifier: Modifier = Modifier, height: Int = 32) {
     if (values.size < 2) return
     val color = MaterialTheme.colorScheme.primary
     Canvas(modifier = modifier.fillMaxWidth().height(height.dp)) {
         val low = values.min()
         val span = (values.max() - low).takeIf { it > 0.0 } ?: 1.0
         val step = size.width / (values.size - 1)
-        val path = androidx.compose.ui.graphics.Path()
+        val path = Path()
         values.forEachIndexed { index, value ->
             val px = step * index
-            val py = size.height - (((value - low) / span).toFloat() * size.height * 0.85f) - size.height * 0.075f
+            val py = size.height - (((value - low) / span).toFloat() * size.height * 0.82f) - size.height * 0.09f
             if (index == 0) path.moveTo(px, py) else path.lineTo(px, py)
         }
-        drawPath(path, color = color, style = Stroke(width = 2.5f, cap = StrokeCap.Round))
+        drawPath(path, color = color, style = Stroke(width = 2f, cap = StrokeCap.Round))
     }
 }
 
-/** Simple bar chart (sleep per night, steps per day). Bars scale to the tallest value. */
+/** Simple bar chart (sleep per night, steps per day). */
 @Composable
-fun BarChart(values: List<Float>, modifier: Modifier = Modifier, height: Int = 96) {
+fun BarChart(values: List<Float>, modifier: Modifier = Modifier, height: Int = 88) {
     if (values.isEmpty()) return
-    val color = MaterialTheme.colorScheme.primary.copy(alpha = 0.75f)
+    val color = MaterialTheme.colorScheme.primary.copy(alpha = 0.8f)
     Canvas(modifier = modifier.fillMaxWidth().height(height.dp)) {
         val max = values.max().takeIf { it > 0f } ?: 1f
         val slot = size.width / values.size
-        val barWidth = (slot * 0.6f).coerceAtLeast(2f)
+        val barWidth = (slot * 0.55f).coerceAtLeast(2f)
         values.forEachIndexed { index, value ->
             val barHeight = (value / max) * size.height
             drawRoundRect(
                 color = color,
                 topLeft = Offset(slot * index + (slot - barWidth) / 2f, size.height - barHeight),
                 size = Size(barWidth, barHeight),
-                cornerRadius = androidx.compose.ui.geometry.CornerRadius(barWidth / 2f, barWidth / 2f),
+                cornerRadius = CornerRadius(barWidth / 2f, barWidth / 2f),
             )
         }
     }

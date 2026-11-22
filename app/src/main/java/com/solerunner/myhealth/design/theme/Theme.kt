@@ -1,5 +1,7 @@
 package com.solerunner.myhealth.design.theme
 
+import androidx.compose.animation.core.CubicBezierEasing
+import androidx.compose.animation.core.Easing
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.MaterialTheme
@@ -14,88 +16,90 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
+/**
+ * Colour roles follow the Rare UI surface model: porcelain/ink neutrals, hairline outlines, one accent.
+ * The accent stays deep pine because the product's single-hue rule outranks any imported palette.
+ */
 private val LightScheme: ColorScheme = lightColorScheme(
     primary = Palette.Pine30,
-    onPrimary = Palette.Neutral100,
-    primaryContainer = Palette.Pine90,
+    onPrimary = Palette.White,
+    primaryContainer = Palette.Pine95,
     onPrimaryContainer = Palette.Pine10,
     inversePrimary = Palette.Pine80,
-    secondary = Palette.Neutral30,
-    onSecondary = Palette.Neutral100,
-    secondaryContainer = Palette.Neutral92,
-    onSecondaryContainer = Palette.Neutral10,
+    secondary = Palette.Ink32,
+    onSecondary = Palette.White,
+    secondaryContainer = Palette.Ink96,
+    onSecondaryContainer = Palette.Ink14,
     tertiary = Palette.Pine40,
-    onTertiary = Palette.Neutral100,
-    tertiaryContainer = Palette.Pine95,
+    onTertiary = Palette.White,
+    tertiaryContainer = Palette.Pine99,
     onTertiaryContainer = Palette.Pine10,
-    background = Palette.Neutral98,
-    onBackground = Palette.Neutral10,
-    surface = Palette.Neutral98,
-    onSurface = Palette.Neutral10,
-    surfaceVariant = Palette.Neutral92,
-    onSurfaceVariant = Palette.Neutral30,
+    background = Palette.Ink99,
+    onBackground = Palette.Ink14,
+    surface = Palette.White,
+    onSurface = Palette.Ink14,
+    surfaceVariant = Palette.Ink94,
+    onSurfaceVariant = Palette.Ink52,
     surfaceTint = Palette.Pine30,
-    surfaceBright = Palette.Neutral99,
-    surfaceDim = Palette.Neutral90,
-    surfaceContainerLowest = Palette.Neutral100,
-    surfaceContainerLow = Palette.Neutral96,
-    surfaceContainer = Palette.Neutral94,
-    surfaceContainerHigh = Palette.Neutral92,
-    surfaceContainerHighest = Palette.Neutral90,
-    inverseSurface = Palette.Neutral20,
-    inverseOnSurface = Palette.Neutral96,
-    outline = Palette.Neutral70,
-    outlineVariant = Palette.Neutral87,
-    // Single-hue product: the "error" slot stays inside the palette (deep pine ink) so that
-    // destructive/critical styling never introduces a second hue. Severity is carried by
-    // iconography, wording, fill weight and position instead of colour.
+    surfaceBright = Palette.White,
+    surfaceDim = Palette.Ink92,
+    surfaceContainerLowest = Palette.White,
+    surfaceContainerLow = Palette.Ink98,
+    surfaceContainer = Palette.Ink96,
+    surfaceContainerHigh = Palette.Ink94,
+    surfaceContainerHighest = Palette.Ink92,
+    inverseSurface = Palette.Ink14,
+    inverseOnSurface = Palette.Ink98,
+    outline = Palette.Ink80,
+    outlineVariant = Palette.Ink92,
+    // Single hue: destructive styling uses pine ink, never a second colour.
     error = Palette.Pine20,
-    onError = Palette.Neutral100,
-    errorContainer = Palette.Neutral90,
-    onErrorContainer = Palette.Pine05,
-    scrim = Palette.Neutral0,
+    onError = Palette.White,
+    errorContainer = Palette.Ink94,
+    onErrorContainer = Palette.Pine10,
+    scrim = Palette.Ink0,
 )
 
 private val DarkScheme: ColorScheme = darkColorScheme(
     primary = Palette.Pine80,
-    onPrimary = Palette.Pine10,
+    onPrimary = Palette.Pine05,
     primaryContainer = Palette.Pine20,
     onPrimaryContainer = Palette.Pine90,
     inversePrimary = Palette.Pine30,
-    secondary = Palette.Neutral80,
-    onSecondary = Palette.Neutral12,
-    secondaryContainer = Palette.Neutral24,
-    onSecondaryContainer = Palette.Neutral90,
+    secondary = Palette.Ink88,
+    onSecondary = Palette.Ink10,
+    secondaryContainer = Palette.Ink22,
+    onSecondaryContainer = Palette.Ink92,
     tertiary = Palette.Pine70,
     onTertiary = Palette.Pine05,
     tertiaryContainer = Palette.Pine20,
     onTertiaryContainer = Palette.Pine90,
-    background = Palette.Neutral6,
-    onBackground = Palette.Neutral92,
-    surface = Palette.Neutral6,
-    onSurface = Palette.Neutral92,
-    surfaceVariant = Palette.Neutral22,
-    onSurfaceVariant = Palette.Neutral80,
+    background = Palette.Ink7,
+    onBackground = Palette.Ink92,
+    surface = Palette.Ink10,
+    onSurface = Palette.Ink92,
+    surfaceVariant = Palette.Ink18,
+    onSurfaceVariant = Palette.Ink72,
     surfaceTint = Palette.Pine80,
-    surfaceBright = Palette.Neutral24,
-    surfaceDim = Palette.Neutral6,
-    surfaceContainerLowest = Palette.Neutral0,
-    surfaceContainerLow = Palette.Neutral10,
-    surfaceContainer = Palette.Neutral12,
-    surfaceContainerHigh = Palette.Neutral17,
-    surfaceContainerHighest = Palette.Neutral22,
-
-    inverseSurface = Palette.Neutral90,
-    inverseOnSurface = Palette.Neutral12,
-    outline = Palette.Neutral60,
-    outlineVariant = Palette.Neutral30,
+    surfaceBright = Palette.Ink26,
+    surfaceDim = Palette.Ink7,
+    surfaceContainerLowest = Palette.Ink3,
+    surfaceContainerLow = Palette.Ink14,
+    surfaceContainer = Palette.Ink14,
+    surfaceContainerHigh = Palette.Ink18,
+    surfaceContainerHighest = Palette.Ink22,
+    inverseSurface = Palette.Ink92,
+    inverseOnSurface = Palette.Ink10,
+    outline = Palette.Ink32,
+    outlineVariant = Palette.Ink22,
     error = Palette.Pine85,
     onError = Palette.Pine05,
-    errorContainer = Palette.Neutral24,
+    errorContainer = Palette.Ink22,
     onErrorContainer = Palette.Pine90,
-    scrim = Palette.Neutral0,
+    scrim = Palette.Ink0,
 )
-/** Spacing scale — every gap in the product comes from here, so the rhythm stays identical app-wide. */
+
+/** Spacing scale. Every gap comes from here so the rhythm stays identical app-wide. */
 @Immutable
 data class Spacing(
     val xxs: Dp = 2.dp,
@@ -107,9 +111,31 @@ data class Spacing(
     val xxl: Dp = 32.dp,
     val xxxl: Dp = 48.dp,
     val screenPadding: Dp = 20.dp,
-    val cardPadding: Dp = 18.dp,
-    val rowHeight: Dp = 52.dp,
+    val cardPadding: Dp = 16.dp,
+    val rowHeight: Dp = 56.dp,
     val hairline: Dp = 1.dp,
+)
+
+/** Geometry constants that keep controls identical in size and stroke across the app. */
+@Immutable
+data class RareDims(
+    val border: Dp = 1.dp,
+    val focusBorder: Dp = 1.5.dp,
+    val controlHeight: Dp = 46.dp,
+    val iconButton: Dp = 40.dp,
+    val touchTarget: Dp = 48.dp,
+    val sheetHandleWidth: Dp = 36.dp,
+    val dot: Dp = 6.dp,
+)
+
+/** Shared motion language: short, eased moves; springs only for playful indicators. */
+@Immutable
+data class Motion(
+    val fast: Int = 120,
+    val normal: Int = 200,
+    val slow: Int = 320,
+    val out: Easing = CubicBezierEasing(0.22f, 1f, 0.36f, 1f),
+    val inOut: Easing = CubicBezierEasing(0.65f, 0f, 0.35f, 1f),
 )
 
 /** Chart palette: tints of the single accent plus neutral, never an independent hue. */
@@ -131,10 +157,10 @@ fun lightChartColors(): ChartColors = ChartColors(
     lineSoft = Palette.Pine60,
     point = Palette.Pine30,
     pointSelected = Palette.Pine10,
-    referenceBand = Palette.Pine90,
-    grid = Palette.Neutral90,
-    axisLabel = Palette.Neutral40,
-    areaTop = Palette.Pine80.copy(alpha = 0.40f),
+    referenceBand = Palette.Pine30.copy(alpha = 0.10f),
+    grid = Palette.Ink92,
+    axisLabel = Palette.Ink52,
+    areaTop = Palette.Pine80.copy(alpha = 0.28f),
     areaBottom = Palette.Pine80.copy(alpha = 0.02f),
 )
 
@@ -143,15 +169,17 @@ fun darkChartColors(): ChartColors = ChartColors(
     lineSoft = Palette.Pine70,
     point = Palette.Pine80,
     pointSelected = Palette.Pine95,
-    referenceBand = Palette.Pine20,
-    grid = Palette.Neutral24,
-    axisLabel = Palette.Neutral70,
-    areaTop = Palette.Pine70.copy(alpha = 0.32f),
+    referenceBand = Palette.Pine80.copy(alpha = 0.14f),
+    grid = Palette.Ink22,
+    axisLabel = Palette.Ink64,
+    areaTop = Palette.Pine70.copy(alpha = 0.24f),
     areaBottom = Palette.Pine70.copy(alpha = 0.02f),
 )
 
 private val LocalSpacing = staticCompositionLocalOf { Spacing() }
 private val LocalChartColors = staticCompositionLocalOf { lightChartColors() }
+private val LocalDims = staticCompositionLocalOf { RareDims() }
+private val LocalMotion = staticCompositionLocalOf { Motion() }
 
 /** Product-wide accessor for the extended design tokens. */
 object MyHealthTokens {
@@ -160,12 +188,17 @@ object MyHealthTokens {
 
     val chart: ChartColors
         @Composable @ReadOnlyComposable get() = LocalChartColors.current
+
+    val dims: RareDims
+        @Composable @ReadOnlyComposable get() = LocalDims.current
+
+    val motion: Motion
+        @Composable @ReadOnlyComposable get() = LocalMotion.current
 }
 
 /**
- * The single theme entry point. `darkTheme` is passed in from the user's setting
- * (`ThemeMode.SYSTEM` resolves to [isSystemInDarkTheme] there), which keeps the "follow day/night"
- * behaviour in one place instead of being re-derived in every screen.
+ * The single theme entry point. `darkTheme` comes from the user's setting, so SYSTEM/LIGHT/DARK is
+ * resolved in one place instead of being re-derived in every screen.
  */
 @Composable
 fun MyHealthTheme(
@@ -176,6 +209,8 @@ fun MyHealthTheme(
     CompositionLocalProvider(
         LocalSpacing provides Spacing(),
         LocalChartColors provides if (darkTheme) darkChartColors() else lightChartColors(),
+        LocalDims provides RareDims(),
+        LocalMotion provides Motion(),
     ) {
         MaterialTheme(
             colorScheme = colorScheme,

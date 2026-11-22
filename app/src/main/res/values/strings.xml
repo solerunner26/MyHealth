@@ -474,6 +474,8 @@
     <string name="error_db">Your records could not be opened.</string>
     <string name="error_no_app_for_file">No app can open this file on this device.</string>
     <string name="snackbar_undo">Undo</string>
+    <string name="meds_reminders_note">Reminders fire from this phone only.</string>
+    <string name="settings_design_credit">Design language inspired by Rare UI</string>
 </resources>
 
 

@@ -16,6 +16,7 @@ class MyHealthApplication : Application() {
         super.onCreate()
         container = AppContainer(this)
         container.start()
+        container.reminders.ensureChannel()
     }
 
     override fun onTerminate() {

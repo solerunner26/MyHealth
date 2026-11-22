@@ -34,19 +34,18 @@ fun ReportDetailScreen(
     LaunchedEffect(state.deleted) { if (state.deleted) onDeleted() }
 
     Column(Modifier.fillMaxSize().padding(horizontal = spacing.screenPadding)) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            IconButton(onClick = onBack) {
-                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.common_back))
-            }
-            Text(
-                stringResource(R.string.records_detail_title),
-                style = MaterialTheme.typography.titleLarge,
-                modifier = Modifier.weight(1f),
-            )
-            IconButton(onClick = { confirmDelete = true }) {
-                Icon(Icons.Filled.Delete, contentDescription = stringResource(R.string.common_delete))
-            }
-        }
+        com.solerunner.myhealth.design.rare.RarePageHeader(
+            title = stringResource(R.string.records_detail_title),
+            onBack = onBack,
+            modifier = Modifier.padding(vertical = spacing.md),
+            actions = {
+                com.solerunner.myhealth.design.rare.RareIconButton(
+                    icon = Icons.Filled.Delete,
+                    contentDescription = stringResource(R.string.common_delete),
+                    onClick = { confirmDelete = true },
+                )
+            },
+        )
 
         val report = state.report
         if (report == null) {

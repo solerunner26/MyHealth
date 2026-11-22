@@ -439,4 +439,6 @@
     <string name="error_db">आपके रिकॉर्ड नहीं खुल सके।</string>
     <string name="error_no_app_for_file">इस डिवाइस पर कोई ऐप यह फ़ाइल नहीं खोल सकता।</string>
     <string name="snackbar_undo">पूर्ववत</string>
+    <string name="meds_reminders_note">रिमाइंडर केवल इसी फ़ोन से आते हैं।</string>
+    <string name="settings_design_credit">डिज़ाइन भाषा Rare UI से प्रेरित</string>
 </resources>

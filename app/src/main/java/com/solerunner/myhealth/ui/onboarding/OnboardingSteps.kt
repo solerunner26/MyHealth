@@ -1,17 +1,26 @@
 package com.solerunner.myhealth.ui.onboarding
 
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.solerunner.myhealth.R
-import com.solerunner.myhealth.design.components.HealthCard
+import com.solerunner.myhealth.design.rare.RareBanner
+import com.solerunner.myhealth.design.rare.RareButton
+import com.solerunner.myhealth.design.rare.RareButtonStyle
+import com.solerunner.myhealth.design.rare.RareCard
+import com.solerunner.myhealth.design.rare.RareTextField
 import com.solerunner.myhealth.design.theme.MyHealthTokens
 
 @Composable
@@ -26,12 +35,15 @@ internal fun WelcomeStep(
         modifier = Modifier.fillMaxWidth().padding(horizontal = spacing.xl),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        HealthCard {
-            Text(
-                stringResource(R.string.auth_welcome_title),
-                style = MaterialTheme.typography.headlineMedium,
-            )
-            Spacer(Modifier.height(spacing.md))
+        Text(
+            stringResource(R.string.app_name).uppercase(),
+            style = MaterialTheme.typography.labelLarge,
+            color = MaterialTheme.colorScheme.primary,
+        )
+        Spacer(Modifier.height(spacing.lg))
+        RareCard {
+            Text(stringResource(R.string.auth_welcome_title), style = MaterialTheme.typography.headlineMedium)
+            Spacer(Modifier.height(spacing.sm))
             Text(
                 stringResource(R.string.auth_welcome_body),
                 style = MaterialTheme.typography.bodyMedium,
@@ -39,18 +51,19 @@ internal fun WelcomeStep(
             )
         }
         Spacer(Modifier.height(spacing.xl))
-        Button(onClick = onStart, modifier = Modifier.fillMaxWidth()) {
-            Text(stringResource(R.string.auth_get_started))
-        }
+        RareButton(text = stringResource(R.string.auth_get_started), onClick = onStart, modifier = Modifier.fillMaxWidth())
         if (googleConfigured) {
             Spacer(Modifier.height(spacing.sm))
-            OutlinedButton(onClick = onGoogle, modifier = Modifier.fillMaxWidth()) {
-                Text(stringResource(R.string.auth_google_sign_in))
-            }
+            RareButton(
+                text = stringResource(R.string.auth_google_sign_in),
+                onClick = onGoogle,
+                modifier = Modifier.fillMaxWidth(),
+                style = RareButtonStyle.SECONDARY,
+            )
         }
         if (error != null) {
             Spacer(Modifier.height(spacing.sm))
-            Text(error, style = MaterialTheme.typography.bodySmall, textAlign = TextAlign.Center)
+            RareBanner(text = error)
         }
     }
 }
@@ -68,7 +81,7 @@ internal fun NameStep(
         modifier = Modifier.fillMaxWidth().padding(horizontal = spacing.xl),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Text(stringResource(R.string.auth_name_title), style = MaterialTheme.typography.headlineSmall)
+        Text(stringResource(R.string.auth_name_title), style = MaterialTheme.typography.headlineSmall, textAlign = TextAlign.Center)
         Spacer(Modifier.height(spacing.sm))
         Text(
             stringResource(R.string.auth_name_body),
@@ -77,24 +90,21 @@ internal fun NameStep(
             textAlign = TextAlign.Center,
         )
         Spacer(Modifier.height(spacing.xl))
-        OutlinedTextField(
+        RareTextField(
             value = name,
             onValueChange = onNameChange,
-            modifier = Modifier.fillMaxWidth(),
-            label = { Text(stringResource(R.string.auth_name_label)) },
-            singleLine = true,
+            label = stringResource(R.string.auth_name_label),
             isError = error != null,
-            keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Words),
-            shape = MaterialTheme.shapes.medium,
+            supportingText = error,
         )
-        if (error != null) {
-            Spacer(Modifier.height(spacing.xs))
-            Text(error, style = MaterialTheme.typography.bodySmall)
-        }
         Spacer(Modifier.height(spacing.xl))
-        Button(onClick = onContinue, modifier = Modifier.fillMaxWidth()) {
-            Text(stringResource(R.string.common_continue))
-        }
-        TextButton(onClick = onBack) { Text(stringResource(R.string.common_back)) }
+        RareButton(text = stringResource(R.string.common_continue), onClick = onContinue, modifier = Modifier.fillMaxWidth())
+        Spacer(Modifier.height(spacing.sm))
+        RareButton(
+            text = stringResource(R.string.common_back),
+            onClick = onBack,
+            modifier = Modifier.fillMaxWidth(),
+            style = RareButtonStyle.GHOST,
+        )
     }
 }
