@@ -2,15 +2,22 @@ package app.myhealth
 
 import android.app.Application
 import app.myhealth.core.CrashLog
+import app.myhealth.data.StorageOpener
 
-class MyHealthApplication : Application() {
+open class MyHealthApplication : Application() {
     lateinit var container: AppContainer
         private set
+
+    /** Test seam: Robolectric tests override this with a software key and an unencrypted SQLite factory. */
+    protected open fun createStorageOpener(): StorageOpener = StorageOpener(this)
 
     override fun onCreate() {
         super.onCreate()
         val crashLog = CrashLog.forContext(this, BuildInfo.versionName(this))
         crashLog.install()
-        container = AppContainer(this, crashLog)
+        container = AppContainer(this, crashLog, ::createStorageOpener)
+        container.start()
     }
 }
+
+val android.content.Context.container: AppContainer get() = (applicationContext as MyHealthApplication).container

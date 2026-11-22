@@ -65,3 +65,33 @@ the only reliable source.
 ## D-010 Latin digits for values
 Medical values are always shown with Latin digits and a '.' decimal point in all three languages, as printed on Indian
 lab reports. UI text is fully translated.
+
+## D-011 SQLCipher without Room (no annotation processors)
+The spec forbids codegen unless the toolchain demands it. Room would need KSP, so persistence uses
+`net.zetetic:sqlcipher-android` (justification: encryption at rest) through the `androidx.sqlite` SupportSQLite API
+(justification: a stable abstraction that lets JVM tests swap in the framework SQLite) with hand-written DAOs.
+- The schema is explicit (`Schema.V1` plus `Migrations.steps`). Versions only move forward. Each version's DDL is
+  snapshotted in `data/schemas/<n>.sql`, and `MigrationTest.schemaSnapshotsMatch` fails on drift.
+- A migration test builds a real v1 database, migrates it, and checks that its DDL equals a fresh install's.
+- `onDowngrade` refuses (`NewerSchema`) and `onCorruption` is a no-op. The framework default *deletes the database*;
+  we never delete user data implicitly.
+- Upserts are update-then-insert, never `INSERT OR REPLACE`, because REPLACE fires ON DELETE CASCADE.
+- `lab_results` has `UNIQUE(member_id, analyte_id, date)`. A new value for the same key replaces the old one, and the
+  review screen warns before that happens.
+
+## D-012 Key hierarchy and fail-closed rules
+AndroidKeyStore AES-256-GCM key (StrongBox when present, not auth-bound so reminders work after reboot) wraps two
+random 256-bit data keys: the SQLCipher passphrase and the attachment-vault key. The wrapped keys live in
+`noBackupFilesDir/secure/keys/keys.bin`. The app never regenerates keys over existing encrypted data, and never
+falls back to plaintext. Failures map to `SecureFailure` and a dedicated screen offers *Try again* and, after explicit
+confirmation, *Erase and start fresh* (not offered for `NewerSchema`).
+
+## D-013 Attachment vault
+Each file is AES-GCM sealed with AAD = its random id, so ciphertexts cannot be swapped between records. On-disk names
+are random ids; the original file name exists only inside the encrypted DB. Max 30 MB per file. Import writes files
+first, then commits all rows in one transaction, and removes the files again if the transaction fails.
+
+## D-014 Preferences outside the database
+Theme, language, lock settings and the active member id are needed before the database opens, so they live in
+app-private SharedPreferences. They hold no health data and are excluded from backup. The PIN is stored only as a
+salted PBKDF2 hash.

@@ -22,3 +22,13 @@ data-extraction rules, locale config); app-private crash log; EN/HI/GU strings.
   direction, monitoring intervals); unit normaliser; parsers (text normaliser, Indian number grouping, dates, lab lines,
   vitals, prescriptions, document type, patient and lab name); value formatter.
 - Tests: units/catalogue 4, dates 4, lab lines 16, vitals/medicines 3, full reports 6, formatter 2.
+
+## Phase 3: encrypted persistence (done)
+- `./gradlew assembleDebug testDebugUnitTest :domain:test lintDebug` → BUILD SUCCESSFUL, 64 tests, 0 failures; lint 0 errors
+- `aapt2 dump permissions app-debug.apk` → no INTERNET / network permissions; `libsqlcipher.so` packaged for 4 ABIs
+- New tests: SecurityTest 6 (GCM, PBKDF2, key manager fail-closed paths, vault AAD binding/wipe), DatabaseTest 10
+  (FKs, cascade, upsert-no-cascade, uniqueness, atomic import with vault cleanup, duplicates, flows, reopen,
+  lost key, erase), MigrationTest 3 (v1→v2 with data, newer schema refused and kept, snapshots),
+  ColdStartTest 3 (clean install, keystore failure → retry recovers, invalidated key → erase → fresh start).
+- Not run here: real AndroidKeyStore and SQLCipher native code (no device or emulator). JVM tests use a
+  software key wrapper and framework SQLite through the same SupportSQLite code path.

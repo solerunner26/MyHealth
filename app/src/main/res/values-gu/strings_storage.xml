@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="storage_opening">તમારા એન્ક્રિપ્ટેડ રેકોર્ડ ખોલી રહ્યા છીએ…</string>
+    <string name="storage_keystore_title">સુરક્ષિત સ્ટોરેજ જવાબ આપતું નથી</string>
+    <string name="storage_keystore_body">Android નું સુરક્ષિત કી-સ્ટોર જવાબ આપતું નથી. તમારા રેકોર્ડ આ ફોનમાં હજી એન્ક્રિપ્ટેડ છે. ફોન રીસ્ટાર્ટ કરીને ફરી પ્રયત્ન કરો.</string>
+    <string name="storage_invalidated_title">તમારી એન્ક્રિપ્શન કી હવે ઉપલબ્ધ નથી</string>
+    <string name="storage_invalidated_body">ફોનનું સ્ક્રીન લૉક રીસેટ થાય ત્યારે આવું થઈ શકે છે. સેવ કરેલા રેકોર્ડ ડિક્રિપ્ટ થઈ શકતા નથી. તમે નવેસરથી શરૂ કરીને એન્ક્રિપ્ટેડ બેકઅપ રીસ્ટોર કરી શકો છો.</string>
+    <string name="storage_corrupt_title">સેવ કરેલી કી બગડી ગઈ છે</string>
+    <string name="storage_corrupt_body">કી બગડી જવાથી એન્ક્રિપ્ટેડ રેકોર્ડ ખૂલતા નથી. કંઈ પણ કાઢી નાખ્યું નથી. ફરી પ્રયત્ન કરો, અથવા નવેસરથી શરૂ કરીને એન્ક્રિપ્ટેડ બેકઅપ રીસ્ટોર કરો.</string>
+    <string name="storage_db_title">તમારા રેકોર્ડ ખોલી શકાયા નહીં</string>
+    <string name="storage_db_body">એન્ક્રિપ્ટેડ ડેટાબેઝ ખોલી શકાયો નહીં. કંઈ પણ કાઢી નાખ્યું નથી. ફોનમાં થોડી જગ્યા ખાલી કરીને ફરી પ્રયત્ન કરો.</string>
+    <string name="storage_newer_title">MyHealth ના નવા વર્ઝનમાં સેવ થયેલું</string>
+    <string name="storage_newer_body">આ રેકોર્ડ એપના નવા વર્ઝનમાં સેવ થયા હતા. તેને ખોલવા MyHealth અપડેટ કરો. કંઈ પણ બદલાયું નથી.</string>
+    <string name="storage_action_erase">બધું ભૂંસીને નવેસરથી શરૂ કરો</string>
+    <string name="storage_erase_title">આ ફોનમાંથી બધું ભૂંસી નાખવું છે?</string>
+    <string name="storage_erase_body">બધા રેકોર્ડ, એટેચમેન્ટ અને એન્ક્રિપ્શન કી કાયમ માટે નાશ પામશે. આ પાછું નહીં થાય. પછીથી તમે એન્ક્રિપ્ટેડ બેકઅપ રીસ્ટોર કરી શકો છો.</string>
+    <string name="storage_erase_confirm">બધું ભૂંસી નાખો</string>
+</resources>

@@ -1,0 +1,205 @@
+package app.myhealth.data.db
+
+import android.content.ContentValues
+import android.database.Cursor
+import android.database.sqlite.SQLiteDatabase
+import androidx.sqlite.db.SupportSQLiteDatabase
+import app.myhealth.domain.model.Attachment
+import app.myhealth.domain.model.AttachmentKind
+import app.myhealth.domain.model.BloodGroup
+import app.myhealth.domain.model.Comparator
+import app.myhealth.domain.model.DailyActivity
+import app.myhealth.domain.model.DoseLog
+import app.myhealth.domain.model.DoseStatus
+import app.myhealth.domain.model.EmergencyContact
+import app.myhealth.domain.model.FamilyMember
+import app.myhealth.domain.model.Frequency
+import app.myhealth.domain.model.LabResult
+import app.myhealth.domain.model.Medicine
+import app.myhealth.domain.model.MedicineForm
+import app.myhealth.domain.model.Relationship
+import app.myhealth.domain.model.Report
+import app.myhealth.domain.model.ReportType
+import app.myhealth.domain.model.Sex
+import app.myhealth.domain.model.Treatment
+import app.myhealth.domain.model.TreatmentKind
+import app.myhealth.domain.model.Vital
+import app.myhealth.domain.model.VitalSource
+import app.myhealth.domain.model.VitalType
+import java.time.Instant
+import java.time.LocalDate
+import java.time.LocalTime
+
+internal inline fun <reified E : Enum<E>> enumOr(name: String?, fallback: E): E =
+    name?.let { n -> enumValues<E>().firstOrNull { it.name == n } } ?: fallback
+
+internal fun LocalDate.iso(): String = toString()
+internal fun String.date(): LocalDate = LocalDate.parse(this)
+
+/**
+ * Update-then-insert. Never `INSERT OR REPLACE`: SQLite implements REPLACE as delete+insert, which would fire
+ * ON DELETE CASCADE and silently erase a member's records.
+ */
+internal fun SupportSQLiteDatabase.upsert(table: String, cv: ContentValues, where: String, args: Array<Any?>) {
+    if (update(table, SQLiteDatabase.CONFLICT_ABORT, cv, where, args) == 0) insert(table, SQLiteDatabase.CONFLICT_ABORT, cv)
+}
+
+object MemberDao {
+    const val T = "members"
+    fun all(db: SupportSQLiteDatabase) = db.q("SELECT * FROM members ORDER BY CASE relationship WHEN 'Self' THEN 0 ELSE 1 END, created_at").mapAll { map() }
+    fun get(db: SupportSQLiteDatabase, id: String) = db.q("SELECT * FROM members WHERE id = ?", id).mapAll { map() }.firstOrNull()
+    fun upsert(db: SupportSQLiteDatabase, m: FamilyMember) = db.upsert(T, ContentValues().apply {
+        put("id", m.id); put("name", m.name); put("relationship", m.relationship.name); put("dob", m.dateOfBirth?.iso())
+        put("sex", m.sex.name); put("height_cm", m.heightCm); put("blood_group", m.bloodGroup.name)
+        put("allergies", m.allergies.joinToString("\n")); put("conditions", m.conditions.joinToString("\n"))
+        put("ec_name", m.emergencyContact.name); put("ec_phone", m.emergencyContact.phone); put("ec_relation", m.emergencyContact.relation)
+        put("created_at", m.createdAtEpochMs)
+    }, "id = ?", arrayOf(m.id))
+    fun delete(db: SupportSQLiteDatabase, id: String) = db.delete(T, "id = ?", arrayOf(id))
+    private fun Cursor.map() = FamilyMember(
+        id = str("id"), name = str("name"), relationship = enumOr(str("relationship"), Relationship.Other),
+        dateOfBirth = strOrNull("dob")?.date(), sex = enumOr(str("sex"), Sex.Unspecified), heightCm = dblOrNull("height_cm"),
+        bloodGroup = enumOr(str("blood_group"), BloodGroup.Unknown),
+        allergies = str("allergies").split('\n').filter { it.isNotBlank() }, conditions = str("conditions").split('\n').filter { it.isNotBlank() },
+        emergencyContact = EmergencyContact(str("ec_name"), str("ec_phone"), str("ec_relation")), createdAtEpochMs = lng("created_at"),
+    )
+}
+
+object ReportDao {
+    const val T = "reports"
+    const val A = "attachments"
+    fun forMember(db: SupportSQLiteDatabase, memberId: String): List<Report> {
+        val reports = db.q("SELECT * FROM reports WHERE member_id = ? ORDER BY report_date DESC, created_at DESC", memberId).mapAll { map() }
+        val atts = db.q("SELECT a.* FROM attachments a JOIN reports r ON r.id = a.report_id WHERE r.member_id = ?", memberId).mapAll { mapAtt() }.groupBy { it.reportId }
+        return reports.map { it.copy(attachments = atts[it.id].orEmpty()) }
+    }
+    fun get(db: SupportSQLiteDatabase, id: String): Report? = db.q("SELECT * FROM reports WHERE id = ?", id).mapAll { map() }.firstOrNull()
+        ?.let { r -> r.copy(attachments = db.q("SELECT * FROM attachments WHERE report_id = ?", id).mapAll { mapAtt() }) }
+    fun bySha(db: SupportSQLiteDatabase, sha: String): Attachment? = db.q("SELECT * FROM attachments WHERE sha256 = ? LIMIT 1", sha).mapAll { mapAtt() }.firstOrNull()
+    fun attachment(db: SupportSQLiteDatabase, id: String): Attachment? = db.q("SELECT * FROM attachments WHERE id = ?", id).mapAll { mapAtt() }.firstOrNull()
+    fun upsert(db: SupportSQLiteDatabase, r: Report) = db.upsert(T, ContentValues().apply {
+        put("id", r.id); put("member_id", r.memberId); put("type", r.type.name); put("title", r.title); put("report_date", r.reportDate.iso())
+        put("lab_name", r.labName); put("doctor_name", r.doctorName); put("notes", r.notes); put("created_at", r.createdAt.toEpochMilli())
+    }, "id = ?", arrayOf(r.id))
+    fun insertAttachment(db: SupportSQLiteDatabase, a: Attachment) {
+        db.insert(A, SQLiteDatabase.CONFLICT_ABORT, ContentValues().apply {
+            put("id", a.id); put("report_id", a.reportId); put("kind", a.kind.name); put("display_name", a.displayName)
+            put("sha256", a.sha256); put("size_bytes", a.sizeBytes); put("page_count", a.pageCount)
+        })
+    }
+    fun attachmentIdsForReport(db: SupportSQLiteDatabase, reportId: String) = db.q("SELECT id FROM attachments WHERE report_id = ?", reportId).mapAll { getString(0) }
+    fun attachmentIdsForMember(db: SupportSQLiteDatabase, memberId: String) =
+        db.q("SELECT a.id FROM attachments a JOIN reports r ON r.id = a.report_id WHERE r.member_id = ?", memberId).mapAll { getString(0) }
+    fun delete(db: SupportSQLiteDatabase, id: String) = db.delete(T, "id = ?", arrayOf(id))
+    private fun Cursor.map() = Report(
+        id = str("id"), memberId = str("member_id"), type = enumOr(str("type"), ReportType.Other), title = str("title"),
+        reportDate = str("report_date").date(), labName = strOrNull("lab_name"), doctorName = strOrNull("doctor_name"),
+        notes = strOrNull("notes"), createdAt = Instant.ofEpochMilli(lng("created_at")),
+    )
+    private fun Cursor.mapAtt() = Attachment(
+        id = str("id"), reportId = str("report_id"), kind = enumOr(str("kind"), AttachmentKind.Pdf), displayName = str("display_name"),
+        sha256 = str("sha256"), sizeBytes = lng("size_bytes"), pageCount = lng("page_count").toInt(),
+    )
+}
+
+object LabResultDao {
+    const val T = "lab_results"
+    fun forMember(db: SupportSQLiteDatabase, memberId: String) = db.q("SELECT * FROM lab_results WHERE member_id = ? ORDER BY date, analyte_id", memberId).mapAll { map() }
+    fun forReport(db: SupportSQLiteDatabase, reportId: String) = db.q("SELECT * FROM lab_results WHERE report_id = ? ORDER BY analyte_id", reportId).mapAll { map() }
+    fun byKey(db: SupportSQLiteDatabase, memberId: String, analyteId: String, date: LocalDate) =
+        db.q("SELECT * FROM lab_results WHERE member_id = ? AND analyte_id = ? AND date = ?", memberId, analyteId, date.iso()).mapAll { map() }.firstOrNull()
+    /** Enforces one row per (member, analyte, date): an existing row with that key is replaced. */
+    fun upsert(db: SupportSQLiteDatabase, r: LabResult) {
+        db.delete(T, "member_id = ? AND analyte_id = ? AND date = ? AND id != ?", arrayOf(r.memberId, r.analyteId, r.date.iso(), r.id))
+        db.upsert(T, ContentValues().apply {
+            put("id", r.id); put("member_id", r.memberId); put("report_id", r.reportId); put("analyte_id", r.analyteId); put("date", r.date.iso())
+            put("value", r.value); put("unit", r.unit); put("comparator", r.comparator.name); put("ref_low", r.refLow); put("ref_high", r.refHigh)
+            put("printed_name", r.printedName); put("printed_value", r.printedValue); put("printed_unit", r.printedUnit); put("printed_range", r.printedRange)
+        }, "id = ?", arrayOf(r.id))
+    }
+    fun delete(db: SupportSQLiteDatabase, id: String) = db.delete(T, "id = ?", arrayOf(id))
+    private fun Cursor.map() = LabResult(
+        id = str("id"), memberId = str("member_id"), reportId = strOrNull("report_id"), analyteId = str("analyte_id"), date = str("date").date(),
+        value = dbl("value"), unit = str("unit"), comparator = enumOr(str("comparator"), Comparator.Eq), refLow = dblOrNull("ref_low"), refHigh = dblOrNull("ref_high"),
+        printedName = str("printed_name"), printedValue = str("printed_value"), printedUnit = str("printed_unit"), printedRange = str("printed_range"),
+    )
+}
+
+object VitalDao {
+    const val T = "vitals"
+    fun forMember(db: SupportSQLiteDatabase, memberId: String) = db.q("SELECT * FROM vitals WHERE member_id = ? ORDER BY measured_at", memberId).mapAll { map() }
+    fun upsert(db: SupportSQLiteDatabase, v: Vital) = db.upsert(T, ContentValues().apply {
+        put("id", v.id); put("member_id", v.memberId); put("type", v.type.name); put("value", v.value); put("value2", v.value2); put("unit", v.unit)
+        put("measured_at", v.measuredAt.toEpochMilli()); put("source", v.source.name); put("report_id", v.reportId); put("custom_name", v.customName); put("note", v.note)
+    }, "id = ?", arrayOf(v.id))
+    fun delete(db: SupportSQLiteDatabase, id: String) = db.delete(T, "id = ?", arrayOf(id))
+    private fun Cursor.map() = Vital(
+        id = str("id"), memberId = str("member_id"), type = enumOr(str("type"), VitalType.Custom), value = dbl("value"), value2 = dblOrNull("value2"),
+        unit = str("unit"), measuredAt = Instant.ofEpochMilli(lng("measured_at")), source = enumOr(str("source"), VitalSource.Manual),
+        reportId = strOrNull("report_id"), customName = strOrNull("custom_name"), note = strOrNull("note"),
+    )
+}
+
+object MedicineDao {
+    const val T = "medicines"
+    const val D = "dose_logs"
+    fun forMember(db: SupportSQLiteDatabase, memberId: String) = db.q("SELECT * FROM medicines WHERE member_id = ? ORDER BY stopped, start_date DESC", memberId).mapAll { map() }
+    fun all(db: SupportSQLiteDatabase) = db.q("SELECT * FROM medicines").mapAll { map() }
+    fun get(db: SupportSQLiteDatabase, id: String) = db.q("SELECT * FROM medicines WHERE id = ?", id).mapAll { map() }.firstOrNull()
+    fun upsert(db: SupportSQLiteDatabase, m: Medicine) = db.upsert(T, ContentValues().apply {
+        put("id", m.id); put("member_id", m.memberId); put("name", m.name); put("strength", m.strength); put("form", m.form.name)
+        put("frequency", m.frequency.name); put("dose", m.dose); put("start_date", m.startDate.iso()); put("end_date", m.endDate?.iso())
+        put("reminder_times", m.reminderTimes.joinToString(",")); put("reminders_enabled", if (m.remindersEnabled) 1 else 0)
+        put("instructions", m.instructions); put("prescribed_by", m.prescribedBy); put("report_id", m.reportId); put("stopped", if (m.stopped) 1 else 0)
+    }, "id = ?", arrayOf(m.id))
+    fun delete(db: SupportSQLiteDatabase, id: String) = db.delete(T, "id = ?", arrayOf(id))
+    fun logDose(db: SupportSQLiteDatabase, l: DoseLog) = db.upsert(D, ContentValues().apply {
+        put("id", l.id); put("medicine_id", l.medicineId); put("scheduled_at", l.scheduledAt.toEpochMilli()); put("status", l.status.name); put("recorded_at", l.recordedAt.toEpochMilli())
+    }, "medicine_id = ? AND scheduled_at = ?", arrayOf(l.medicineId, l.scheduledAt.toEpochMilli()))
+    fun doseLogs(db: SupportSQLiteDatabase, memberId: String, since: Instant) = db.q(
+        "SELECT d.* FROM dose_logs d JOIN medicines m ON m.id = d.medicine_id WHERE m.member_id = ? AND d.scheduled_at >= ? ORDER BY d.scheduled_at",
+        memberId, since.toEpochMilli(),
+    ).mapAll { DoseLog(str("id"), str("medicine_id"), Instant.ofEpochMilli(lng("scheduled_at")), enumOr(str("status"), DoseStatus.Taken), Instant.ofEpochMilli(lng("recorded_at"))) }
+    private fun Cursor.map() = Medicine(
+        id = str("id"), memberId = str("member_id"), name = str("name"), strength = str("strength"), form = enumOr(str("form"), MedicineForm.Other),
+        frequency = enumOr(str("frequency"), Frequency.OnceDaily), dose = str("dose"), startDate = str("start_date").date(), endDate = strOrNull("end_date")?.date(),
+        reminderTimes = str("reminder_times").split(',').filter { it.isNotBlank() }.mapNotNull { runCatching { LocalTime.parse(it) }.getOrNull() },
+        remindersEnabled = bool("reminders_enabled"), instructions = str("instructions"), prescribedBy = str("prescribed_by"),
+        reportId = strOrNull("report_id"), stopped = bool("stopped"),
+    )
+}
+
+object TreatmentDao {
+    const val T = "treatments"
+    fun forMember(db: SupportSQLiteDatabase, memberId: String) = db.q("SELECT * FROM treatments WHERE member_id = ? ORDER BY date DESC", memberId).mapAll { map() }
+    fun upsert(db: SupportSQLiteDatabase, t: Treatment) = db.upsert(T, ContentValues().apply {
+        put("id", t.id); put("member_id", t.memberId); put("name", t.name); put("kind", t.kind.name); put("date", t.date.iso()); put("provider", t.provider)
+        put("follow_up_date", t.followUpDate?.iso()); put("notes", t.notes); put("follow_up_done", if (t.followUpDone) 1 else 0)
+    }, "id = ?", arrayOf(t.id))
+    fun delete(db: SupportSQLiteDatabase, id: String) = db.delete(T, "id = ?", arrayOf(id))
+    private fun Cursor.map() = Treatment(
+        id = str("id"), memberId = str("member_id"), name = str("name"), kind = enumOr(str("kind"), TreatmentKind.Other), date = str("date").date(),
+        provider = str("provider"), followUpDate = strOrNull("follow_up_date")?.date(), notes = str("notes"), followUpDone = bool("follow_up_done"),
+    )
+}
+
+object ActivityDao {
+    const val T = "daily_activity"
+    fun forMember(db: SupportSQLiteDatabase, memberId: String) = db.q("SELECT * FROM daily_activity WHERE member_id = ? ORDER BY date", memberId).mapAll {
+        DailyActivity(str("member_id"), str("date").date(), lngOrNull("steps"), dblOrNull("resting_hr"), dblOrNull("avg_hr"), lngOrNull("sleep_minutes"), dblOrNull("weight_kg"))
+    }
+    fun upsert(db: SupportSQLiteDatabase, d: DailyActivity) = db.upsert(T, ContentValues().apply {
+        put("member_id", d.memberId); put("date", d.date.iso()); put("steps", d.steps); put("resting_hr", d.restingHeartRate); put("avg_hr", d.avgHeartRate)
+        put("sleep_minutes", d.sleepMinutes); put("weight_kg", d.weightKg)
+    }, "member_id = ? AND date = ?", arrayOf(d.memberId, d.date.iso()))
+    fun clear(db: SupportSQLiteDatabase, memberId: String) = db.delete(T, "member_id = ?", arrayOf(memberId))
+}
+
+object MetaDao {
+    const val T = "meta"
+    fun get(db: SupportSQLiteDatabase, key: String): String? = db.q("SELECT value FROM meta WHERE key = ?", key).mapAll { getString(0) }.firstOrNull()
+    fun set(db: SupportSQLiteDatabase, key: String, value: String?) {
+        if (value == null) db.delete(T, "key = ?", arrayOf(key))
+        else db.upsert(T, ContentValues().apply { put("key", key); put("value", value) }, "key = ?", arrayOf(key))
+    }
+}

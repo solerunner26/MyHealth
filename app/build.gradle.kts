@@ -46,5 +46,7 @@ dependencies {
     testImplementation(libs.androidx.test.ext.junit)
     testImplementation(libs.compose.ui.test.junit4)
     testImplementation(libs.kotlinx.coroutines.test)
+    testImplementation(libs.androidx.sqlite)
+    testImplementation(libs.androidx.sqlite.framework)
     debugImplementation(libs.compose.ui.test.manifest)
 }

@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="storage_opening">Unlocking your encrypted records…</string>
+    <string name="storage_keystore_title">Secure storage is not responding</string>
+    <string name="storage_keystore_body">Android\'s secure key store did not respond. Your records are still encrypted on this device. Restart the phone and try again.</string>
+    <string name="storage_invalidated_title">Your encryption key is no longer available</string>
+    <string name="storage_invalidated_body">This can happen after the phone\'s screen lock is reset. The stored records cannot be decrypted. You can start fresh and restore an encrypted backup.</string>
+    <string name="storage_corrupt_title">The stored keys are damaged</string>
+    <string name="storage_corrupt_body">The encrypted records cannot be opened because their keys are damaged. Nothing has been deleted. You can try again, or start fresh and restore an encrypted backup.</string>
+    <string name="storage_db_title">Your records could not be opened</string>
+    <string name="storage_db_body">The encrypted database could not be opened. Nothing has been deleted. Free up some storage space and try again.</string>
+    <string name="storage_newer_title">Saved by a newer version of MyHealth</string>
+    <string name="storage_newer_body">These records were saved by a newer version of the app. Update MyHealth to open them. Nothing has been changed.</string>
+    <string name="storage_action_erase">Erase and start fresh</string>
+    <string name="storage_erase_title">Erase everything on this device?</string>
+    <string name="storage_erase_body">All records, attachments and encryption keys will be destroyed. This cannot be undone. You can restore an encrypted backup afterwards.</string>
+    <string name="storage_erase_confirm">Erase everything</string>
+</resources>

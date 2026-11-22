@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="storage_opening">आपके एन्क्रिप्टेड रिकॉर्ड खोले जा रहे हैं…</string>
+    <string name="storage_keystore_title">सुरक्षित स्टोरेज जवाब नहीं दे रहा</string>
+    <string name="storage_keystore_body">Android का सुरक्षित की-स्टोर जवाब नहीं दे रहा। आपके रिकॉर्ड इस फ़ोन पर अब भी एन्क्रिप्टेड हैं। फ़ोन रीस्टार्ट करके फिर कोशिश करें।</string>
+    <string name="storage_invalidated_title">आपकी एन्क्रिप्शन की अब उपलब्ध नहीं है</string>
+    <string name="storage_invalidated_body">फ़ोन का स्क्रीन लॉक रीसेट होने पर ऐसा हो सकता है। सेव किए गए रिकॉर्ड डिक्रिप्ट नहीं हो सकते। आप नए सिरे से शुरू करके एन्क्रिप्टेड बैकअप रीस्टोर कर सकते हैं।</string>
+    <string name="storage_corrupt_title">सेव की गई की खराब हो गई है</string>
+    <string name="storage_corrupt_body">की खराब होने से एन्क्रिप्टेड रिकॉर्ड नहीं खुल रहे। कुछ भी हटाया नहीं गया है। फिर से कोशिश करें, या नए सिरे से शुरू करके एन्क्रिप्टेड बैकअप रीस्टोर करें।</string>
+    <string name="storage_db_title">आपके रिकॉर्ड नहीं खुल सके</string>
+    <string name="storage_db_body">एन्क्रिप्टेड डेटाबेस नहीं खुल सका। कुछ भी हटाया नहीं गया है। फ़ोन में थोड़ी जगह खाली करके फिर कोशिश करें।</string>
+    <string name="storage_newer_title">MyHealth के नए वर्ज़न में सेव किया गया</string>
+    <string name="storage_newer_body">ये रिकॉर्ड ऐप के नए वर्ज़न में सेव हुए थे। इन्हें खोलने के लिए MyHealth अपडेट करें। कुछ भी बदला नहीं गया है।</string>
+    <string name="storage_action_erase">सब मिटाकर नए सिरे से शुरू करें</string>
+    <string name="storage_erase_title">इस फ़ोन से सब कुछ मिटाएँ?</string>
+    <string name="storage_erase_body">सभी रिकॉर्ड, अटैचमेंट और एन्क्रिप्शन की हमेशा के लिए मिट जाएँगी। यह वापस नहीं होगा। बाद में आप एन्क्रिप्टेड बैकअप रीस्टोर कर सकते हैं।</string>
+    <string name="storage_erase_confirm">सब कुछ मिटाएँ</string>
+</resources>
