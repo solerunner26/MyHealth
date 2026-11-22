@@ -128,7 +128,14 @@ object Notifications {
             .addAction(action(ReminderScheduler.ACTION_SNOOZE, R.string.notif_snooze, 0x20))
             .addAction(action(ReminderScheduler.ACTION_SKIP, R.string.notif_skip, 0x30))
             .build()
-        runCatching { NotificationManagerCompat.from(context).notify(ReminderScheduler.notificationId(medicineId), n) }
+        val granted = Build.VERSION.SDK_INT < 33 ||
+            ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED
+        if (!granted) return
+        try {
+            NotificationManagerCompat.from(context).notify(ReminderScheduler.notificationId(medicineId), n)
+        } catch (e: SecurityException) {
+            Log.w("MyHealth", "notification permission revoked", e)
+        }
     }
 
 }

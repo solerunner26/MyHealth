@@ -76,7 +76,9 @@ class ReminderTest {
     }
 
     @Test fun firingShowsPrivateNotificationAndChainsNextDose() {
-        val scheduled = DoseSchedule.next(med, app.container.clock.instant(), app.container.clock.zone)!!
+        // A real alarm fires at its slot: use the most recent past slot, so "next after slot" == "next after now".
+        val now = app.container.clock.instant()
+        val scheduled = DoseSchedule.occurrences(med, now.minusSeconds(86_400), now, app.container.clock.zone).last()
         ReminderReceiver().onReceive(app, Intent(ReminderScheduler.ACTION_FIRE).putExtra(ReminderScheduler.EXTRA_MEDICINE, "med1").putExtra(ReminderScheduler.EXTRA_SCHEDULED, scheduled.toEpochMilli()))
         awaitCondition { notifications.allNotifications.isNotEmpty() }
         val n = notifications.allNotifications.single()
@@ -86,7 +88,7 @@ class ReminderTest {
         assertEquals(app.getString(R.string.notif_dose_title, "Metformin"), shadowOf(n).contentTitle)
         // the following dose is scheduled
         val following = DoseSchedule.next(med, scheduled, app.container.clock.zone)!!
-        assertEquals(following.toEpochMilli(), alarms.peekNextScheduledAlarm()!!.triggerAtTime)
+        awaitCondition { alarms.peekNextScheduledAlarm()?.triggerAtTime == following.toEpochMilli() }
     }
 
     @Test fun takenAndSnoozeActionsAreLogged() {
@@ -95,8 +97,11 @@ class ReminderTest {
         fun act(a: String) = ReminderActionReceiver().onReceive(app, Intent(a).putExtra(ReminderScheduler.EXTRA_MEDICINE, "med1").putExtra(ReminderScheduler.EXTRA_SCHEDULED, slot.toEpochMilli()))
         act(ReminderScheduler.ACTION_SNOOZE)
         awaitCondition { runBlocking { stack.medicines.doseLogs("m1", Instant.EPOCH) }.isNotEmpty() }
-        val snoozeAlarm = alarms.peekNextScheduledAlarm()!!
-        assertTrue(snoozeAlarm.triggerAtTime - System.currentTimeMillis() in (14 * 60_000L)..(16 * 60_000L))
+        fun snoozeAlarm() = alarms.scheduledAlarms.firstOrNull { it.triggerAtTime - System.currentTimeMillis() in (14 * 60_000L)..(16 * 60_000L) }
+        awaitCondition { snoozeAlarm() != null }
+        // an unlock re-runs the full reschedule: the user's snooze must survive it
+        runBlocking { app.container.reminders.rescheduleAll(stack) }
+        assertNotNull(snoozeAlarm())
         act(ReminderScheduler.ACTION_TAKEN)
         awaitCondition { runBlocking { stack.medicines.doseLogs("m1", Instant.EPOCH) }.single().status == DoseStatus.Taken }
     }

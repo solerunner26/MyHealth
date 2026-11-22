@@ -74,3 +74,7 @@ property). It was fixed forward in `63e5952`. Since then every commit runs only 
   chains the next dose; Snooze schedules +15 min and Taken is logged; locked storage → receiver does nothing, no crash.
 - `CareFlowTest` (UI): log BP 142/92 → tile shows "High"; add a medicine with reminders → alarm scheduled, badge shown.
 - Not run here: real alarm delivery under Doze and notification rendering on a device.
+- Correction: commit `3ff77d6` was pushed with one failing test (`ReminderTest.firingShows…`: a race between the
+  background reschedule on unlock and a dose fired 12 h early, which never happens in production). The test now
+  fires at a past slot like a real alarm. Fixed forward in the next commit. Commits now go through one script that
+  runs the gate and stops on failure, so a shell chaining mistake cannot bypass it again.

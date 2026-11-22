@@ -161,3 +161,27 @@ points are shown so the user can see why the score is what it is.
 - Charts mark out-of-range points as hollow rings with a heavy stroke and in-range points as small filled dots. The
   band is drawn with dashed edges, a legend explains each encoding, and every chart has a text description for
   TalkBack.
+
+## D-020 Dose reminders
+- One AlarmManager alarm per medicine, set for its next dose (`DoseSchedule.next`, pure and DST-safe on local wall
+  time). When it fires, the notification is shown and the following dose is scheduled. Every unlock, boot, app
+  update, clock change and time-zone change rebuilds all alarms from the database (idempotent).
+- **No `SCHEDULE_EXACT_ALARM`/`USE_EXACT_ALARM`.** Android 12+ denies them by default and Play restricts them to
+  alarm/calendar apps. API 26–30 use `setExactAndAllowWhileIdle`; 31+ use `setAndAllowWhileIdle`, which Doze may
+  defer by a few minutes. That is acceptable for dose reminders, and documented here.
+- Notification actions *Taken*, *In 15 min* and *Skip* are logged as `DoseLog` rows against the scheduled slot (one
+  row per slot, latest action wins). Adherence ("taken X of Y in 7 days") and the missed-dose focus rule read them.
+- Privacy: `VISIBILITY_PRIVATE` with a generic public version ("Medicine reminder"), so medicine and member names
+  never appear on the lock screen.
+- Receivers run inside `goAsync` with an 8 s timeout and a catch-all, so they can never crash the process. If
+  storage cannot be opened (e.g. Keystore unavailable) they do nothing: fail closed, nothing shown.
+- POST_NOTIFICATIONS is requested only when the user turns reminders on. If it is denied, the editor explains how to
+  enable it; the setting is kept.
+
+## D-021 Vitals
+- Values are stored in canonical units. Entry accepts lb, °F, mmol/L and inches and converts them. Plausibility
+  bounds reject typos only.
+- BMI is never stored as a separate reading unless one comes from a document; it is derived from each weight and
+  the profile height (or the latest height reading), so it updates when the height is corrected.
+- Vital bands: ACC/AHA BP categories, SpO₂ ≥ 95, resting pulse 50–100, temperature 36.1–37.4 °C, breathing rate
+  12–20, home glucose 70–140. BP charts show systolic solid and diastolic dashed, with square markers.

@@ -43,7 +43,8 @@ class ReminderScheduler(private val context: Context, private val clock: Clock) 
         val meds = runCatching { stack.medicines.allMembersActive(today.minusDays(1)) }.getOrElse { return 0 }
         var n = 0
         runCatching { stack.members.all() }.getOrDefault(emptyList()).forEach { member ->
-            runCatching { stack.medicines.all(member.id) }.getOrDefault(emptyList()).forEach { cancel(it.id) }
+            // Only the regular next-dose alarm is rebuilt; a pending snooze the user asked for must survive an unlock.
+            runCatching { stack.medicines.all(member.id) }.getOrDefault(emptyList()).forEach { cancelRegular(it.id) }
         }
         meds.forEach { m -> if (scheduleNext(m, clock.instant())) n++ }
         return n
@@ -51,7 +52,8 @@ class ReminderScheduler(private val context: Context, private val clock: Clock) 
 
     /** Schedules [m]'s next dose after [after]; returns false when it has none (finished, reminders off). */
     fun scheduleNext(m: Medicine, after: Instant): Boolean {
-        val next = DoseSchedule.next(m, after, clock.zone) ?: run { cancel(m.id); return false }
+        if (!m.remindersEnabled || m.stopped) { cancel(m.id); return false }
+        val next = DoseSchedule.next(m, after, clock.zone) ?: run { cancelRegular(m.id); return false }
         set(m.id, next, next, snooze = false)
         return true
     }
@@ -59,8 +61,13 @@ class ReminderScheduler(private val context: Context, private val clock: Clock) 
     fun snooze(medicineId: String, scheduledAt: Instant, minutes: Long = 15) =
         set(medicineId, clock.instant().plusSeconds(minutes * 60), scheduledAt, snooze = true)
 
-    fun cancel(medicineId: String) {
-        listOf(false, true).forEach { s -> runCatching { alarms?.cancel(pending(medicineId, Instant.EPOCH, s, PendingIntent.FLAG_NO_CREATE) ?: return@forEach) } }
+    /** Cancels the next-dose alarm and any snooze (medicine deleted, stopped or reminders turned off). */
+    fun cancel(medicineId: String) = listOf(false, true).forEach { cancelOne(medicineId, it) }
+
+    fun cancelRegular(medicineId: String) = cancelOne(medicineId, false)
+
+    private fun cancelOne(medicineId: String, snooze: Boolean) {
+        runCatching { pending(medicineId, Instant.EPOCH, snooze, PendingIntent.FLAG_NO_CREATE)?.let { alarms?.cancel(it) } }
     }
 
     private fun set(medicineId: String, fireAt: Instant, scheduledAt: Instant, snooze: Boolean) {
