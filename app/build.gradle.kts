@@ -10,8 +10,9 @@ android {
         applicationId = "app.myhealth"
         minSdk = 26
         targetSdk = 37
-        versionCode = 2
-        versionName = "0.2.0"
+        // CI stamps every release with a growing code (100 + run number) so the self-updater can tell builds apart.
+        versionCode = (project.findProperty("myhealth.versionCode") as String?)?.toIntOrNull() ?: 3
+        versionName = "0.3.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
     androidResources {

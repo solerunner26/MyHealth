@@ -28,10 +28,11 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
       - name: Definition-of-Done gate
         run: ./scripts/verify.sh --stacktrace
-      - name: No network permission in the merged manifest
+      - name: Only the expected permissions in the merged manifest
         run: |
           AAPT2=$(ls -d $ANDROID_HOME/build-tools/37.0.0)/aapt2
-          ! $AAPT2 dump permissions app/build/outputs/apk/debug/app-debug.apk | grep -E "INTERNET|ACCESS_NETWORK_STATE"
+          # Network only for the self-updater: INTERNET is allowed, nothing that reads the network state or location
+          ! $AAPT2 dump permissions app/build/outputs/apk/debug/app-debug.apk | grep -E "ACCESS_NETWORK_STATE|LOCATION|READ_CONTACTS|READ_PHONE"
       - uses: actions/upload-artifact@v4
         if: always()
         with:

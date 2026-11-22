@@ -14,6 +14,9 @@ open class MyHealthApplication : Application() {
     /** Test seam: the welcome splash is shown once per app start; JVM UI tests skip it (one test covers it). */
     open val showSplash: Boolean = true
 
+    /** Test seam: JVM tests never reach the network. */
+    open val updatesEnabled: Boolean = true
+
     override fun onCreate() {
         super.onCreate()
         val crashLog = CrashLog.forContext(this, BuildInfo.versionName(this))

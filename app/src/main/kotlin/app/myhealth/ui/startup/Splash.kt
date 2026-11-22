@@ -51,7 +51,7 @@ import app.myhealth.ui.common.MyHealthLogo
  * the user enters with one button. Shown once per app start, before the PIN lock.
  */
 @Composable
-fun SplashScreen(onEnter: () -> Unit) {
+fun SplashScreen(onEnter: () -> Unit, update: UpdateUi = UpdateUi.Done, onAllowUpdates: () -> Unit = {}, onSkipUpdate: () -> Unit = {}) {
     val c = MyHealthTheme.colors
     val reduce = MyHealthTheme.reduceMotion
     val rise = remember { Animatable(if (reduce) 1f else 0f) }
@@ -86,7 +86,10 @@ fun SplashScreen(onEnter: () -> Unit) {
                     Modifier.graphicsLayer { alpha = rise.value; translationY = (1f - rise.value) * 48f },
                     verticalArrangement = Arrangement.spacedBy(12.dp), horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
-                    if (c.isGlass) MyHealthPrimaryButton(stringResource(R.string.splash_enter), onEnter, Modifier.fillMaxWidth().height(58.dp).testTag("enterApp"), icon = MyHealthIcons.Forward)
+                    UpdateStatus(update, onAllowUpdates, onSkipUpdate)
+                    val canEnter = update == UpdateUi.Done || update == UpdateUi.Failed
+                    if (!canEnter) Unit
+                    else if (c.isGlass) MyHealthPrimaryButton(stringResource(R.string.splash_enter), onEnter, Modifier.fillMaxWidth().height(58.dp).testTag("enterApp"), icon = MyHealthIcons.Forward)
                     else androidx.compose.material3.Button(
                         onClick = onEnter, shape = MyHealthTheme.radii.pillShape,
                         colors = androidx.compose.material3.ButtonDefaults.buttonColors(containerColor = c.background, contentColor = c.textPrimary),
@@ -102,4 +105,26 @@ fun SplashScreen(onEnter: () -> Unit) {
         }
     }
     if (c.isGlass) content() else ProvideHeroColors(content)
+}
+
+/** Update progress on the splash (item 6): checking, downloading, the one-time permission, installing, or failure. */
+@Composable
+private fun UpdateStatus(u: UpdateUi, onAllow: () -> Unit, onSkip: () -> Unit) {
+    val text = MyHealthTheme.colors.textSecondary
+    when (u) {
+        UpdateUi.Done -> Unit
+        UpdateUi.Checking -> Text(stringResource(R.string.upd_checking), style = MyHealthTheme.typography.caption, color = text, modifier = Modifier.testTag("updChecking"))
+        is UpdateUi.Downloading -> Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text(stringResource(R.string.upd_found, u.version), style = MyHealthTheme.typography.label, color = MyHealthTheme.colors.textPrimary)
+            androidx.compose.material3.LinearProgressIndicator({ u.progress }, Modifier.fillMaxWidth(), color = MyHealthTheme.colors.accent, trackColor = MyHealthTheme.colors.accentSoft)
+        }
+        is UpdateUi.NeedsPermission -> Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text(stringResource(R.string.upd_allow_title), style = MyHealthTheme.typography.subtitle, color = MyHealthTheme.colors.textPrimary, textAlign = TextAlign.Center)
+            Text(stringResource(R.string.upd_allow_body), style = MyHealthTheme.typography.bodySmall, color = text, textAlign = TextAlign.Center)
+            app.myhealth.core.designsystem.components.MyHealthSecondaryButton(stringResource(R.string.upd_allow), onAllow, Modifier.fillMaxWidth())
+            app.myhealth.core.designsystem.components.MyHealthTextButton(stringResource(R.string.upd_skip), onSkip)
+        }
+        UpdateUi.Installing -> Text(stringResource(R.string.upd_installing), style = MyHealthTheme.typography.label, color = MyHealthTheme.colors.textPrimary, textAlign = TextAlign.Center)
+        UpdateUi.Failed -> Text(stringResource(R.string.upd_failed), style = MyHealthTheme.typography.caption, color = text, textAlign = TextAlign.Center)
+    }
 }

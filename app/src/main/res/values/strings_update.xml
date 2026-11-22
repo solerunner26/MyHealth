@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="upd_checking">Checking for updates…</string>
+    <string name="upd_found">Updating to version %1$s…</string>
+    <string name="upd_installing">Installing the update. MyHealth will close; open it again in a moment.</string>
+    <string name="upd_allow_title">Allow MyHealth to install its updates</string>
+    <string name="upd_allow_body">Android asks this once. Turn on \"Allow from this source\" for MyHealth, then come back.</string>
+    <string name="upd_allow">Open settings</string>
+    <string name="upd_failed">The update could not be installed. You can continue with this version.</string>
+    <string name="upd_skip">Continue without updating</string>
+    <string name="settings_auto_update">Check for updates when the app opens</string>
+    <string name="settings_auto_update_sub">Only asks GitHub whether a newer version exists. Nothing about you or your health is sent.</string>
+</resources>

@@ -37,6 +37,8 @@ class AppContainer(
     val preferences = Preferences(context)
     /** True once the user tapped "Enter" on this app start's splash (process lifetime, not persisted). */
     var splashDone = false
+    /** The update check runs once per app start. */
+    var updateChecked = false
     val lock = app.myhealth.core.AppLock(preferences, app.myhealth.core.AndroidMonotonic(context))
     val reminders by lazy { app.myhealth.reminders.ReminderScheduler(context, clock) }
 

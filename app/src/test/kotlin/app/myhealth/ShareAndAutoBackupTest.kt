@@ -33,4 +33,27 @@ class ShareAndAutoBackupTest {
         assertEquals(names.take(3), prune)
         assertTrue("manual backup kept", "MyHealth-2026-01-01.myhealth" !in prune)
     }
+
+    @Test fun updaterPicksTheNewestValidReleaseAndOnlyTalksToGithub() {
+        val sha = "a".repeat(64)
+        fun rel(tag: String, manifest: Boolean, draft: Boolean = false) = """{"tag_name":"$tag","draft":$draft,"assets":[
+            ${if (manifest) """{"name":"update.json","browser_download_url":"https://github.com/x/$tag/update.json"},""" else ""}
+            {"name":"MyHealth-$tag-release.apk","browser_download_url":"https://github.com/x/$tag/app.apk"}]}"""
+        val releases = "[" + listOf(rel("0.4.0", true, draft = true), rel("0.3.1", true), rel("0.3.0", true), rel("0.2.0", false)).joinToString(",") + "]"
+        val manifests = mapOf(
+            "https://github.com/x/0.4.0/update.json" to """{"versionCode":5,"versionName":"0.4.0","apk":"MyHealth-0.4.0-release.apk","sha256":"$sha"}""",
+            "https://github.com/x/0.3.1/update.json" to """{"versionCode":4,"versionName":"0.3.1","apk":"MyHealth-0.3.1-release.apk","sha256":"$sha","size":10}""",
+            "https://github.com/x/0.3.0/update.json" to """{"versionCode":3,"versionName":"0.3.0","apk":"MyHealth-0.3.0-release.apk","sha256":"$sha"}""",
+        )
+        val a = app.myhealth.core.Updater.pick(releases, currentCode = 3) { manifests.getValue(it) }!!
+        assertEquals(4, a.versionCode); assertEquals("https://github.com/x/0.3.1/app.apk", a.apkUrl) // drafts ignored
+        assertNull(app.myhealth.core.Updater.pick(releases, currentCode = 4) { manifests.getValue(it) }) // already newest
+        // a manifest with a bad checksum or a non-APK file is ignored
+        val bad = mapOf("https://github.com/x/0.3.1/update.json" to """{"versionCode":9,"apk":"evil.sh","sha256":"zz"}""") + manifests.filterKeys { "0.3.1" !in it }
+        assertEquals(3L, app.myhealth.core.Updater.pick(releases, currentCode = 2) { bad.getValue(it) }!!.versionCode)
+        // only HTTPS to GitHub hosts
+        for (u in listOf("http://github.com/a", "https://evil.example/a", "https://github.com.evil.example/a")) {
+            assertTrue(runCatching { app.myhealth.core.Updater.get(u, 10) { it.readBytes() } }.exceptionOrNull() is IllegalArgumentException)
+        }
+    }
 }

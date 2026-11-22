@@ -59,7 +59,12 @@ class MainActivity : FragmentActivity() {
                     androidx.compose.animation.fadeIn(androidx.compose.animation.core.tween(500)) togetherWith
                         androidx.compose.animation.fadeOut(androidx.compose.animation.core.tween(300)) + androidx.compose.animation.scaleOut(targetScale = 1.06f)
                 }, label = ENTRY) { inApp ->
-                if (!inApp) app.myhealth.ui.startup.SplashScreen { c.splashDone = true; entered = true }
+                if (!inApp) {
+                    val (update, allow) = app.myhealth.ui.startup.rememberUpdateFlow()
+                    var skipped by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(false) }
+                    app.myhealth.ui.startup.SplashScreen({ c.splashDone = true; entered = true },
+                        if (skipped) app.myhealth.ui.startup.UpdateUi.Done else update, allow, { skipped = true })
+                }
                 else Box(Modifier.fillMaxSize()) {
                     Box(Modifier.fillMaxSize().then(if (locked) Modifier.clearAndSetSemantics { } else Modifier)) {
                         StorageGate(storage, onRetry = c::retry, onErase = { SecureErase.run(this@MainActivity) }) { stack ->

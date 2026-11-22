@@ -80,7 +80,7 @@ class SplashPreviewTest {
         var current by androidx.compose.runtime.mutableStateOf(themes.first() to modes.first())
         rule.setContent {
             app.myhealth.core.designsystem.theme.MyHealthTheme(current.second, current.first) {
-                app.myhealth.core.designsystem.components.MyHealthAmbientBackground { app.myhealth.ui.startup.SplashScreen {} }
+                app.myhealth.core.designsystem.components.MyHealthAmbientBackground { app.myhealth.ui.startup.SplashScreen({}) }
             }
         }
         for (t in themes) for (m in modes) {

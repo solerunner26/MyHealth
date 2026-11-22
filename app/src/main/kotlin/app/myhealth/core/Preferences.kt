@@ -81,6 +81,10 @@ class Preferences(context: Context) {
 
     data class Lockout(val boot: Long, val startElapsed: Long, val durationMs: Long) { companion object { val NONE = Lockout(0, 0, 0) } }
 
+    /** Item 6: check GitHub for a newer release on app start (default on). */
+    fun autoUpdate(): Boolean = prefs.getBoolean("auto_update", true)
+    fun setAutoUpdate(on: Boolean) = update { putBoolean("auto_update", on) }
+
     // ---- automatic backups (item 3) ----
     fun autoBackupFolder(): String? = prefs.getString("ab_folder", null)
     fun autoBackupSecret(): String? = prefs.getString("ab_secret", null)

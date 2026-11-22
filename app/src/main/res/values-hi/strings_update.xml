@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="upd_checking">अपडेट देखे जा रहे हैं…</string>
+    <string name="upd_found">संस्करण %1$s पर अपडेट हो रहा है…</string>
+    <string name="upd_installing">अपडेट इंस्टॉल हो रहा है। MyHealth बंद होगा; थोड़ी देर में फिर खोलें।</string>
+    <string name="upd_allow_title">MyHealth को अपने अपडेट इंस्टॉल करने दें</string>
+    <string name="upd_allow_body">एंड्रॉइड यह एक बार पूछता है। MyHealth के लिए \"इस स्रोत से अनुमति दें\" चालू करें, फिर वापस आएँ।</string>
+    <string name="upd_allow">सेटिंग्स खोलें</string>
+    <string name="upd_failed">अपडेट इंस्टॉल नहीं हो सका। आप इसी संस्करण के साथ जारी रख सकते हैं।</string>
+    <string name="upd_skip">बिना अपडेट जारी रखें</string>
+    <string name="settings_auto_update">ऐप खुलने पर अपडेट देखें</string>
+    <string name="settings_auto_update_sub">सिर्फ़ GitHub से पूछता है कि नया संस्करण है या नहीं। आपके या आपकी सेहत के बारे में कुछ नहीं भेजा जाता।</string>
+</resources>

@@ -98,6 +98,10 @@ fun SettingsScreen(onBack: () -> Unit, onErased: () -> Unit) {
             MyHealthSwitchRow(stringResource(R.string.settings_screenshots), prefs.blockScreenshots, { c.preferences.setBlockScreenshots(it) },
                 subtitle = stringResource(R.string.settings_screenshots_sub), modifier = Modifier.testTag("secureSwitch"))
 
+            var autoUpdate by rememberSaveable { mutableStateOf(c.preferences.autoUpdate()) }
+            MyHealthSwitchRow(stringResource(R.string.settings_auto_update), autoUpdate, { autoUpdate = it; c.preferences.setAutoUpdate(it) },
+                subtitle = stringResource(R.string.settings_auto_update_sub), modifier = Modifier.testTag("autoUpdateSwitch"))
+
             MyHealthSectionHeader(stringResource(R.string.settings_data))
             Text(stringResource(R.string.settings_history), style = MyHealthTheme.typography.label, color = MyHealthTheme.colors.textSecondary)
             MyHealthChipRow(listOf(1, 2, 3, 5, 10, 20), prefs.historyYears, { stringResource(R.string.settings_years, it) }, { c.preferences.setHistoryYears(it) })

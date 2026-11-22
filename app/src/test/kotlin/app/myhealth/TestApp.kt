@@ -11,6 +11,7 @@ class TestApp : MyHealthApplication() {
     override fun createStorageOpener(): StorageOpener =
         StorageOpener(this, StoragePaths(File(noBackupFilesDir, "secure")), TestHooks.wrapper) { FrameworkSQLiteOpenHelperFactory() }
     override val showSplash: Boolean get() = TestHooks.splash
+    override val updatesEnabled: Boolean get() = false
 }
 
 object TestHooks {
