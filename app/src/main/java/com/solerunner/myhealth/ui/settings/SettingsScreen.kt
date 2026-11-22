@@ -69,6 +69,7 @@ fun SettingsScreen(container: AppContainer) {
     var showAutoLock by remember { mutableStateOf(false) }
     var showPin by remember { mutableStateOf(false) }
     val spacing = MyHealthTokens.spacing
+    val shareLabel = stringResource(R.string.common_share)
     val snackbar = remember { androidx.compose.material3.SnackbarHostState() }
     val scope = rememberCoroutineScope()
     val wipedText = stringResource(R.string.settings_wiped)
@@ -76,7 +77,7 @@ fun SettingsScreen(container: AppContainer) {
 
     LaunchedEffect(extra.shareIntent) {
         extra.shareIntent?.let { intent ->
-            context.startActivity(Intent.createChooser(intent, context.getString(R.string.common_share)))
+            context.startActivity(Intent.createChooser(intent, shareLabel))
             viewModel.clearShare()
         }
     }

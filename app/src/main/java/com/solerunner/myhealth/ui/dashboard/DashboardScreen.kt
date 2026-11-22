@@ -22,6 +22,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -83,7 +84,7 @@ fun DashboardScreen(
                 .padding(horizontal = spacing.screenPadding, vertical = spacing.md),
         ) {
             RarePageHeader(
-                eyebrow = Dates.format(Dates.today(), Locale.getDefault(), "EEEE, dd MMM"),
+                eyebrow = Dates.format(Dates.today(), LocalConfiguration.current.locales[0], "EEEE, dd MMM"),
                 title = stringResource(R.string.home_greeting_named, greetingText(), profile.displayName.substringBefore(' ')),
                 actions = {
                     RareIconButton(

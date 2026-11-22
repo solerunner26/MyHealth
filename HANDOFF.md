@@ -47,6 +47,8 @@ what is left, gotchas. Keep it short and factual; the code is the source of trut
   `GetCredentialException` and falling back to the offline path.
 - Reminder cancellation now persists the armed time labels, so editing a reminder time cannot leave an
   orphaned alarm behind.
+- **Lint is now clean: `:app:lintDebug` reports 0 errors** (remaining warnings are unused resources, UseKtx and
+  PluralsCandidate suggestions).
 
 ### Medicine reminders (T-034) — manifest debt cleared
 - `MedicineReminders` uses **AlarmManager** (exact when the platform allows it, inexact otherwise),

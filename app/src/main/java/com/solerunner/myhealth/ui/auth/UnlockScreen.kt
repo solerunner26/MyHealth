@@ -42,6 +42,9 @@ fun UnlockScreen(container: AppContainer, onUnlocked: () -> Unit) {
     var error by remember { mutableStateOf<String?>(null) }
     val context = LocalContext.current
     val activity = context as? FragmentActivity
+    val biometricTitle = stringResource(R.string.auth_biometric_prompt)
+    val skipPin = stringResource(R.string.auth_skip_pin)
+    val wrongPin = stringResource(R.string.auth_pin_wrong)
     val biometricAllowed = remember {
         container.settings.settings.value.biometricUnlock &&
             runCatching {
@@ -74,8 +77,8 @@ fun UnlockScreen(container: AppContainer, onUnlocked: () -> Unit) {
     fun askBiometric() {
         prompt?.authenticate(
             BiometricPrompt.PromptInfo.Builder()
-                .setTitle(context.getString(R.string.auth_biometric_prompt))
-                .setNegativeButtonText(context.getString(R.string.auth_skip_pin))
+                .setTitle(biometricTitle)
+                .setNegativeButtonText(skipPin)
                 .setAllowedAuthenticators(BiometricManager.Authenticators.BIOMETRIC_WEAK)
                 .build(),
         )
@@ -114,7 +117,7 @@ fun UnlockScreen(container: AppContainer, onUnlocked: () -> Unit) {
                     container.lock.unlockedNow()
                     onUnlocked()
                 } else {
-                    error = context.getString(R.string.auth_pin_wrong)
+                    error = wrongPin
                     pin = ""
                 }
             },

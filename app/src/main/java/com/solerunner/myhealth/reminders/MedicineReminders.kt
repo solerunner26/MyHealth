@@ -1,13 +1,16 @@
 package com.solerunner.myhealth.reminders
 
+import android.Manifest
 import android.app.AlarmManager
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.os.Build
 import androidx.core.app.NotificationCompat
+import androidx.core.content.ContextCompat
 import androidx.core.app.NotificationManagerCompat
 import com.solerunner.myhealth.MainActivity
 import com.solerunner.myhealth.R
@@ -140,6 +143,12 @@ class MedicineReminders(private val context: Context) {
         /** Posts the reminder notification for one medicine. Called by the receiver. */
         fun notify(context: Context, medicineId: Long, medicineName: String?, strength: String?, timeLabel: String) {
             val manager = NotificationManagerCompat.from(context)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+                ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) !=
+                PackageManager.PERMISSION_GRANTED
+            ) {
+                return
+            }
             if (!manager.areNotificationsEnabled()) return
             val open = PendingIntent.getActivity(
                 context,

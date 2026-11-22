@@ -24,6 +24,7 @@ import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -60,7 +61,7 @@ fun LineChart(
     }
 
     val colors = MyHealthTokens.chart
-    val locale = Locale.getDefault()
+    val locale = LocalConfiguration.current.locales[0]
     val values = points.map { it.value }
     val low = minOf(values.min(), referenceLow ?: values.min())
     val high = maxOf(values.max(), referenceHigh ?: values.max())

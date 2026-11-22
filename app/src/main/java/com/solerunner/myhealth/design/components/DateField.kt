@@ -28,6 +28,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.solerunner.myhealth.R
@@ -49,7 +50,7 @@ fun DateField(
     allowClear: Boolean = false,
 ) {
     var showPicker by remember { mutableStateOf(false) }
-    val locale = Locale.getDefault()
+    val locale = LocalConfiguration.current.locales[0]
     val interaction = rememberInteraction()
     Column(modifier = modifier.fillMaxWidth()) {
         Text(
@@ -116,7 +117,7 @@ private fun MaterialDatePicker(initial: LocalDate?, onDismiss: () -> Unit, onSel
                 onClick = {
                     val millis = state.selectedDateMillis
                     if (millis != null) {
-                        onSelected(LocalDate.ofInstant(Instant.ofEpochMilli(millis), ZoneOffset.UTC))
+                        onSelected(Instant.ofEpochMilli(millis).atZone(ZoneOffset.UTC).toLocalDate())
                     } else {
                         onDismiss()
                     }

@@ -40,6 +40,9 @@ fun OnboardingScreen(container: AppContainer) {
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
     val google = remember { GoogleSignIn(context) }
+    val googleFailedText = stringResource(R.string.auth_google_failed)
+    val nameRequiredText = stringResource(R.string.auth_name_required)
+    val pinMismatchText = stringResource(R.string.auth_pin_mismatch)
 
     fun finish() {
         if (busy) return
@@ -81,14 +84,14 @@ fun OnboardingScreen(container: AppContainer) {
                         runCatching { google.signIn() }
                             .onSuccess { result ->
                                 if (result == null) {
-                                    error = context.getString(R.string.auth_google_failed)
+                                    error = googleFailedText
                                 } else {
                                     identity = result
                                     if (name.isBlank()) name = result.displayName.orEmpty()
                                     step = OnboardingStep.NAME
                                 }
                             }
-                            .onFailure { error = context.getString(R.string.auth_google_failed) }
+                            .onFailure { error = googleFailedText }
                     }
                 },
             )
@@ -102,7 +105,7 @@ fun OnboardingScreen(container: AppContainer) {
                 error = error,
                 onContinue = {
                     if (name.trim().length < 2) {
-                        error = context.getString(R.string.auth_name_required)
+                        error = nameRequiredText
                     } else {
                         step = OnboardingStep.PIN
                     }
@@ -135,7 +138,7 @@ fun OnboardingScreen(container: AppContainer) {
                         finish()
                     } else {
                         confirm = ""
-                        error = context.getString(R.string.auth_pin_mismatch)
+                        error = pinMismatchText
                     }
                 },
             )

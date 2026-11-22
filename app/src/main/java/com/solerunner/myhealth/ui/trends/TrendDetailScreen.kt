@@ -30,10 +30,11 @@ fun TrendDetailScreen(container: AppContainer, analyteKey: String, onBack: () ->
     val state by viewModel.state.collectAsStateWithLifecycle()
     val context = LocalContext.current
     val spacing = MyHealthTokens.spacing
+    val shareLabel = stringResource(R.string.common_share)
 
     LaunchedEffect(state.shareIntent) {
         state.shareIntent?.let { intent ->
-            context.startActivity(android.content.Intent.createChooser(intent, context.getString(R.string.common_share)))
+            context.startActivity(android.content.Intent.createChooser(intent, shareLabel))
             viewModel.clearShare()
         }
     }
