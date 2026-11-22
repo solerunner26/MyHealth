@@ -48,6 +48,9 @@ Data display: `RareStat`, `RareListRow`, `RareTaskRow`, `RareKeyValue`, `RareBad
 Feedback and overlays: `RareSnackbarHost`, `RareLinearProgress`, `RareScrollProgress`, `RareSkeleton`,
 `RareSpinner`, `RareSheet`, `RareConfirmDialog`, `RareChoiceDialog`, `RareBanner`.
 Chrome: `RareTopBar`, `RarePageHeader`, `RareBottomBar`, `RareNavRail`.
+Extended: `RareChoiceTiles` (visual theme picker), `RareDurationChips`, `RareHoldToDelete`,
+`RareFolderGroup`, `RareStepPlayer`, `RareHeatmap` (13-week consistency), `RareNotificationBell`,
+`RareFaqItem`. Infinite animations honour the system animation scale through `animationsEnabled()`.
 
 `design/components` keeps the older screen-level names (`HealthCard`, `SectionHeader`, `StatusPill`,
 `MetricTile`, `ListRow`, …) as thin aliases onto these primitives so existing screens inherited the new

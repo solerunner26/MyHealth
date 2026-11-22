@@ -22,6 +22,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -57,10 +58,12 @@ fun RarePinEntry(
     error: String? = null,
     actionLabel: String? = null,
     onAction: (() -> Unit)? = null,
+    actionEnabled: Boolean = true,
     onBiometric: (() -> Unit)? = null,
     note: String? = null,
 ) {
     val spacing = MyHealthTokens.spacing
+    val animateCaret = animationsEnabled()
     val rows = ((pin.length.coerceAtLeast(1) + 3) / 4).coerceIn(1, 3)
     val slots = rows * 4
 
@@ -88,20 +91,15 @@ fun RarePinEntry(
                     val index = row * 4 + column
                     val filled = index < pin.length
                     val active = index == pin.length && pin.length < slots
-                    PinSlot(filled = filled, active = active)
+                    PinSlot(filled = filled, active = active, hasError = error != null, animate = animateCaret)
                 }
             }
             Spacer(Modifier.height(8.dp))
         }
 
         if (error != null) {
-            Spacer(Modifier.height(6.dp))
-            Text(
-                error,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurface,
-                textAlign = TextAlign.Center,
-            )
+            Spacer(Modifier.height(8.dp))
+            RareBanner(text = error, icon = Icons.Filled.Warning)
         }
         Spacer(Modifier.height(20.dp))
 
@@ -136,7 +134,7 @@ fun RarePinEntry(
             RareButton(
                 text = actionLabel,
                 onClick = onAction,
-                enabled = PinHasher.isValidFormat(pin),
+                enabled = actionEnabled && PinHasher.isValidFormat(pin),
                 modifier = Modifier.fillMaxWidth(),
             )
         }
@@ -156,22 +154,32 @@ fun RarePinEntry(
 }
 
 @Composable
-private fun PinSlot(filled: Boolean, active: Boolean) {
+private fun PinSlot(filled: Boolean, active: Boolean, hasError: Boolean, animate: Boolean) {
     val colors = MaterialTheme.colorScheme
     val transition = rememberInfiniteTransition(label = "pin-caret")
-    val caretAlpha by transition.animateFloat(
+    val animatedAlpha by transition.animateFloat(
         initialValue = 1f,
         targetValue = 0.15f,
         animationSpec = infiniteRepeatable(tween(700), RepeatMode.Reverse),
         label = "caret-alpha",
     )
+    val caretAlpha = if (animate) animatedAlpha else 0.7f
     Surface(
         modifier = Modifier.size(width = 46.dp, height = 54.dp),
         shape = MaterialTheme.shapes.medium,
         color = if (filled) colors.surfaceContainerLow else colors.surface,
         border = BorderStroke(
-            if (active) 1.5.dp else 1.dp,
-            if (active) colors.primary else if (filled) colors.outline else colors.outlineVariant,
+            when {
+                hasError -> 2.dp
+                active -> 1.5.dp
+                else -> 1.dp
+            },
+            when {
+                hasError -> colors.onSurface
+                active -> colors.primary
+                filled -> colors.outline
+                else -> colors.outlineVariant
+            },
         ),
     ) {
         Box(contentAlignment = Alignment.Center) {

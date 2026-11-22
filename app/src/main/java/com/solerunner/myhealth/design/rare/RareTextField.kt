@@ -145,10 +145,10 @@ fun RareSearchField(
         leadingIcon = Icons.Filled.Search,
         trailing = if (query.isEmpty()) null else {
             {
-                IconButton(onClick = { onQueryChange("") }, modifier = Modifier.size(28.dp)) {
+                IconButton(onClick = { onQueryChange("") }) {
                     Icon(
                         Icons.Filled.Clear,
-                        contentDescription = null,
+                        contentDescription = androidx.compose.ui.res.stringResource(com.solerunner.myhealth.R.string.common_remove),
                         tint = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.size(16.dp),
                     )

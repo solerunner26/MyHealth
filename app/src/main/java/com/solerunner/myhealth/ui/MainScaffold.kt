@@ -168,21 +168,26 @@ private fun AppNavHost(container: AppContainer, profile: Profile, navController:
         }
         composable(Routes.PROFILE) {
             Column(Modifier.fillMaxSize()) {
-                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(horizontal = MyHealthTokens.spacing.screenPadding)) {
-                    TextButton(onClick = { navController.popBackStack() }) { Text(stringResource(R.string.common_back)) }
-                    Spacer(Modifier.weight(1f))
-                    TextButton(onClick = { navController.navigate(Routes.SETTINGS) }) {
-                        Text(stringResource(R.string.nav_settings))
-                    }
-                }
+                com.solerunner.myhealth.design.rare.RarePageHeader(
+                    title = stringResource(R.string.nav_profile),
+                    onBack = { navController.popBackStack() },
+                    modifier = Modifier.padding(horizontal = MyHealthTokens.spacing.screenPadding, vertical = MyHealthTokens.spacing.md),
+                    actions = {
+                        TextButton(onClick = { navController.navigate(Routes.SETTINGS) }) {
+                            Text(stringResource(R.string.nav_settings))
+                        }
+                    },
+                )
                 ProfileScreen(container = container)
             }
         }
         composable(Routes.SETTINGS) {
             Column(Modifier.fillMaxSize()) {
-                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(horizontal = MyHealthTokens.spacing.screenPadding)) {
-                    TextButton(onClick = { navController.popBackStack() }) { Text(stringResource(R.string.common_back)) }
-                }
+                com.solerunner.myhealth.design.rare.RarePageHeader(
+                    title = stringResource(R.string.settings_title),
+                    onBack = { navController.popBackStack() },
+                    modifier = Modifier.padding(horizontal = MyHealthTokens.spacing.screenPadding, vertical = MyHealthTokens.spacing.md),
+                )
                 SettingsScreen(container = container)
             }
         }

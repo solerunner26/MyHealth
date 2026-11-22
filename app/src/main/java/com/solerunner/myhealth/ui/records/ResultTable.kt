@@ -1,5 +1,6 @@
 package com.solerunner.myhealth.ui.records
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -17,9 +18,12 @@ import java.util.Locale
 
 /** One analyte line of a report: name, printed value + unit, reference text, status pill. */
 @Composable
-fun ResultRow(result: LabResult) {
+fun ResultRow(result: LabResult, onClick: (() -> Unit)? = null) {
     Row(
-        modifier = Modifier.fillMaxWidth().padding(vertical = 10.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)
+            .padding(vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Column(Modifier.weight(1f)) {

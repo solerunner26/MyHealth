@@ -77,6 +77,17 @@ abandoned, re-claim with a note in `HANDOFF.md`).
   writes fail closed, passphrase never overwritten, crash logger + share action, retry UI (by: cline)
 - [x] T-046 Database open on device: `PRAGMA journal_mode` moved from `execSQL` to `rawQuery`, WAL made
   optional, never-initialised database quarantined once, regression test (by: cline)
+- [x] T-047 Security hardening: PIN lockout with exponential cooldown, re-auth for PIN change and app-lock
+  disable, private lock-screen notifications, CSV formula neutralisation, vault path/GCM checks, cache purge,
+  complete wipe (PIN, flags, armed reminders) (by: cline)
+- [x] T-048 Runtime fixes: reminder cold-start readiness, import size/bitmap caps, wrapped PDF text,
+  onboarding back steps, report page viewer, post-import result editing (by: cline)
+- [x] T-049 Health Connect: permission set, incremental 90-day read, daily aggregation, BP/glucose
+  measurements, settings connect + sync, automatic sync when enabled (by: cline)
+- [x] T-050 Encrypted backup/restore: PBKDF2 + AES-GCM codec, portable JSON bundle with attachments,
+  SAF export/import, full replacement on restore (by: cline)
+- [x] T-051 Accessibility and Rare components: 48dp targets, descriptions, reduced motion, theme tiles,
+  duration chips, hold-to-delete, folder groups, step player, consistency heatmap, notification bell, FAQ (by: cline)
 
 ---
 

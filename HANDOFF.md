@@ -5,6 +5,56 @@ what is left, gotchas. Keep it short and factual; the code is the source of trut
 
 ---
 
+## 2026-11-22 — cline (session 5) — full audit pass (security, runtime, a11y, Rare components)
+
+Implemented the complete audit list. Every item below is in the tree and covered by the build; device-only
+behaviour still needs the APK on the Pixel.
+
+### Security and safety
+- **PIN lockout**: five failures start a 30 s cooldown that doubles per further failure (cap 15 min), stored
+  in the encrypted prefs so a restart cannot reset it. Locked-out attempts never reach PBKDF2, and even the
+  correct PIN waits out the cooldown. `AppLockManagerTest` covers it.
+- **Re-authentication**: changing the PIN or turning App Lock off now requires the current PIN through
+  `VerifyPinSheet`.
+- **Notification privacy**: medicine reminders use `VISIBILITY_PRIVATE` with a generic public version.
+- **CSV injection**: fields starting with `= + - @ TAB CR` are prefixed with an apostrophe and quoted;
+  covered by `CsvExporterTest`.
+- **Vault**: decryption buffers the whole file and calls `doFinal` (GCM tag verified), rejects names with
+  separators or `..`, and enforces canonical-path containment plus a 64 MB cap.
+- **Cache**: exports are purged at cold start; camera captures are deleted once read.
+- **Wipe**: clears health tables, vault, audit log, PIN/security flags and all armed reminders.
+- The earlier passphrase-overwrite and StrongBox-fallback bugs remain fixed.
+
+### Runtime and features
+- Reminder receiver waits for `container.ready` before querying (same as boot receiver).
+- Imports capped at 32 MB; PDF pages render at most 2400 px; camera photos decode with `inSampleSize`.
+- Doctor-summary PDF wraps every paragraph to the printable width.
+- Onboarding PIN steps have Back; report detail shows decrypted page thumbnails and supports editing a
+  parsed result (reclassified and marked user-edited).
+- **Health Connect** sync implemented: read permissions, 90-day window, daily aggregation, BP/glucose as
+  measurements, Settings connect/sync with last-sync time, automatic sync when enabled.
+- **Encrypted backup/restore** implemented: PBKDF2-HMAC-SHA256 (210k) + AES-256-GCM portable file with a
+  JSON bundle (profile, reports, results, measurements, medicines, treatments, daily metrics, attachments),
+  SAF export/import, confirmation before replacing the record. PIN/theme/language stay device-local.
+
+### Accessibility and Rare UI
+- 48 dp minimum targets (buttons, icon buttons, switches, checkboxes, back arrows, avatar), back/clear
+  `contentDescription`s, reduced-motion support for the PIN caret and skeleton, PIN errors use a warning
+  banner plus border emphasis, Change PIN distinguishes format vs mismatch, Profile/Settings use
+  `RarePageHeader`, the duplicate biometric trigger is gone, and the medicines screen no longer repeats its
+  empty copy. Dark hairlines were lightened and small labels raised to 11–11.5 sp.
+- New Rare components: choice tiles (theme), duration chips, hold-to-delete, folder groups, step player,
+  13-week consistency heatmap, notification bell and FAQ; all are integrated (Settings, Medicines, Records,
+  Import, Dashboard).
+
+### Evidence
+- `:app:testDebugUnitTest` → **59 tests, 0 failures** (adds lockout, backup codec, CSV injection).
+- `:app:assembleDebug` → **BUILD SUCCESSFUL**, APK **versionCode 4** (uploaded to the preview release).
+- `:app:lintDebug` → **BUILD SUCCESSFUL, 0 errors**.
+- Screenshots regenerated from the real Compose UI.
+
+---
+
 ## 2026-11-22 — cline (session 4) — on-device crash fix
 
 ### Symptom

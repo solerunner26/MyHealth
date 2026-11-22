@@ -69,6 +69,15 @@ class MedicineReminders(private val context: Context) {
         prefs.edit().remove(KEY_PREFIX + medicineId).apply()
     }
 
+    /** Cancels every armed reminder. Used by "erase all data" and by a full reset. */
+    fun cancelAll() {
+        prefs.all.keys.filter { it.startsWith(KEY_PREFIX) }.forEach { key ->
+            val id = key.removePrefix(KEY_PREFIX).toLongOrNull() ?: return@forEach
+            cancel(id)
+        }
+        prefs.edit().clear().apply()
+    }
+
     private fun storeScheduled(medicineId: Long, labels: List<String>) {
         prefs.edit().putString(KEY_PREFIX + medicineId, labels.joinToString(",")).apply()
     }
@@ -159,11 +168,19 @@ class MedicineReminders(private val context: Context) {
             val title = medicineName ?: context.getString(R.string.meds_title)
             val text = listOfNotNull(strength, context.getString(R.string.meds_reminder_times), timeLabel)
                 .joinToString(" · ")
+            // The medicine name is health data: keep it off the lock screen and out of the shade preview.
+            val publicVersion = NotificationCompat.Builder(context, CHANNEL_ID)
+                .setSmallIcon(R.drawable.ic_notification)
+                .setContentTitle(context.getString(R.string.meds_reminder_generic_title))
+                .setContentText(context.getString(R.string.meds_reminder_generic_text))
+                .build()
             val notification = NotificationCompat.Builder(context, CHANNEL_ID)
                 .setSmallIcon(R.drawable.ic_notification)
                 .setContentTitle(title)
                 .setContentText(text)
                 .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+                .setVisibility(NotificationCompat.VISIBILITY_PRIVATE)
+                .setPublicVersion(publicVersion)
                 .setAutoCancel(true)
                 .setContentIntent(open)
                 .build()

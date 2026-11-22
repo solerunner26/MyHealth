@@ -18,6 +18,9 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -51,6 +54,7 @@ fun RecordsScreen(
     val viewModel = containerViewModel(container) { RecordsViewModel(it) }
     val state by viewModel.state.collectAsStateWithLifecycle()
     val spacing = MyHealthTokens.spacing
+    var collapsedYears by remember { mutableStateOf(setOf<Int>()) }
     val kinds = listOf(null, ReportKind.LAB, ReportKind.PRESCRIPTION, ReportKind.PHARMACY_BILL, ReportKind.IMAGING)
 
     Column(Modifier.fillMaxSize()) {
@@ -127,20 +131,26 @@ fun RecordsScreen(
             ) {
                 state.visible.groupBy { it.sampleDate.year }.forEach { (year, reports) ->
                     item(key = "year-$year") {
-                        RareSectionLabel(text = year.toString())
-                    }
-                    item(key = "card-$year") {
-                        RareCard(contentPadding = 0.dp) {
-                            reports.forEachIndexed { index, report ->
-                                Column(Modifier.padding(horizontal = 14.dp)) {
-                                    RareListRow(
-                                        title = report.title,
-                                        subtitle = "${report.sampleDate} · ${report.kind.label()}",
-                                        trailing = report.labName,
-                                        onClick = { onOpenReport(report.id) },
-                                    )
+                        com.solerunner.myhealth.design.rare.RareFolderGroup(
+                            title = year.toString(),
+                            count = reports.size,
+                            expanded = year !in collapsedYears,
+                            onToggle = {
+                                collapsedYears = if (year in collapsedYears) collapsedYears - year else collapsedYears + year
+                            },
+                        ) {
+                            RareCard(contentPadding = 0.dp) {
+                                reports.forEachIndexed { index, report ->
+                                    Column(Modifier.padding(horizontal = 14.dp)) {
+                                        RareListRow(
+                                            title = report.title,
+                                            subtitle = "${report.sampleDate} · ${report.kind.label()}",
+                                            trailing = report.labName,
+                                            onClick = { onOpenReport(report.id) },
+                                        )
+                                    }
+                                    if (index != reports.lastIndex) RareDivider(Modifier.padding(horizontal = 14.dp))
                                 }
-                                if (index != reports.lastIndex) RareDivider(Modifier.padding(horizontal = 14.dp))
                             }
                         }
                         Spacer(Modifier.height(spacing.sm))

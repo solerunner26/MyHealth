@@ -14,6 +14,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import kotlinx.coroutines.delay
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -40,11 +41,13 @@ import com.solerunner.myhealth.di.AppContainer
 fun UnlockScreen(container: AppContainer, onUnlocked: () -> Unit) {
     var pin by remember { mutableStateOf("") }
     var error by remember { mutableStateOf<String?>(null) }
+    var lockoutSeconds by remember { mutableStateOf(container.lock.lockoutRemainingMillis() / 1000L) }
     val context = LocalContext.current
     val activity = context as? FragmentActivity
     val biometricTitle = stringResource(R.string.auth_biometric_prompt)
     val skipPin = stringResource(R.string.auth_skip_pin)
     val wrongPin = stringResource(R.string.auth_pin_wrong)
+    val lockedOutTemplate = stringResource(R.string.auth_locked_out)
     val biometricAllowed = remember {
         container.settings.settings.value.biometricUnlock &&
             runCatching {
@@ -88,6 +91,13 @@ fun UnlockScreen(container: AppContainer, onUnlocked: () -> Unit) {
         if (prompt != null) askBiometric()
     }
 
+    LaunchedEffect(lockoutSeconds) {
+        if (lockoutSeconds > 0) {
+            delay(1_000)
+            lockoutSeconds = container.lock.lockoutRemainingMillis() / 1000L
+        }
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -112,13 +122,19 @@ fun UnlockScreen(container: AppContainer, onUnlocked: () -> Unit) {
             subtitle = stringResource(R.string.auth_unlock_subtitle),
             error = error,
             actionLabel = stringResource(R.string.common_continue),
+            actionEnabled = lockoutSeconds == 0L,
             onAction = {
-                if (container.lock.verifyPin(pin)) {
+                if (lockoutSeconds > 0L) {
+                    error = lockedOutTemplate.format(lockoutSeconds)
+                    return@RarePinEntry
+                } else if (container.lock.verifyPin(pin)) {
                     container.lock.unlockedNow()
                     onUnlocked()
                 } else {
-                    error = wrongPin
                     pin = ""
+                    val remaining = container.lock.lockoutRemainingMillis() / 1000L
+                    lockoutSeconds = remaining
+                    error = if (remaining > 0L) lockedOutTemplate.format(remaining) else wrongPin
                 }
             },
             onBiometric = if (prompt != null) ({ askBiometric() }) else null,

@@ -96,6 +96,15 @@ fun RareScrollProgress(scrollState: androidx.compose.foundation.ScrollState, mod
 /** Shimmer block for skeletons; the only looping animation in the app. */
 @Composable
 fun RareSkeleton(modifier: Modifier = Modifier, height: Int = 16) {
+    if (!animationsEnabled()) {
+        Box(
+            modifier = modifier
+                .height(height.dp)
+                .clip(MaterialTheme.shapes.extraSmall)
+                .background(MaterialTheme.colorScheme.surfaceContainerHigh),
+        )
+        return
+    }
     val transition = rememberInfiniteTransition(label = "skeleton")
     val shift by transition.animateFloat(
         initialValue = 0f,

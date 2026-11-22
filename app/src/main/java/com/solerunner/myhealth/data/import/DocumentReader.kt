@@ -27,12 +27,15 @@ class DocumentReader(private val context: Context) {
 
     private fun ocr(): OcrEngine = ocrEngine ?: OcrEngine(context).also { ocrEngine = it }
     private val ocrThreshold = 40
+    private val MAX_INPUT_BYTES = 32 * 1024 * 1024
+    private val MAX_BITMAP_DIMENSION = 2_400
 
     suspend fun read(uri: Uri, displayName: String?, mimeType: String?): ReadDocument =
         withContext(Dispatchers.IO) {
             val resolvedMime = mimeType ?: context.contentResolver.getType(uri) ?: guessMime(displayName)
             val bytes = context.contentResolver.openInputStream(uri)?.use { it.readBytes() }
                 ?: error("Cannot open the selected document")
+            require(bytes.size <= MAX_INPUT_BYTES) { "Document is larger than the supported 32 MB" }
             val name = displayName ?: uri.lastPathSegment?.substringAfterLast('/') ?: "document"
             when {
                 resolvedMime == "application/pdf" || name.endsWith(".pdf", true) -> readPdf(bytes, name, resolvedMime)
@@ -79,12 +82,21 @@ class DocumentReader(private val context: Context) {
     }
 
     private suspend fun readImage(bytes: ByteArray, name: String, mime: String): ReadDocument {
-        val bitmap = android.graphics.BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
-            ?: error("The image could not be decoded")
+        val bitmap = decodeDownsampled(bytes) ?: error("The image could not be decoded")
         val text = runCatching { ocr().recognize(bitmap) }.getOrDefault("")
         val image = ocr().encodeJpeg(bitmap)
         bitmap.recycle()
         return ReadDocument(name, mime, bytes, listOf(ReadPage(0, text, image)), usedOcr = true)
+    }
+
+    /** Decodes a photo with `inSampleSize` so a high-resolution camera image never enters memory whole. */
+    private fun decodeDownsampled(bytes: ByteArray): Bitmap? {
+        val bounds = android.graphics.BitmapFactory.Options().apply { inJustDecodeBounds = true }
+        android.graphics.BitmapFactory.decodeByteArray(bytes, 0, bytes.size, bounds)
+        var sample = 1
+        while (maxOf(bounds.outWidth, bounds.outHeight) / (sample * 2) >= MAX_BITMAP_DIMENSION) sample *= 2
+        val options = android.graphics.BitmapFactory.Options().apply { inSampleSize = sample }
+        return android.graphics.BitmapFactory.decodeByteArray(bytes, 0, bytes.size, options)
     }
 
     private fun extractPdfText(file: File): List<String> = PDDocument.load(file).use { document ->
@@ -100,8 +112,14 @@ class DocumentReader(private val context: Context) {
 
     private fun renderPage(renderer: PdfRenderer, index: Int): Bitmap {
         renderer.openPage(index).use { page ->
-            val scale = 2
-            val bitmap = Bitmap.createBitmap(page.width * scale, page.height * scale, Bitmap.Config.ARGB_8888)
+            // Cap the rendered size: a 2x A4 page is fine, a poster-sized PDF is not.
+            val longest = maxOf(page.width, page.height).coerceAtLeast(1)
+            val scale = (MAX_BITMAP_DIMENSION.toFloat() / longest).coerceIn(1f, 2f)
+            val bitmap = Bitmap.createBitmap(
+                (page.width * scale).toInt().coerceAtLeast(1),
+                (page.height * scale).toInt().coerceAtLeast(1),
+                Bitmap.Config.ARGB_8888,
+            )
             bitmap.eraseColor(Color.WHITE)
             page.render(bitmap, null, null, PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY)
             return bitmap

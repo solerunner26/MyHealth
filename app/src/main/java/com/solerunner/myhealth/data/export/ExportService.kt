@@ -41,6 +41,14 @@ class ExportService(private val context: Context) {
         }
     }
 
+    /**
+     * Deletes previously generated exports. They are plaintext by necessity (they leave through the share
+     * sheet), so they must not linger in the cache; this runs on every cold start.
+     */
+    fun clearCache() {
+        File(context.cacheDir, "exports").listFiles()?.forEach { it.delete() }
+    }
+
     fun uriFor(file: File): Uri =
         FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
 

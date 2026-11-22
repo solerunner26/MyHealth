@@ -22,6 +22,7 @@ class MyHealthApplication : Application() {
         container = AppContainer(this)
         container.start()
         container.reminders.ensureChannel()
+        container.exporter.clearCache()
     }
 
     override fun onTerminate() {

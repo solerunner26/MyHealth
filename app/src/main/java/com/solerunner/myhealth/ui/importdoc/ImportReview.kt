@@ -63,6 +63,16 @@ fun ImportReview(state: ImportUiState.Review, viewModel: ImportViewModel, onBack
                 .verticalScroll(rememberScrollState())
                 .padding(horizontal = spacing.screenPadding),
         ) {
+            com.solerunner.myhealth.design.rare.RareStepPlayer(
+                steps = listOf(
+                    stringResource(R.string.import_step_pick),
+                    stringResource(R.string.import_step_read),
+                    stringResource(R.string.import_step_review),
+                    stringResource(R.string.import_step_save),
+                ),
+                current = 2,
+            )
+            Spacer(Modifier.height(spacing.md))
             Text(
                 stringResource(R.string.import_review_body),
                 style = MaterialTheme.typography.bodySmall,

@@ -118,35 +118,49 @@ fun OnboardingScreen(container: AppContainer) {
                 onBack = { step = OnboardingStep.WELCOME },
             )
 
-            OnboardingStep.PIN -> RarePinEntry(
-                pin = pin,
-                onPinChange = { pin = it },
-                title = stringResource(R.string.auth_setup_title),
-                subtitle = stringResource(R.string.auth_setup_body),
-                actionLabel = stringResource(R.string.common_continue),
-                onAction = {
-                    error = null
-                    step = OnboardingStep.CONFIRM
-                },
-            )
-
-            OnboardingStep.CONFIRM -> RarePinEntry(
-                pin = confirm,
-                onPinChange = { confirm = it },
-                title = stringResource(R.string.auth_confirm_title),
-                subtitle = stringResource(R.string.auth_confirm_body),
-                error = error,
-                actionLabel = stringResource(R.string.common_continue),
-                onAction = {
-                    if (confirm == pin) {
+            OnboardingStep.PIN -> {
+                RarePinEntry(
+                    pin = pin,
+                    onPinChange = { pin = it },
+                    title = stringResource(R.string.auth_setup_title),
+                    subtitle = stringResource(R.string.auth_setup_body),
+                    actionLabel = stringResource(R.string.common_continue),
+                    onAction = {
                         error = null
-                        finish()
-                    } else {
-                        confirm = ""
-                        error = pinMismatchText
-                    }
-                },
-            )
+                        step = OnboardingStep.CONFIRM
+                    },
+                )
+                androidx.compose.material3.TextButton(onClick = { step = OnboardingStep.NAME }) {
+                    Text(stringResource(R.string.common_back), style = MaterialTheme.typography.labelLarge)
+                }
+            }
+
+            OnboardingStep.CONFIRM -> {
+                RarePinEntry(
+                    pin = confirm,
+                    onPinChange = { confirm = it },
+                    title = stringResource(R.string.auth_confirm_title),
+                    subtitle = stringResource(R.string.auth_confirm_body),
+                    error = error,
+                    actionLabel = stringResource(R.string.common_continue),
+                    onAction = {
+                        if (confirm == pin) {
+                            error = null
+                            finish()
+                        } else {
+                            confirm = ""
+                            error = pinMismatchText
+                        }
+                    },
+                )
+                androidx.compose.material3.TextButton(onClick = {
+                    confirm = ""
+                    error = null
+                    step = OnboardingStep.PIN
+                }) {
+                    Text(stringResource(R.string.common_back), style = MaterialTheme.typography.labelLarge)
+                }
+            }
         }
         Spacer(Modifier.height(MyHealthTokens.spacing.xl))
         Text(

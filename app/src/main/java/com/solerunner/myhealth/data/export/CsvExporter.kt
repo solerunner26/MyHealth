@@ -77,9 +77,18 @@ object CsvExporter {
         return text.trimEnd('0').trimEnd('.')
     }
 
+    /**
+     * Quotes a field for CSV and neutralises spreadsheet formulas.
+     *
+     * OCR text and user-entered names are untrusted: a title beginning with `=`, `+`, `-`, `@`, tab or
+     * carriage return could execute in Excel or Sheets. Such a field is prefixed with an apostrophe,
+     * which spreadsheets treat as text while the visible value stays intact.
+     */
     private fun csv(value: String): String {
-        val needsQuotes = value.any { it == ',' || it == '"' || it == '\n' }
-        val escaped = value.replace("\"", "\"\"")
+        val dangerousPrefix = value.isNotEmpty() && value.first() in charArrayOf('=', '+', '-', '@', '\t', '\r')
+        val safe = if (dangerousPrefix) "'" + value else value
+        val needsQuotes = safe.any { it == ',' || it == '"' || it == '\n' || it == '\r' }
+        val escaped = safe.replace("\"", "\"\"")
         return if (needsQuotes) "\"$escaped\"" else escaped
     }
 }

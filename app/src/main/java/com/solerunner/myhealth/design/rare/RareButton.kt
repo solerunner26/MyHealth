@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -113,7 +114,7 @@ fun RareIconButton(
 ) {
     val colors = MaterialTheme.colorScheme
     val interaction = rememberInteraction()
-    Box(modifier = modifier.size(MyHealthTokens.dims.iconButton)) {
+    Box(modifier = modifier.size(MyHealthTokens.dims.iconButton).minimumInteractiveComponentSize()) {
         Box(
             modifier = Modifier
                 .matchParentSize()

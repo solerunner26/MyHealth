@@ -3,7 +3,9 @@ package com.solerunner.myhealth.ui.settings
 import android.app.Activity
 import android.content.Intent
 import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.biometric.BiometricManager
+import androidx.health.connect.client.PermissionController
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -31,7 +33,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import java.time.Instant
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.activity.result.contract.ActivityResultContracts
 import com.solerunner.myhealth.BuildConfig
 import com.solerunner.myhealth.R
 import com.solerunner.myhealth.data.prefs.AppLanguage
@@ -57,6 +63,8 @@ import kotlinx.coroutines.launch
  * Settings, grouped into hairline cards: appearance, language, security, data and about. Every toggle
  * writes through the encrypted preference store; destructive actions always pass a confirmation sheet.
  */
+private enum class VerifyPurpose { CHANGE_PIN, DISABLE_LOCK }
+
 @Composable
 fun SettingsScreen(container: AppContainer) {
     val viewModel = containerViewModel(container) { SettingsViewModel(it) }
@@ -68,11 +76,17 @@ fun SettingsScreen(container: AppContainer) {
     var confirmWipe by remember { mutableStateOf(false) }
     var showAutoLock by remember { mutableStateOf(false) }
     var showPin by remember { mutableStateOf(false) }
+    var backupRequest by remember { mutableStateOf<BackupRequest?>(null) }
+    var restoreCandidate by remember { mutableStateOf<Uri?>(null) }
+    var verifyPurpose by remember { mutableStateOf<VerifyPurpose?>(null) }
     val spacing = MyHealthTokens.spacing
     val shareLabel = stringResource(R.string.common_share)
     val snackbar = remember { androidx.compose.material3.SnackbarHostState() }
     val scope = rememberCoroutineScope()
     val wipedText = stringResource(R.string.settings_wiped)
+    val backupDoneText = stringResource(R.string.settings_backup_done)
+    val backupRestoredText = stringResource(R.string.settings_backup_restored)
+    val backupFailedText = stringResource(R.string.settings_backup_failed)
     val scroll = rememberScrollState()
 
     LaunchedEffect(extra.shareIntent) {
@@ -87,6 +101,24 @@ fun SettingsScreen(container: AppContainer) {
             viewModel.consumeMessage()
         }
     }
+
+    val createBackupLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.CreateDocument("application/octet-stream"),
+    ) { uri -> if (uri != null) backupRequest = BackupRequest(uri, exporting = true) }
+    val openBackupLauncher = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        if (uri != null) restoreCandidate = uri
+    }
+
+    val healthConnectPermissions = remember { container.healthConnect.readPermissions }
+    val healthConnectLauncher = rememberLauncherForActivityResult(
+        PermissionController.createRequestPermissionResultContract(),
+    ) { granted ->
+        if (granted.containsAll(healthConnectPermissions)) {
+            viewModel.setHealthConnectEnabled(true)
+            viewModel.syncHealthConnect()
+        }
+    }
+    val healthConnectAvailable = remember { viewModel.healthConnectAvailable() }
 
     val biometricAvailable = remember {
         runCatching {
@@ -111,7 +143,7 @@ fun SettingsScreen(container: AppContainer) {
             ) {
                 RareCard {
                     RareSectionLabel(text = stringResource(R.string.settings_appearance))
-                    RareSegmented(
+                    com.solerunner.myhealth.design.rare.RareChoiceTiles(
                         options = ThemeMode.entries,
                         selected = settings.themeMode,
                         onSelect = viewModel::setTheme,
@@ -154,7 +186,13 @@ fun SettingsScreen(container: AppContainer) {
                         title = stringResource(R.string.settings_app_lock),
                         subtitle = stringResource(R.string.settings_app_lock_desc),
                         checked = settings.appLockEnabled && container.lock.hasPin(),
-                        onChange = viewModel::setAppLock,
+                        onChange = { enabled ->
+                            when {
+                                enabled && !container.lock.hasPin() -> showPin = true
+                                !enabled && container.lock.hasPin() -> verifyPurpose = VerifyPurpose.DISABLE_LOCK
+                                else -> viewModel.setAppLock(enabled)
+                            }
+                        },
                     )
                     if (biometricAvailable && settings.appLockEnabled) {
                         SettingsSwitchRow(
@@ -174,7 +212,52 @@ fun SettingsScreen(container: AppContainer) {
                         onChange = viewModel::setScreenshotBlock,
                     )
                     RareDivider()
-                    TextButton(onClick = { showPin = true }) { Text(stringResource(R.string.settings_change_pin)) }
+                    TextButton(onClick = {
+                        if (container.lock.hasPin()) verifyPurpose = VerifyPurpose.CHANGE_PIN else showPin = true
+                    }) { Text(stringResource(R.string.settings_change_pin)) }
+                }
+
+                RareCard {
+                    RareSectionLabel(text = stringResource(R.string.settings_health_connect))
+                    Text(
+                        stringResource(R.string.settings_health_connect_desc),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    if (!healthConnectAvailable) {
+                        Spacer(Modifier.height(8.dp))
+                        Text(
+                            stringResource(R.string.settings_health_connect_unavailable),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    } else {
+                        Spacer(Modifier.height(10.dp))
+                        com.solerunner.myhealth.design.rare.RareButton(
+                            text = stringResource(
+                                if (settings.healthConnectEnabled) R.string.settings_health_connect_sync
+                                else R.string.settings_health_connect_connect,
+                            ),
+                            onClick = {
+                                if (settings.healthConnectEnabled) viewModel.syncHealthConnect()
+                                else healthConnectLauncher.launch(healthConnectPermissions)
+                            },
+                        )
+                        if (settings.lastHealthConnectSync > 0L) {
+                            Spacer(Modifier.height(6.dp))
+                            val formatter = remember { DateTimeFormatter.ofPattern("dd MMM yyyy, HH:mm") }
+                            Text(
+                                stringResource(
+                                    R.string.settings_health_connect_last,
+                                    Instant.ofEpochMilli(settings.lastHealthConnectSync)
+                                        .atZone(ZoneId.systemDefault())
+                                        .format(formatter),
+                                ),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+                    }
                 }
 
                 RareCard {
@@ -183,6 +266,26 @@ fun SettingsScreen(container: AppContainer) {
                         label = stringResource(R.string.settings_documents),
                         value = extra.storageBytes?.let { "%.1f MB".format(it / 1_048_576.0) } ?: "—",
                     )
+                    Spacer(Modifier.height(10.dp))
+                    Text(
+                        stringResource(R.string.settings_backup_desc),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    Spacer(Modifier.height(8.dp))
+                    Row(horizontalArrangement = Arrangement.spacedBy(spacing.sm)) {
+                        com.solerunner.myhealth.design.rare.RareButton(
+                            text = stringResource(R.string.settings_backup_create),
+                            onClick = { createBackupLauncher.launch("myhealth-backup.mhb") },
+                            modifier = Modifier.weight(1f),
+                        )
+                        com.solerunner.myhealth.design.rare.RareButton(
+                            text = stringResource(R.string.settings_backup_restore),
+                            onClick = { openBackupLauncher.launch(arrayOf("application/octet-stream", "*/*")) },
+                            style = com.solerunner.myhealth.design.rare.RareButtonStyle.SECONDARY,
+                            modifier = Modifier.weight(1f),
+                        )
+                    }
                     Spacer(Modifier.height(4.dp))
                     Row(horizontalArrangement = Arrangement.spacedBy(spacing.sm)) {
                         com.solerunner.myhealth.design.rare.RareButton(
@@ -192,8 +295,12 @@ fun SettingsScreen(container: AppContainer) {
                             modifier = Modifier.weight(1f),
                         )
                     }
-                    Spacer(Modifier.height(4.dp))
-                    TextButton(onClick = { confirmWipe = true }) { Text(stringResource(R.string.settings_wipe)) }
+                    Spacer(Modifier.height(6.dp))
+                    com.solerunner.myhealth.design.rare.RareHoldToDelete(
+                        label = stringResource(R.string.settings_wipe),
+                        onConfirm = { confirmWipe = true },
+                        modifier = Modifier.fillMaxWidth(),
+                    )
                 }
 
                 RareCard {
@@ -211,6 +318,22 @@ fun SettingsScreen(container: AppContainer) {
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
+                    Spacer(Modifier.height(10.dp))
+                    com.solerunner.myhealth.design.rare.RareFaqItem(
+                        question = stringResource(R.string.settings_faq_encryption_q),
+                        answer = stringResource(R.string.settings_faq_encryption_a),
+                    )
+                    RareDivider()
+                    com.solerunner.myhealth.design.rare.RareFaqItem(
+                        question = stringResource(R.string.settings_faq_ocr_q),
+                        answer = stringResource(R.string.settings_faq_ocr_a),
+                    )
+                    RareDivider()
+                    com.solerunner.myhealth.design.rare.RareFaqItem(
+                        question = stringResource(R.string.settings_faq_ranges_q),
+                        answer = stringResource(R.string.settings_faq_ranges_a),
+                    )
+                    RareDivider()
                     Spacer(Modifier.height(10.dp))
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Text(
@@ -276,6 +399,68 @@ fun SettingsScreen(container: AppContainer) {
         )
     }
 
+    restoreCandidate?.let { uri ->
+        RareConfirmDialog(
+            title = stringResource(R.string.settings_backup_overwrite_title),
+            body = stringResource(R.string.settings_backup_overwrite_body),
+            confirmLabel = stringResource(R.string.settings_backup_restore),
+            onConfirm = {
+                restoreCandidate = null
+                backupRequest = BackupRequest(uri, exporting = false)
+            },
+            onDismiss = { restoreCandidate = null },
+        )
+    }
+
+    backupRequest?.let { request ->
+        BackupPassphraseSheet(
+            exporting = request.exporting,
+            onDismiss = { backupRequest = null },
+            onSubmit = { passphrase ->
+                backupRequest = null
+                scope.launch {
+                    val outcome = runCatching {
+                        if (request.exporting) {
+                            val bytes = container.backup.export(passphrase)
+                            context.contentResolver.openOutputStream(request.uri)?.use { it.write(bytes) }
+                                ?: error("cannot write backup")
+                        } else {
+                            val bytes = context.contentResolver.openInputStream(request.uri)?.use { it.readBytes() }
+                                ?: error("cannot read backup")
+                            container.backup.restore(bytes, passphrase)
+                        }
+                    }
+                    passphrase.fill('\u0000')
+                    snackbar.showSnackbar(
+                        when {
+                            !outcome.isSuccess -> backupFailedText
+                            request.exporting -> backupDoneText
+                            else -> backupRestoredText
+                        },
+                    )
+                }
+            },
+        )
+    }
+
+    verifyPurpose?.let { purpose ->
+        VerifyPinSheet(
+            title = when (purpose) {
+                VerifyPurpose.CHANGE_PIN -> stringResource(R.string.settings_change_pin)
+                VerifyPurpose.DISABLE_LOCK -> stringResource(R.string.settings_app_lock)
+            },
+            onDismiss = { verifyPurpose = null },
+            verify = viewModel::verifyCurrentPin,
+            onVerified = {
+                verifyPurpose = null
+                when (purpose) {
+                    VerifyPurpose.CHANGE_PIN -> showPin = true
+                    VerifyPurpose.DISABLE_LOCK -> viewModel.setAppLock(false)
+                }
+            },
+        )
+    }
+
     if (showPin) {
         ChangePinDialog(
             onDismiss = { showPin = false },
@@ -312,3 +497,6 @@ private fun autoLockLabel(delay: AutoLockDelay): String = when (delay) {
     AutoLockDelay.FIVE_MINUTES -> stringResource(R.string.settings_auto_lock_5min)
     AutoLockDelay.FIFTEEN_MINUTES -> stringResource(R.string.settings_auto_lock_15min)
 }
+
+
+private data class BackupRequest(val uri: Uri, val exporting: Boolean)

@@ -63,11 +63,33 @@ class SettingsViewModel(private val container: AppContainer) : ViewModel() {
         viewModelScope.launch { container.audit.log("settings.app_lock", enabled.toString()) }
     }
 
+    fun verifyCurrentPin(pin: String): Boolean = container.lock.verifyPin(pin)
+
     fun setBiometric(enabled: Boolean) = container.settings.setBiometricUnlock(enabled)
 
     fun setAutoLock(delay: AutoLockDelay) = container.settings.setAutoLock(delay)
 
     fun setScreenshotBlock(block: Boolean) = container.settings.setScreenshotBlock(block)
+
+    fun setHealthConnectEnabled(enabled: Boolean) = container.settings.setHealthConnectEnabled(enabled)
+
+    fun healthConnectAvailable(): Boolean = container.healthConnect.isAvailable()
+
+    /** Reads wearable data now; the last-sync timestamp lands in settings and updates the UI. */
+    fun syncHealthConnect() {
+        viewModelScope.launch {
+            runCatching { container.syncHealthConnect() }
+                .onSuccess { result ->
+                    val note = when {
+                        result.unavailable -> "unavailable"
+                        result.skippedForPermission -> "permission"
+                        else -> "synced ${result.days}"
+                    }
+                    _extra.update { it.copy(message = note) }
+                }
+                .onFailure { error -> _extra.update { it.copy(message = error.message) } }
+        }
+    }
 
     fun changePin(pin: String): Boolean {
         if (!com.solerunner.myhealth.core.security.PinHasher.isValidFormat(pin)) return false
@@ -93,7 +115,7 @@ class SettingsViewModel(private val container: AppContainer) : ViewModel() {
 
     fun wipe() {
         viewModelScope.launch {
-            runCatching { container.maintenance.wipeEverything() }
+            runCatching { container.wipeEverything() }
                 .onSuccess { _extra.update { it.copy(wiped = true) } }
                 .onFailure { error -> _extra.update { it.copy(message = error.message) } }
         }

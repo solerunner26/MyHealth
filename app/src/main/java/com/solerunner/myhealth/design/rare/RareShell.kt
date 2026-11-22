@@ -20,6 +20,9 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material3.minimumInteractiveComponentSize
+import androidx.compose.ui.res.stringResource
+import com.solerunner.myhealth.R
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -55,6 +58,7 @@ fun RareTopBar(
                 Box(
                     modifier = Modifier
                         .size(36.dp)
+                        .minimumInteractiveComponentSize()
                         .clip(MaterialTheme.shapes.small)
                         .pressScale(interaction)
                         .clickable(interactionSource = interaction, indication = null, onClick = onBack),
@@ -62,7 +66,7 @@ fun RareTopBar(
                 ) {
                     Icon(
                         Icons.AutoMirrored.Filled.ArrowBack,
-                        contentDescription = null,
+                        contentDescription = stringResource(R.string.common_back),
                         tint = MaterialTheme.colorScheme.onSurface,
                         modifier = Modifier.size(20.dp),
                     )
@@ -231,6 +235,7 @@ fun RarePageHeader(
                 Box(
                     modifier = Modifier
                         .size(36.dp)
+                        .minimumInteractiveComponentSize()
                         .clip(MaterialTheme.shapes.small)
                         .pressScale(backInteraction)
                         .clickable(interactionSource = backInteraction, indication = null, onClick = onBack),
@@ -238,7 +243,7 @@ fun RarePageHeader(
                 ) {
                     Icon(
                         Icons.AutoMirrored.Filled.ArrowBack,
-                        contentDescription = null,
+                        contentDescription = stringResource(R.string.common_back),
                         tint = MaterialTheme.colorScheme.onSurface,
                         modifier = Modifier.size(20.dp),
                     )

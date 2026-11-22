@@ -7,6 +7,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -53,6 +54,10 @@ fun ImportScreen(
     val camera = rememberLauncherForActivityResult(ActivityResultContracts.TakePicture()) { success ->
         if (success) viewModel.read(photoUri, photoFile.name, "image/jpeg")
     }
+    // The capture has been read into memory by the time the state leaves Reading; do not keep it.
+    LaunchedEffect(state) {
+        if (state !is ImportUiState.Idle && state !is ImportUiState.Reading) photoFile.delete()
+    }
 
     when (val current = state) {
         is ImportUiState.Idle -> ImportPicker(
@@ -66,6 +71,16 @@ fun ImportScreen(
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
+            com.solerunner.myhealth.design.rare.RareStepPlayer(
+                steps = listOf(
+                    stringResource(R.string.import_step_pick),
+                    stringResource(R.string.import_step_read),
+                    stringResource(R.string.import_step_review),
+                    stringResource(R.string.import_step_save),
+                ),
+                current = 1,
+                modifier = Modifier.padding(bottom = 20.dp),
+            )
             com.solerunner.myhealth.design.rare.RareSpinner(size = 26)
             Spacer(Modifier.height(spacing.md))
             Text(

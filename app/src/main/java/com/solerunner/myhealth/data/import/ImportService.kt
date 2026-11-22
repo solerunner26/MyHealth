@@ -141,6 +141,19 @@ class ImportService(
                 source = DataSource.REPORT_IMPORT,
             )
         }
+        // Rendered page images are saved as separate attachments so the report viewer can show the
+        // pages that OCR read, even when the original is a text-layer PDF.
+        val pageAttachments = draft.pageImages.mapIndexed { index, image ->
+            val blob = vault.store(image.inputStream())
+            Attachment(
+                fileName = "${draft.fileName}-page-${index + 1}.jpg",
+                mimeType = "image/jpeg",
+                sizeBytes = blob.sizeBytes,
+                sha256 = blob.sha256,
+                storedName = blob.storedName,
+                pageIndex = index + 1,
+            )
+        }
         val id = reports.save(
             report = report.copy(
                 fingerprint = sha256(draft.bytes),
@@ -153,6 +166,9 @@ class ImportService(
             measurements = measurements,
             attachment = attachment,
         )
+        pageAttachments.forEach { page ->
+            database.write { db -> db.attachmentDao.insert(page.copy(reportId = id)) }
+        }
         selectedMedicines.forEach { medicines.save(it.copy(source = DataSource.REPORT_IMPORT)) }
         audit.log("report.import", "${draft.fileName} → $id")
         id

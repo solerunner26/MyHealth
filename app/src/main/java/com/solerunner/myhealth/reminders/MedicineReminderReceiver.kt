@@ -6,6 +6,8 @@ import android.content.Intent
 import com.solerunner.myhealth.MyHealthApplication
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.coroutines.launch
 
 /**
@@ -23,6 +25,9 @@ class MedicineReminderReceiver : BroadcastReceiver() {
         val pending = goAsync()
         CoroutineScope(Dispatchers.IO).launch {
             try {
+                // An alarm can cold-start the process; wait for the encrypted database to finish opening.
+                withTimeoutOrNull(6_000) { application.container.ready.first { it } }
+                if (!application.container.ready.value) return@launch
                 val medicine = application.container.medicines.byId(medicineId)
                 if (medicine != null && medicine.reminderEnabled && medicine.isActive) {
                     MedicineReminders.notify(context, medicine.id, medicine.name, medicine.strength, timeLabel)

@@ -87,6 +87,11 @@ fun MedicineEditorDialog(
             label = stringResource(R.string.meds_duration),
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
         )
+        Spacer(Modifier.height(6.dp))
+        com.solerunner.myhealth.design.rare.RareDurationChips(
+            selectedDays = draft.durationDays.toIntOrNull(),
+            onSelect = { draft.durationDays = it.toString() },
+        )
         Spacer(Modifier.height(spacing.sm))
         DateField(label = stringResource(R.string.meds_start), date = draft.startDate, onChange = { draft.startDate = it })
         Spacer(Modifier.height(spacing.sm))

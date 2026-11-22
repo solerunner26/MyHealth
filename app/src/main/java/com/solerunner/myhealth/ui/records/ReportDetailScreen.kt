@@ -14,6 +14,9 @@ import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.solerunner.myhealth.R
 import com.solerunner.myhealth.design.components.*
+import com.solerunner.myhealth.design.rare.RareSectionLabel
+import com.solerunner.myhealth.domain.model.Attachment
+import com.solerunner.myhealth.domain.model.LabResult
 import com.solerunner.myhealth.design.theme.MyHealthTokens
 import com.solerunner.myhealth.di.AppContainer
 import com.solerunner.myhealth.ui.common.label
@@ -29,6 +32,8 @@ fun ReportDetailScreen(
     val viewModel = containerViewModel(container, key = "report-$reportId") { ReportDetailViewModel(it, reportId) }
     val state by viewModel.state.collectAsStateWithLifecycle()
     var confirmDelete by remember { mutableStateOf(false) }
+    var viewing by remember { mutableStateOf<Attachment?>(null) }
+    var editing by remember { mutableStateOf<LabResult?>(null) }
     val spacing = MyHealthTokens.spacing
 
     LaunchedEffect(state.deleted) { if (state.deleted) onDeleted() }
@@ -84,6 +89,16 @@ fun ReportDetailScreen(
                     }
                 }
             }
+            if (state.attachments.isNotEmpty()) {
+                item {
+                    RareSectionLabel(text = stringResource(R.string.records_pages), modifier = Modifier.padding(top = spacing.md))
+                    ReportPagesStrip(
+                        container = container,
+                        attachments = state.attachments,
+                        onOpen = { viewing = it },
+                    )
+                }
+            }
             item {
                 Text(
                     stringResource(R.string.records_detail_results, state.results.size),
@@ -101,11 +116,26 @@ fun ReportDetailScreen(
                 }
             } else {
                 items(state.results, key = { it.id }) { result ->
-                    ResultRow(result)
+                    ResultRow(result, onClick = { editing = result })
                     ThinDivider()
                 }
             }
         }
+    }
+
+    viewing?.let { attachment ->
+        ReportPageDialog(container = container, attachment = attachment, onDismiss = { viewing = null })
+    }
+
+    editing?.let { result ->
+        EditResultSheet(
+            result = result,
+            onDismiss = { editing = null },
+            onSave = { updated ->
+                editing = null
+                viewModel.updateResult(updated)
+            },
+        )
     }
 
     if (confirmDelete) {

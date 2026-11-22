@@ -11,18 +11,24 @@ import javax.crypto.spec.PBEKeySpec
  * verifier, security toggles and Health Connect consent — never for health data itself (that lives in
  * the encrypted database).
  */
+interface SecureKeyValueStore {
+    fun putString(key: String, value: String?): Boolean
+    fun getString(key: String): String?
+    fun remove(key: String)
+}
+
 class SecureStore(
     context: Context,
     private val crypto: VaultCrypto,
     name: String = "myhealth_secure",
-) {
+) : SecureKeyValueStore {
     private val prefs = context.applicationContext.getSharedPreferences(name, Context.MODE_PRIVATE)
 
     /**
      * Writes an encrypted value. Returns false when the Keystore cannot encrypt right now; in that case
      * nothing is written, so a transient key failure can never destroy a value that is already stored.
      */
-    fun putString(key: String, value: String?): Boolean {
+    override fun putString(key: String, value: String?): Boolean {
         val editor = prefs.edit()
         if (value == null) {
             editor.remove(key)
@@ -33,7 +39,7 @@ class SecureStore(
         return true
     }
 
-    fun getString(key: String): String? = crypto.decryptString(prefs.getString(key, null))
+    override fun getString(key: String): String? = crypto.decryptString(prefs.getString(key, null))
 
     fun putBoolean(key: String, value: Boolean) = putString(key, if (value) "1" else "0")
 
@@ -43,9 +49,12 @@ class SecureStore(
 
     fun getInt(key: String, default: Int = 0): Int = getString(key)?.toIntOrNull() ?: default
 
-    fun remove(key: String) = prefs.edit().remove(key).apply()
+    override fun remove(key: String) = prefs.edit().remove(key).apply()
 
     fun contains(key: String): Boolean = prefs.contains(key)
+
+    /** Removes every secure value, including the PIN verifier and security flags. */
+    fun clearAll() = prefs.edit().clear().apply()
 }
 
 /**

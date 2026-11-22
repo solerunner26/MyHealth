@@ -42,8 +42,8 @@ val MyHealthTypography: Typography = Typography(
     bodyMedium = base.bodyMedium.copy(fontFamily = InterFamily, fontSize = 14.sp, lineHeight = 20.sp),
     bodySmall = base.bodySmall.copy(fontFamily = InterFamily, fontSize = 12.5.sp, lineHeight = 17.sp),
     labelLarge = base.labelLarge.copy(fontFamily = InterFamily, fontWeight = FontWeight.SemiBold, fontSize = 13.sp, lineHeight = 18.sp, letterSpacing = 0.1.sp),
-    labelMedium = base.labelMedium.copy(fontFamily = InterFamily, fontWeight = FontWeight.Medium, fontSize = 11.5.sp, lineHeight = 15.sp, letterSpacing = 0.2.sp),
-    labelSmall = base.labelSmall.copy(fontFamily = InterFamily, fontWeight = FontWeight.Medium, fontSize = 10.5.sp, lineHeight = 14.sp, letterSpacing = 0.5.sp),
+    labelMedium = base.labelMedium.copy(fontFamily = InterFamily, fontWeight = FontWeight.Medium, fontSize = 12.sp, lineHeight = 16.sp, letterSpacing = 0.2.sp),
+    labelSmall = base.labelSmall.copy(fontFamily = InterFamily, fontWeight = FontWeight.Medium, fontSize = 11.5.sp, lineHeight = 15.sp, letterSpacing = 0.5.sp),
 )
 
 /** Values, scores and doses use tabular digits through the platform mono face. */
@@ -57,7 +57,7 @@ val NumericTextStyle: TextStyle = TextStyle(
 val RareLabelStyle: TextStyle = TextStyle(
     fontFamily = InterFamily,
     fontWeight = FontWeight.SemiBold,
-    fontSize = 10.5.sp,
-    lineHeight = 14.sp,
+    fontSize = 11.sp,
+    lineHeight = 15.sp,
     letterSpacing = 0.9.sp,
 )

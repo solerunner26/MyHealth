@@ -1,6 +1,10 @@
 package com.solerunner.myhealth.ui.dashboard
 
 import androidx.compose.foundation.clickable
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -17,6 +21,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -48,6 +53,8 @@ import com.solerunner.myhealth.design.rare.RareTone
 import com.solerunner.myhealth.design.theme.MyHealthTokens
 import com.solerunner.myhealth.di.AppContainer
 import com.solerunner.myhealth.domain.model.ScoreBand
+import com.solerunner.myhealth.domain.model.Severity
+import java.time.LocalDate
 import com.solerunner.myhealth.domain.model.Profile
 import com.solerunner.myhealth.ui.common.AllClearCard
 import com.solerunner.myhealth.ui.common.FocusCard
@@ -85,12 +92,22 @@ fun DashboardContent(
                 eyebrow = Dates.format(Dates.today(), LocalConfiguration.current.locales[0], "EEEE, dd MMM"),
                 title = stringResource(R.string.home_greeting_named, greetingText(), profile.displayName.substringBefore(' ')),
                 actions = {
+                    com.solerunner.myhealth.design.rare.RareNotificationBell(
+                        count = state.focus.count { it.severity != Severity.INFO },
+                        onClick = { onNavigate(Routes.INSIGHTS) },
+                    )
                     RareIconButton(
                         icon = Icons.Filled.Settings,
                         contentDescription = stringResource(R.string.nav_settings),
                         onClick = { onNavigate(Routes.SETTINGS) },
                     )
-                    Column(Modifier.clickable { onNavigate(Routes.PROFILE) }) {
+                    val profileLabel = stringResource(R.string.nav_profile)
+                    Column(
+                        Modifier
+                            .minimumInteractiveComponentSize()
+                            .clickable(role = Role.Button, onClickLabel = profileLabel) { onNavigate(Routes.PROFILE) }
+                            .semantics { contentDescription = profileLabel },
+                    ) {
                         RareAvatar(profile.initials, size = 40)
                     }
                 },
@@ -144,6 +161,21 @@ fun DashboardContent(
                 onOpenReport = onOpenReport,
                 onImport = { onNavigate(Routes.IMPORT) },
             )
+
+            Spacer(Modifier.height(spacing.lg))
+            RareSectionLabel(text = stringResource(R.string.home_consistency))
+            RareCard {
+                val counts = buildMap<LocalDate, Int> {
+                    snapshot?.measurements?.forEach { merge(it.recordedDay, 1, Int::plus) }
+                    snapshot?.reports?.forEach { merge(it.sampleDate, 1, Int::plus) }
+                }
+                com.solerunner.myhealth.design.rare.RareHeatmap(days = emptyList(), counts = counts)
+                Text(
+                    stringResource(R.string.settings_privacy),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
 
             Spacer(Modifier.height(spacing.lg))
             Row(horizontalArrangement = Arrangement.spacedBy(spacing.sm)) {

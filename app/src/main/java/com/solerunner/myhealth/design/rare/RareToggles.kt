@@ -12,6 +12,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -43,6 +44,7 @@ fun RareSwitch(
     Box(
         modifier = modifier
             .size(width = 44.dp, height = 26.dp)
+            .minimumInteractiveComponentSize()
             .clip(CircleShape)
             .background(track)
             .hairline(if (checked) colors.primary else colors.outlineVariant, CircleShape)
@@ -80,6 +82,7 @@ fun RareCheckbox(
     Box(
         modifier = modifier
             .size(22.dp)
+            .minimumInteractiveComponentSize()
             .clip(MaterialTheme.shapes.extraSmall)
             .background(if (checked) colors.primary else colors.surface)
             .hairline(if (checked) colors.primary else colors.outline, MaterialTheme.shapes.extraSmall)

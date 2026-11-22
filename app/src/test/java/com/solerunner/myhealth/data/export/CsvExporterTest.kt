@@ -8,6 +8,7 @@ import com.solerunner.myhealth.domain.model.LabResult
 import com.solerunner.myhealth.domain.model.Report
 import com.solerunner.myhealth.domain.model.SeriesPoint
 import com.solerunner.myhealth.domain.model.ValueStatus
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.time.LocalDate
@@ -34,6 +35,26 @@ class CsvExporterTest {
         assertTrue(csv.contains(CsvExporter.SERIES_HEADER))
         assertTrue(csv.contains("2026-01-01,12.9,g/dL,13,17,LOW,REPORT_IMPORT"))
         assertTrue(csv.contains("Haemoglobin"))
+    }
+
+    @Test
+    fun `neutralises spreadsheet formulas in user text`() {
+        val report = Report(
+            title = "=HYPERLINK(\"http://example.com\")",
+            sampleDate = LocalDate.of(2026, 3, 12),
+            labName = "+SUM(1)",
+        )
+        val result = LabResult(
+            reportId = 1L,
+            analyteKey = "hemoglobin",
+            displayName = "Haemoglobin",
+            value = 13.2,
+            unit = "g/dL",
+        )
+        val csv = CsvExporter.results(listOf(report to result))
+        assertTrue("formula must be prefixed with an apostrophe", csv.contains("'=HYPERLINK"))
+        assertTrue("plus formula must be prefixed", csv.contains("'+SUM(1)"))
+        assertFalse(csv.contains(",=HYPERLINK"))
     }
 
     @Test

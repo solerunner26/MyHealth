@@ -135,12 +135,6 @@ fun MedicinesScreen(container: AppContainer) {
                         }
                     }
                 }
-                Spacer(Modifier.height(spacing.lg))
-                Text(
-                    stringResource(R.string.meds_empty_body),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
                 Spacer(Modifier.height(spacing.xxxl))
             }
         }

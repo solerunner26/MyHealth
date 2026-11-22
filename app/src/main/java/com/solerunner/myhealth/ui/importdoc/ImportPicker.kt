@@ -38,6 +38,16 @@ fun ImportPicker(onBack: () -> Unit, onPick: () -> Unit, onCamera: () -> Unit) {
             modifier = Modifier.padding(horizontal = spacing.screenPadding, vertical = spacing.sm),
         )
         Column(Modifier.padding(horizontal = spacing.screenPadding)) {
+            com.solerunner.myhealth.design.rare.RareStepPlayer(
+                steps = listOf(
+                    stringResource(R.string.import_step_pick),
+                    stringResource(R.string.import_step_read),
+                    stringResource(R.string.import_step_review),
+                    stringResource(R.string.import_step_save),
+                ),
+                current = 0,
+            )
+            Spacer(Modifier.height(spacing.lg))
             Text(
                 stringResource(R.string.import_pick_prompt),
                 style = MaterialTheme.typography.bodyMedium,

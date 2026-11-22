@@ -5,10 +5,13 @@ import com.solerunner.myhealth.auth.AppLockManager
 import com.solerunner.myhealth.core.security.SecureStore
 import com.solerunner.myhealth.core.security.VaultCrypto
 import com.solerunner.myhealth.core.security.VaultFileStore
+import com.solerunner.myhealth.data.backup.BackupService
 import com.solerunner.myhealth.data.db.MyHealthDatabase
 import com.solerunner.myhealth.data.db.SqlcipherDbFactory
 import com.solerunner.myhealth.data.export.DoctorSummaryPdf
 import com.solerunner.myhealth.data.export.ExportService
+import com.solerunner.myhealth.data.healthconnect.HealthConnectResult
+import com.solerunner.myhealth.data.healthconnect.HealthConnectSync
 import com.solerunner.myhealth.data.import.DocumentReader
 import com.solerunner.myhealth.data.import.ImportService
 import com.solerunner.myhealth.data.prefs.SecureSettingsRepository
@@ -71,8 +74,10 @@ class AppContainer(context: Context) {
     val documentReader = DocumentReader(appContext)
     val importer = ImportService(database, documentReader, vault, reports, medicines, profiles, audit)
     val exporter = ExportService(appContext)
+    val backup = BackupService(database, vault)
     val doctorSummaryPdf = DoctorSummaryPdf(appContext)
     val reminders = MedicineReminders(appContext)
+    val healthConnect = HealthConnectSync(appContext, device, measurements)
 
     /** Written by the uncaught-exception handler; shared only when the user asks. */
     val crashLogFile: java.io.File get() = java.io.File(appContext.filesDir, "diagnostics/last-crash.txt")
@@ -104,6 +109,9 @@ class AppContainer(context: Context) {
             result.onSuccess {
                 databaseState.edit().putBoolean(KEY_DB_INITIALIZED, true).apply()
                 readyState.value = true
+                if (settings.settings.value.healthConnectEnabled) {
+                    scope.launch { runCatching { syncHealthConnect() } }
+                }
             }.onFailure { error -> fail(error) }
         }
     }
@@ -129,6 +137,27 @@ class AppContainer(context: Context) {
     fun close() {
         database.close()
         documentReader.close()
+    }
+
+    /** Reads wearable data now and records the time of a successful sync. */
+    suspend fun syncHealthConnect(): HealthConnectResult {
+        val result = healthConnect.sync()
+        if (!result.unavailable && !result.skippedForPermission) {
+            settings.setLastHealthConnectSync(System.currentTimeMillis())
+        }
+        return result
+    }
+
+    /**
+     * Erases health data, vault files, audit log, PIN, security flags and armed reminders in one place.
+     * Kept on the container so no screen can perform a partial wipe.
+     */
+    suspend fun wipeEverything() {
+        maintenance.wipeEverything()
+        reminders.cancelAll()
+        secureStore.clearAll()
+        settings.setAppLockEnabled(false)
+        settings.setBiometricUnlock(false)
     }
 
     val scopeForWork: CoroutineScope get() = scope

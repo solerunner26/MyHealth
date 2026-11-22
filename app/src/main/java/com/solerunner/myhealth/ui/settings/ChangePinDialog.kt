@@ -31,6 +31,7 @@ fun ChangePinDialog(onDismiss: () -> Unit, onSubmit: (String) -> Unit) {
     var second by remember { mutableStateOf("") }
     var error by remember { mutableStateOf<String?>(null) }
     val mismatch = stringResource(R.string.auth_pin_mismatch)
+    val invalidFormat = stringResource(R.string.auth_pin_invalid)
     val spacing = MyHealthTokens.spacing
 
     RareSheet(onDismiss = onDismiss) {
@@ -59,10 +60,10 @@ fun ChangePinDialog(onDismiss: () -> Unit, onSubmit: (String) -> Unit) {
         RareButton(
             text = stringResource(R.string.common_save),
             onClick = {
-                if (!PinHasher.isValidFormat(first) || first != second) {
-                    error = mismatch
-                } else {
-                    onSubmit(first)
+                when {
+                    !PinHasher.isValidFormat(first) -> error = invalidFormat
+                    first != second -> error = mismatch
+                    else -> onSubmit(first)
                 }
             },
             modifier = Modifier.fillMaxWidth(),

@@ -479,6 +479,47 @@
     <string name="settings_documents">Documents</string>
     <string name="auth_pin_store_failed">Could not secure your PIN on this device. Please try again.</string>
     <string name="settings_crash_log">Share last crash log</string>
+    <string name="auth_locked_out">Too many attempts. Try again in %1$d seconds.</string>
+    <string name="auth_reauth_title">Enter your current PIN</string>
+    <string name="auth_reauth_body">Confirm it is you before changing security settings.</string>
+    <string name="meds_reminder_generic_title">Medicine reminder</string>
+    <string name="meds_reminder_generic_text">Open My Health to see details.</string>
+    <string name="records_pages">Pages</string>
+    <string name="records_no_pages">No page images stored for this document.</string>
+    <string name="records_view_page">View page</string>
+    <string name="records_page_label">Page %1$d</string>
+    <string name="records_edit_result">Edit result</string>
+    <string name="records_ref_low">Reference low</string>
+    <string name="records_ref_high">Reference high</string>
+    <string name="settings_health_connect">Health Connect</string>
+    <string name="settings_health_connect_desc">Bring sleep, steps, heart rate and weight from this phone into your record.</string>
+    <string name="settings_health_connect_connect">Connect</string>
+    <string name="settings_health_connect_sync">Sync now</string>
+    <string name="settings_health_connect_last">Last sync: %1$s</string>
+    <string name="settings_health_connect_unavailable">Health Connect is not available on this device.</string>
+    <string name="settings_health_connect_permission">Allow Health Connect access to sync.</string>
+    <string name="settings_backup">Encrypted backup</string>
+    <string name="settings_backup_desc">Save an encrypted copy you can restore on a new phone.</string>
+    <string name="settings_backup_create">Create backup</string>
+    <string name="settings_backup_restore">Restore backup</string>
+    <string name="settings_backup_passphrase">Backup passphrase</string>
+    <string name="settings_backup_passphrase_hint">At least 8 characters. You will need it to restore.</string>
+    <string name="settings_backup_done">Backup written</string>
+    <string name="settings_backup_restored">Backup restored</string>
+    <string name="settings_backup_failed">Could not read or write the backup.</string>
+    <string name="settings_backup_overwrite_title">Replace all records?</string>
+    <string name="settings_backup_overwrite_body">Restoring replaces every record on this phone with the backup.</string>
+    <string name="auth_pin_invalid">Use 4 to 12 digits.</string>
+    <string name="meds_days">%1$d days</string>
+    <string name="home_consistency">Consistency</string>
+    <string name="settings_faq_encryption_q">How are my records protected?</string>
+    <string name="settings_faq_encryption_a">The database and every stored document are encrypted with a key held by this phone. Nothing is uploaded and OS backup is disabled.</string>
+    <string name="settings_faq_ocr_q">How accurate is the reading?</string>
+    <string name="settings_faq_ocr_a">Text-layer PDFs are exact. Photos and scans use on-device OCR; every parsed value is reviewed by you before saving.</string>
+    <string name="settings_faq_ranges_q">Where do reference ranges come from?</string>
+    <string name="settings_faq_ranges_a">The range printed on your report always wins. When a report omits it, an adult India-typical range from the local catalogue is shown and labelled.</string>
+    <string name="import_step_pick">Pick</string>
+    <string name="import_step_review">Review</string>
 </resources>
 
 
