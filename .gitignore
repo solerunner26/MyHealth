@@ -21,6 +21,9 @@ captures/
 keystore.properties
 secrets.properties
 
+# Local Android toolchain installed by tools/bootstrap-env.sh (never commit: ~3 GB)
+.toolchain/
+
 # Local environment
 .env
 *.log

@@ -191,7 +191,9 @@ internal object FocusRules {
             )
         }
 
-        active.filter { it.endDate != null && daysAgo(it.endDate!!, today) in 0..60 }.forEach { medicine ->
+        // A course that has just finished is no longer active, but it is exactly what the user
+        // needs to be nudged about (was it completed?).
+        input.medicines.filter { it.endDate != null && daysAgo(it.endDate!!, today) in 0..60 }.forEach { medicine ->
             out += FocusItem(
                 code = FocusCode.MEDICINE_COURSE_ENDED,
                 severity = Severity.INFO,

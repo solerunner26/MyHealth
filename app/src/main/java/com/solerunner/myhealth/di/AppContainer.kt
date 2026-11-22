@@ -1,0 +1,96 @@
+package com.solerunner.myhealth.di
+
+import android.content.Context
+import com.solerunner.myhealth.auth.AppLockManager
+import com.solerunner.myhealth.core.security.SecureStore
+import com.solerunner.myhealth.core.security.VaultCrypto
+import com.solerunner.myhealth.core.security.VaultFileStore
+import com.solerunner.myhealth.data.db.MyHealthDatabase
+import com.solerunner.myhealth.data.db.SqlcipherDbFactory
+import com.solerunner.myhealth.data.export.DoctorSummaryPdf
+import com.solerunner.myhealth.data.export.ExportService
+import com.solerunner.myhealth.data.import.DocumentReader
+import com.solerunner.myhealth.data.import.ImportService
+import com.solerunner.myhealth.data.prefs.SecureSettingsRepository
+import com.solerunner.myhealth.data.prefs.SettingsRepository
+import com.solerunner.myhealth.data.repository.AttachmentRepositoryImpl
+import com.solerunner.myhealth.data.repository.AuditRepositoryImpl
+import com.solerunner.myhealth.data.repository.DeviceRepositoryImpl
+import com.solerunner.myhealth.data.repository.MaintenanceRepositoryImpl
+import com.solerunner.myhealth.data.repository.MeasurementRepositoryImpl
+import com.solerunner.myhealth.data.repository.MedicineRepositoryImpl
+import com.solerunner.myhealth.data.repository.ProfileRepositoryImpl
+import com.solerunner.myhealth.data.repository.ReportRepositoryImpl
+import com.solerunner.myhealth.data.repository.TreatmentRepositoryImpl
+import com.solerunner.myhealth.domain.repository.AuditRepository
+import com.solerunner.myhealth.domain.repository.DeviceRepository
+import com.solerunner.myhealth.domain.repository.MaintenanceRepository
+import com.solerunner.myhealth.domain.repository.MeasurementRepository
+import com.solerunner.myhealth.domain.repository.MedicineRepository
+import com.solerunner.myhealth.domain.repository.ProfileRepository
+import com.solerunner.myhealth.domain.repository.ReportRepository
+import com.solerunner.myhealth.domain.repository.TreatmentRepository
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
+
+/**
+ * Manual dependency container. One instance per process, created by [com.solerunner.myhealth.MyHealthApplication].
+ *
+ * The encrypted database is opened on a background dispatcher because SQLCipher derives its key from a
+ * hardware-wrapped passphrase, which is not instant. Screens gate on [ready] until that finishes.
+ */
+class AppContainer(context: Context) {
+
+    private val appContext = context.applicationContext
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+
+    val crypto = VaultCrypto(appContext)
+    val vault = VaultFileStore(appContext, crypto)
+    val secureStore = SecureStore(appContext, crypto)
+    val settings: SettingsRepository = SecureSettingsRepository(secureStore)
+    val lock = AppLockManager(secureStore)
+
+    val database = MyHealthDatabase(SqlcipherDbFactory(appContext, crypto))
+
+    val profiles: ProfileRepository = ProfileRepositoryImpl(database)
+    val reports: ReportRepository = ReportRepositoryImpl(database, vault)
+    val measurements: MeasurementRepository = MeasurementRepositoryImpl(database)
+    val medicines: MedicineRepository = MedicineRepositoryImpl(database)
+    val treatments: TreatmentRepository = TreatmentRepositoryImpl(database)
+    val device: DeviceRepository = DeviceRepositoryImpl(database)
+    val attachments = AttachmentRepositoryImpl(database, vault)
+    val audit: AuditRepository = AuditRepositoryImpl(database)
+    val maintenance: MaintenanceRepository = MaintenanceRepositoryImpl(database, vault)
+
+    val documentReader = DocumentReader(appContext)
+    val importer = ImportService(database, documentReader, vault, reports, medicines, profiles, audit)
+    val exporter = ExportService(appContext)
+    val doctorSummaryPdf = DoctorSummaryPdf(appContext)
+
+    private val readyState = MutableStateFlow(false)
+    val ready: StateFlow<Boolean> = readyState.asStateFlow()
+
+    private val failureState = MutableStateFlow<String?>(null)
+    val failure: StateFlow<String?> = failureState.asStateFlow()
+
+    fun start() {
+        if (readyState.value) return
+        scope.launch {
+            runCatching { database.open(crypto.databasePassphrase()) }
+                .onSuccess { readyState.value = true }
+                .onFailure { failureState.value = it.message ?: "database" }
+        }
+    }
+
+    fun close() {
+        database.close()
+        documentReader.close()
+    }
+
+    val scopeForWork: CoroutineScope get() = scope
+}

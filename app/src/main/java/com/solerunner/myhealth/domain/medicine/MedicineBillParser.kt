@@ -89,7 +89,7 @@ object MedicineBillParser {
 
         val strengthMatch = strengthPattern.find(line)
         val strength = strengthMatch?.let { m ->
-            (Numbers.parse(m.groupValues[1])?.value?.let { trimNumber(it) } ?: m.groupValues[1]) + m.groupValues[2].lowercase(Locale.ROOT)
+            (Numbers.parse(m.groupValues[1])?.value?.let { trimNumber(it) } ?: m.groupValues[1]) + " " + m.groupValues[2].lowercase(Locale.ROOT)
         }
 
         val schedule = schedulePattern.find(line)

@@ -17,6 +17,8 @@ val googleWebClientId: String = (project.findProperty("MYHEALTH_GOOGLE_WEB_CLIEN
 android {
     namespace = "com.solerunner.myhealth"
     compileSdk = 37
+    // Android 17 uses minor SDK versions; Compose 1.13 requires 37.1+ metadata.
+    compileSdkMinor = 2
 
     defaultConfig {
         applicationId = "com.solerunner.myhealth"
@@ -25,7 +27,6 @@ android {
         versionCode = 1
         versionName = "1.0.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-        resourceConfigurations += listOf("en")
         buildConfigField("String", "GOOGLE_WEB_CLIENT_ID", "\"$googleWebClientId\"")
         vectorDrawables { useSupportLibrary = true }
     }
@@ -66,6 +67,11 @@ android {
     buildFeatures {
         compose = true
         buildConfig = true
+    }
+
+    androidResources {
+        // Keep every shipped translation; a missing locale here silently strips values-hi/values-gu.
+        localeFilters += listOf("en", "hi", "gu")
     }
 
     testOptions {

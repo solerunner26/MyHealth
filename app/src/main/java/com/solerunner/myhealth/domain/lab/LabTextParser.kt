@@ -255,8 +255,32 @@ object LabTextParser {
         if (token.lowercase(Locale.ROOT) in stopWords) return null
         if (token.first().isDigit()) return null
         if (!unitPattern.matches(token)) return null
-        return normalizeUnitToken(token)
+        val normalized = normalizeUnitToken(token) ?: return null
+        return displayUnit(normalized)
     }
+
+    /** normalized (lower-case, µ→u) token → the way laboratories actually print it. */
+    private val unitDisplay: Map<String, String> = mapOf(
+        "g/dl" to "g/dL",
+        "mg/dl" to "mg/dL",
+        "mmol/l" to "mmol/L",
+        "umol/l" to "µmol/L",
+        "miu/l" to "mIU/L",
+        "uiu/ml" to "µIU/mL",
+        "iu/ml" to "IU/mL",
+        "ng/ml" to "ng/mL",
+        "pg/ml" to "pg/mL",
+        "u/l" to "U/L",
+        "iu/l" to "IU/L",
+        "meq/l" to "mEq/L",
+        "mmhg" to "mmHg",
+        "ml/min/1.73m2" to "mL/min/1.73m²",
+        "/ul" to "/µL",
+        "fl" to "fL",
+    )
+
+    private fun displayUnit(normalized: String): String = unitDisplay[normalized] ?: normalized
+
 
     private data class Range(val low: Double?, val high: Double?, val text: String?)
 
@@ -393,14 +417,25 @@ object LabTextParser {
         )
     }
 
+    private val billHintPattern = Regex("(?i)\\b(pharmacy|invoice|bill\\s*no|mrp|batch\\s*no|gstin|chemist)\\b")
+    private val prescriptionHintPattern = Regex("(?i)\\b(prescription|advice|dosage)\\b|sig:")
+    private val imagingHintPattern = Regex("(?i)\\b(impression|x-ray|xray|ultrasound|sonography|mri|doppler)\\b|ct\\s*scan")
+    private val dischargeHintPattern = Regex("(?i)\\b(discharge\\s*summary|inpatient)\\b|admitted\\s+on")
+
+    /**
+     * Decides what kind of document this is. Keywords use word boundaries: "biochemistry" contains
+     * the letters of "chemist" but is not a pharmacy bill, and mislabelling a lab report as a bill
+     * would send its analytes down the medicine import path.
+     */
     private fun detectKind(text: String): ReportKind {
         val l = text.lowercase(Locale.ROOT)
+        val labLike = "haemoglobin" in l || "hemoglobin" in l || "creatinine" in l || "hba1c" in l
         return when {
-            listOf("pharmacy", "invoice", "bill no", "mrp", "batch no", "gstin", "chemist").any { it in l } -> ReportKind.PHARMACY_BILL
-            listOf("prescription", "advice", "dosage", "sig:").any { it in l } && "hemoglobin" !in l && "haemoglobin" !in l -> ReportKind.PRESCRIPTION
-            listOf("impression:", "x-ray", "xray", "ultrasound", "sonography", "ct scan", "mri", "doppler").any { it in l } -> ReportKind.IMAGING
-            listOf("discharge summary", "admitted on", "inpatient").any { it in l } -> ReportKind.DISCHARGE
-            "haemoglobin" in l || "hemoglobin" in l || "creatinine" in l || "hba1c" in l -> ReportKind.LAB
+            billHintPattern.containsMatchIn(l) && !labLike -> ReportKind.PHARMACY_BILL
+            prescriptionHintPattern.containsMatchIn(l) && !labLike -> ReportKind.PRESCRIPTION
+            imagingHintPattern.containsMatchIn(l) -> ReportKind.IMAGING
+            dischargeHintPattern.containsMatchIn(l) -> ReportKind.DISCHARGE
+            labLike -> ReportKind.LAB
             else -> ReportKind.OTHER
         }
     }

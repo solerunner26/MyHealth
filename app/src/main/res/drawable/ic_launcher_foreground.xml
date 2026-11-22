@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Brand mark: a record card with a pulse line through it. Drawn as geometry, so it stays crisp at
+  every density and needs no PNG exports.
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <path
+        android:pathData="M36,30 L72,30 A8,8 0 0 1 80,38 L80,70 A8,8 0 0 1 72,78 L36,78 A8,8 0 0 1 28,70 L28,38 A8,8 0 0 1 36,30 Z"
+        android:strokeColor="#A8E4D6"
+        android:strokeWidth="3.5"
+        android:fillColor="#00000000"
+        android:strokeAlpha="0.75" />
+
+    <path
+        android:pathData="M34,54 L43,54 L48,42 L55,66 L60,51 L74,51"
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="4.5"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:fillColor="#00000000" />
+</vector>

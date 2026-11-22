@@ -14,7 +14,7 @@ import java.util.Locale
  */
 object VitalExtractor {
 
-    private val bpPattern = Regex("(?<!\\d)(\\d{2,3})\\s*[/\\]\\s*(\\d{2,3})(?!\\d)")
+    private val bpPattern = Regex("(?<!\\d)(\\d{2,3})\\s*[/\\\\]\\s*(\\d{2,3})(?!\\d)")
     private val pulsePattern = Regex("(?i)\\b(?:pulse|heart\\s*rate|hr|pr)\\b[^0-9]{0,14}(\\d{2,3})")
     private val spo2Pattern = Regex("(?i)\\b(?:spo2|sp\\s*o2|oxygen\\s*saturation|o2\\s*sat|saturation)\\b[^0-9]{0,14}(\\d{2,3})\\s*%?")
     private val weightPattern = Regex("(?i)\\b(?:weight|wt)\\b[^0-9]{0,14}(\\d{1,3}(?:[.,]\\d{1,2})?)\\s*(kg|kgs|kilogram|lbs|lb|pound)?")
