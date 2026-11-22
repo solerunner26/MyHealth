@@ -442,4 +442,6 @@
     <string name="meds_reminders_note">रिमाइंडर केवल इसी फ़ोन से आते हैं।</string>
     <string name="settings_design_credit">डिज़ाइन भाषा Rare UI से प्रेरित</string>
     <string name="settings_documents">दस्तावेज़</string>
+    <string name="auth_pin_store_failed">इस डिवाइस पर आपका PIN सुरक्षित नहीं हो सका। फिर कोशिश करें।</string>
+    <string name="settings_crash_log">पिछला क्रैश लॉग साझा करें</string>
 </resources>

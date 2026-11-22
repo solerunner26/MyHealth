@@ -2,15 +2,20 @@ package com.solerunner.myhealth.core.security
 
 import android.content.Context
 import android.content.pm.PackageManager
+import android.os.Build
 import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyProperties
 import android.util.Base64
+import android.util.Log
 import java.security.KeyStore
 import java.security.SecureRandom
 import javax.crypto.Cipher
 import javax.crypto.KeyGenerator
 import javax.crypto.SecretKey
 import javax.crypto.spec.GCMParameterSpec
+
+/** Thrown when the Keystore cannot provide or use the vault key. Never swallowed silently. */
+class VaultUnavailableException(message: String, cause: Throwable? = null) : IllegalStateException(message, cause)
 
 /**
  * The cryptographic root of the app.
@@ -23,9 +28,9 @@ import javax.crypto.spec.GCMParameterSpec
  * * **vault files** — scanned reports/bills are stored encrypted, not merely in private storage;
  * * **secure preferences** — PIN hash/salt, security flags, Health Connect consent.
  *
- * The key is StrongBox-backed when the device offers it. `setUserAuthenticationRequired` is left off
- * on purpose: the wrapped passphrase must also be usable by the background Health Connect sync, and
- * the *user-facing* lock is enforced separately by [com.solerunner.myhealth.auth.AppLockManager].
+ * StrongBox is preferred but never required: if the device advertises it and generation fails (some
+ * vendor implementations do), the key is regenerated with a fresh TEE-backed spec. Encryption failures
+ * are reported to the caller instead of crashing a lifecycle callback or a button press.
  */
 class VaultCrypto(context: Context) {
 
@@ -37,18 +42,44 @@ class VaultCrypto(context: Context) {
     private var cachedKey: SecretKey? = null
 
     fun secretKey(): SecretKey = cachedKey ?: synchronized(this) {
-        cachedKey ?: (loadKey() ?: createKey()).also { cachedKey = it }
+        cachedKey ?: runCatching { loadKey() ?: createKey() }
+            .getOrElse { error ->
+                Log.e(TAG, "Vault key unavailable", error)
+                throw VaultUnavailableException("The device keystore could not provide the vault key", error)
+            }
+            .also { cachedKey = it }
     }
 
     private fun loadKey(): SecretKey? = try {
         val keyStore = KeyStore.getInstance(ANDROID_KEYSTORE).apply { load(null) }
         keyStore.getKey(KEY_ALIAS, null) as? SecretKey
-    } catch (_: Exception) {
+    } catch (error: Exception) {
+        Log.w(TAG, "Could not load the vault key", error)
         null
     }
 
     private fun createKey(): SecretKey {
         val generator = KeyGenerator.getInstance(KeyProperties.KEY_ALGORITHM_AES, ANDROID_KEYSTORE)
+        val strongBoxAdvertised = Build.VERSION.SDK_INT >= Build.VERSION_CODES.P &&
+            appContext.packageManager.hasSystemFeature(PackageManager.FEATURE_STRONGBOX_KEYSTORE)
+
+        if (strongBoxAdvertised) {
+            val strongBox = runCatching {
+                generator.init(newKeySpec(strongBox = true).build())
+                generator.generateKey()
+            }
+            strongBox.onSuccess { return it }
+            strongBox.onFailure { error ->
+                // A fresh spec is essential: reusing the StrongBox builder would keep requesting it.
+                Log.w(TAG, "StrongBox key generation failed; using the TEE-backed key", error)
+            }
+        }
+
+        generator.init(newKeySpec(strongBox = false).build())
+        return generator.generateKey()
+    }
+
+    private fun newKeySpec(strongBox: Boolean): KeyGenParameterSpec.Builder {
         val builder = KeyGenParameterSpec.Builder(
             KEY_ALIAS,
             KeyProperties.PURPOSE_ENCRYPT or KeyProperties.PURPOSE_DECRYPT,
@@ -57,19 +88,8 @@ class VaultCrypto(context: Context) {
             .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_NONE)
             .setKeySize(256)
             .setRandomizedEncryptionRequired(true)
-
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.P &&
-            appContext.packageManager.hasSystemFeature(PackageManager.FEATURE_STRONGBOX_KEYSTORE)
-        ) {
-            try {
-                generator.init(builder.setIsStrongBoxBacked(true).build())
-                return generator.generateKey()
-            } catch (_: Exception) {
-                // Fall through to a normal TEE-backed key on devices with partial StrongBox support.
-            }
-        }
-        generator.init(builder.build())
-        return generator.generateKey()
+        if (strongBox) builder.setIsStrongBoxBacked(true)
+        return builder
     }
 
     /** Returns `iv || ciphertext`, which is what gets written to disk. */
@@ -90,14 +110,17 @@ class VaultCrypto(context: Context) {
         return cipher.doFinal(cipherText)
     }
 
-    fun encryptString(value: String): String =
+    /** Returns null when the Keystore is unavailable; callers must fail closed, never crash. */
+    fun encryptString(value: String): String? = runCatching {
         Base64.encodeToString(encrypt(value.toByteArray(Charsets.UTF_8)), Base64.NO_WRAP)
+    }.onFailure { error -> Log.e(TAG, "Could not encrypt a secure value", error) }.getOrNull()
 
     fun decryptString(value: String?): String? {
         if (value.isNullOrEmpty()) return null
         return try {
             String(decrypt(Base64.decode(value, Base64.NO_WRAP)), Charsets.UTF_8)
-        } catch (_: Exception) {
+        } catch (error: Exception) {
+            Log.w(TAG, "Could not decrypt a secure value", error)
             null
         }
     }
@@ -106,28 +129,33 @@ class VaultCrypto(context: Context) {
 
     /**
      * SQLCipher passphrase: 32 random bytes, generated once and kept wrapped by the Keystore key.
-     * Returned as a char array because that is what SQLCipher's API expects.
+     *
+     * If a wrapped passphrase exists but cannot be unwrapped, this throws. Overwriting it would make
+     * every existing database permanently unreadable, so a transient Keystore failure must never be
+     * treated as "first run".
      */
     fun databasePassphrase(): CharArray {
         val stored = prefs.getString(KEY_DB_PASSPHRASE, null)
         if (stored != null) {
             val decoded = decryptString(stored)
-            if (decoded != null) return decoded.toCharArray()
+                ?: throw VaultUnavailableException("The stored database passphrase cannot be unwrapped")
+            return decoded.toCharArray()
         }
-        val fresh = randomBytes(32)
-        prefs.edit()
-            .putString(KEY_DB_PASSPHRASE, encryptString(Base64.encodeToString(fresh, Base64.NO_WRAP)))
-            .apply()
-        return Base64.encodeToString(fresh, Base64.NO_WRAP).toCharArray()
+        val fresh = Base64.encodeToString(randomBytes(32), Base64.NO_WRAP)
+        val wrapped = encryptString(fresh)
+            ?: throw VaultUnavailableException("The device keystore is unavailable")
+        prefs.edit().putString(KEY_DB_PASSPHRASE, wrapped).apply()
+        return fresh.toCharArray()
     }
 
     /** Confirms that the Keystore key still works — used to detect a restored-but-undecryptable vault. */
-    fun selfCheck(): Boolean {
+    fun selfCheck(): Boolean = runCatching {
         val probe = encrypt("myhealth".toByteArray())
-        return String(decrypt(probe)) == "myhealth"
-    }
+        String(decrypt(probe)) == "myhealth"
+    }.getOrDefault(false)
 
     private companion object {
+        const val TAG = "MyHealthVault"
         const val ANDROID_KEYSTORE = "AndroidKeyStore"
         const val KEY_ALIAS = "myhealth.vault.key.v1"
         const val PREFS_NAME = "myhealth_vault"

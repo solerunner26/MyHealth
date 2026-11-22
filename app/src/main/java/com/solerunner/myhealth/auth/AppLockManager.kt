@@ -14,12 +14,19 @@ class AppLockManager(private val store: SecureStore) {
 
     fun hasPin(): Boolean = !store.getString(KEY_HASH).isNullOrEmpty() && !store.getString(KEY_SALT).isNullOrEmpty()
 
-    fun setPin(pin: String) {
+    fun setPin(pin: String): Boolean {
         require(PinHasher.isValidFormat(pin)) { "PIN must be 4-12 digits" }
         val salt = PinHasher.newSalt()
         val hash = PinHasher.hash(pin, salt)
-        store.putString(KEY_SALT, Base64.encodeToString(salt, Base64.NO_WRAP))
-        store.putString(KEY_HASH, Base64.encodeToString(hash, Base64.NO_WRAP))
+        val saltStored = store.putString(KEY_SALT, Base64.encodeToString(salt, Base64.NO_WRAP))
+        val hashStored = store.putString(KEY_HASH, Base64.encodeToString(hash, Base64.NO_WRAP))
+        if (!saltStored || !hashStored) {
+            // Never leave half a verifier behind: clear both so the app reports "no PIN" cleanly.
+            store.remove(KEY_SALT)
+            store.remove(KEY_HASH)
+            return false
+        }
+        return hasPin()
     }
 
     fun verifyPin(pin: String): Boolean {

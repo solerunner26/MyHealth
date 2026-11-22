@@ -29,7 +29,10 @@ class ExportService(private val context: Context) {
         write("myhealth-results.csv", CsvExporter.results(rows))
     }
 
-    fun shareIntent(file: File, mime: String = "text/csv"): Intent {
+    fun shareIntent(file: File, mime: String = "text/csv"): Intent = shareDocument(file, mime)
+
+    /** Share any file that lives on a path exposed by the app's FileProvider. */
+    fun shareDocument(file: File, mime: String = "text/plain"): Intent {
         val uri = uriFor(file)
         return Intent(Intent.ACTION_SEND).apply {
             type = mime

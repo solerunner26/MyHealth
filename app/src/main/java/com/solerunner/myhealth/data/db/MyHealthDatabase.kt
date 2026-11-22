@@ -3,6 +3,9 @@ package com.solerunner.myhealth.data.db
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
@@ -20,6 +23,7 @@ import kotlinx.coroutines.withContext
 class MyHealthDatabase(private val factory: DbFactory) {
 
     private val version = MutableStateFlow(0L)
+    private val openState = MutableStateFlow(false)
 
     @Volatile
     private var db: Db? = null
@@ -40,10 +44,11 @@ class MyHealthDatabase(private val factory: DbFactory) {
             val created = factory.create(passphrase)
             Schema.ensure(created)
             db = created
+            openState.value = true
         }
     }
 
-    fun isOpen(): Boolean = db != null
+    fun isOpen(): Boolean = openState.value && db != null
 
     private fun connection(): Db = db ?: error("Database is not open yet")
 
@@ -61,10 +66,20 @@ class MyHealthDatabase(private val factory: DbFactory) {
     /** Re-emits whenever anything is written; repositories map it into their own queries. */
     fun changes(): Flow<Long> = version.asStateFlow()
 
-    fun <T> observe(query: suspend () -> T): Flow<T> = changes().map { query() }.flowOn(Dispatchers.IO)
+    /**
+     * Observers are only queried once the encrypted database is actually open. The first composition of
+     * the app races the background open, and querying early threw from a LaunchedEffect, crashing the
+     * process before onboarding could appear. Emits again as soon as the database opens.
+     */
+    fun <T> observe(query: suspend () -> T): Flow<T> =
+        combine(version, openState) { _, opened -> opened }
+            .distinctUntilChanged()
+            .mapNotNull { opened -> if (opened) query() else null }
+            .flowOn(Dispatchers.IO)
 
     fun close(): Unit = synchronized(this) {
         db?.close()
         db = null
+        openState.value = false
     }
 }

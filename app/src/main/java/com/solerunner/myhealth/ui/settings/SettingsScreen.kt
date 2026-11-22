@@ -242,6 +242,12 @@ fun SettingsScreen(container: AppContainer) {
                             )
                         }
                     }
+                    if (extra.hasCrashLog) {
+                        Spacer(Modifier.height(6.dp))
+                        TextButton(onClick = viewModel::shareCrashLog) {
+                            Text(stringResource(R.string.settings_crash_log))
+                        }
+                    }
                 }
                 Spacer(Modifier.height(spacing.xxxl))
             }

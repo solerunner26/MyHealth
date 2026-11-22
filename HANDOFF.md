@@ -5,6 +5,48 @@ what is left, gotchas. Keep it short and factual; the code is the source of trut
 
 ---
 
+## 2026-11-22 — cline (session 4) — on-device crash fix
+
+### Symptom
+On a Google Pixel 10 Pro the debug APK crashed continuously before onboarding. No device was available
+here, so the launch path was exercised with a real Robolectric activity launch plus targeted regression
+tests.
+
+### Root causes found and fixed
+1. **Observers queried the encrypted database before it opened.** `MyHealthApp` collected the profile
+   flow regardless of `ready`, and `MyHealthDatabase.observe` mapped the initial change tick straight to a
+   query, which threw `IllegalStateException("Database is not open yet")` inside a `LaunchedEffect` and
+   killed the process. The initial composition always races the background open.
+   Fix: `MyHealthDatabase` now exposes an `openState` and `observe` only queries after open (emitting as
+   soon as it opens); `MyHealthApp` gates the profile collection on `ready`. Regression tests:
+   `DatabaseGateTest` (no query before open, emits after open, silent after close).
+2. **Keystore failures crashed the main thread.** Two problems: the StrongBox fallback reused the same
+   `KeyGenParameterSpec.Builder`, so the "fallback" still requested StrongBox and threw outside the guard;
+   and every `SecureStore` write was unguarded. `ON_STOP` (backgrounding) and PIN creation therefore
+   crashed on devices where StrongBox is advertised but unavailable, producing a crash loop at onboarding.
+   Fix: a fresh TEE spec for the fallback, all secure writes fail closed (return false, never throw),
+   `AppLockManager.setPin` reports failure and onboarding shows a localized error, lifecycle callbacks are
+   wrapped defensively.
+3. **A transient Keystore failure could brick an existing database.** `databasePassphrase()` generated a
+   new passphrase when the stored one could not be decrypted, overwriting the only copy. It now throws
+   `VaultUnavailableException` and the UI offers a retry instead of destroying access.
+4. `DocumentReader.close()` initialised ML Kit just to close it; it now closes only an existing engine.
+   App shutdown is guarded.
+5. **Diagnostics for the next round:** a crash logger writes `filesDir/diagnostics/last-crash.txt`
+   (device, app version, stack trace) before the process dies; Settings → About offers "Share last crash
+   log", and the database error screen shows the cause with a Retry button. Nothing is uploaded.
+
+### Evidence
+- `AppLaunchTest` launches the real `MainActivity` with the real `Application` under Robolectric; it failed
+  on the unguarded Keystore write before the fix and passes now.
+- `DatabaseGateTest` proves observers cannot query before open.
+- `:app:testDebugUnitTest` → **50 tests, 0 failures**; `:app:assembleDebug` → **BUILD SUCCESSFUL**
+  (versionCode 2; APK re-uploaded to `preview-rare-ui-2026-11-22`).
+- Still no physical device: the APK must be re-tested on the Pixel. If it crashes again, Settings → About →
+  Share last crash log will contain the exact stack trace.
+
+---
+
 ## 2026-11-22 — cline (session 3) — CHECKPOINT: Rare UI redesign + reminders + hi/gu
 
 ### Verified state (evidence)

@@ -72,7 +72,9 @@ abandoned, re-claim with a note in `HANDOFF.md`).
   POST_NOTIFICATIONS request, SCHEDULE_EXACT_ALARM (by: cline)
 - [x] T-035 Localization: full `values-hi` + `values-gu` (439 keys) with parity test (by: cline)
 - [x] T-036 Branding: adaptive icon, monochrome themed icon, brand mark, splash asset (by: cline)
-- [x] T-037 Unit tests: 42 tests across parsers, catalog, trends/focus/score, CSV, PIN hashing, vitals, i18n parity (by: cline)
+- [x] T-037 Unit tests: 50 tests across parsers, catalog, trends/focus/score, CSV, PIN hashing, vitals, i18n parity, database gating, activity launch (by: cline)
+- [x] T-045 Startup crash hardening: database observers gated on open, StrongBox fallback fixed, secure
+  writes fail closed, passphrase never overwritten, crash logger + share action, retry UI (by: cline)
 
 ---
 

@@ -477,6 +477,8 @@
     <string name="meds_reminders_note">Reminders fire from this phone only.</string>
     <string name="settings_design_credit">Design language inspired by Rare UI</string>
     <string name="settings_documents">Documents</string>
+    <string name="auth_pin_store_failed">Could not secure your PIN on this device. Please try again.</string>
+    <string name="settings_crash_log">Share last crash log</string>
 </resources>
 
 

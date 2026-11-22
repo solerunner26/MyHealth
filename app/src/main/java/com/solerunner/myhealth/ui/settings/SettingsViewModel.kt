@@ -21,6 +21,7 @@ data class SettingsExtraState(
     val shareIntent: Intent? = null,
     val wiped: Boolean = false,
     val message: String? = null,
+    val hasCrashLog: Boolean = false,
 )
 
 class SettingsViewModel(private val container: AppContainer) : ViewModel() {
@@ -37,7 +38,17 @@ class SettingsViewModel(private val container: AppContainer) : ViewModel() {
         viewModelScope.launch {
             runCatching { container.maintenance.storageFootprintBytes() }
                 .onSuccess { bytes -> _extra.update { it.copy(storageBytes = bytes) } }
+            _extra.update { it.copy(hasCrashLog = container.crashLogFile.exists()) }
         }
+    }
+
+    /** Shares the last fatal exception written by the uncaught-exception handler. */
+    fun shareCrashLog() {
+        val file = container.crashLogFile
+        if (!file.exists()) return
+        runCatching { container.exporter.shareDocument(file, "text/plain") }
+            .onSuccess { intent -> _extra.update { it.copy(shareIntent = intent) } }
+            .onFailure { error -> _extra.update { it.copy(message = error.message) } }
     }
 
     fun setTheme(mode: ThemeMode) = container.settings.setThemeMode(mode)
@@ -60,7 +71,8 @@ class SettingsViewModel(private val container: AppContainer) : ViewModel() {
 
     fun changePin(pin: String): Boolean {
         if (!com.solerunner.myhealth.core.security.PinHasher.isValidFormat(pin)) return false
-        container.lock.setPin(pin)
+        val stored = container.lock.setPin(pin)
+        if (!stored) return false
         container.settings.setAppLockEnabled(true)
         viewModelScope.launch { container.audit.log("settings.pin_changed") }
         return true

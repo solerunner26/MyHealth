@@ -74,6 +74,9 @@ class AppContainer(context: Context) {
     val doctorSummaryPdf = DoctorSummaryPdf(appContext)
     val reminders = MedicineReminders(appContext)
 
+    /** Written by the uncaught-exception handler; shared only when the user asks. */
+    val crashLogFile: java.io.File get() = java.io.File(appContext.filesDir, "diagnostics/last-crash.txt")
+
     private val readyState = MutableStateFlow(false)
     val ready: StateFlow<Boolean> = readyState.asStateFlow()
 
@@ -82,10 +85,15 @@ class AppContainer(context: Context) {
 
     fun start() {
         if (readyState.value) return
+        failureState.value = null
         scope.launch {
             runCatching { database.open(crypto.databasePassphrase()) }
                 .onSuccess { readyState.value = true }
-                .onFailure { failureState.value = it.message ?: "database" }
+                .onFailure { error ->
+                    android.util.Log.e("MyHealth", "Encrypted database could not be opened", error)
+                    failureState.value = error.message?.takeIf { it.isNotBlank() }
+                        ?: error::class.java.simpleName
+                }
         }
     }
 

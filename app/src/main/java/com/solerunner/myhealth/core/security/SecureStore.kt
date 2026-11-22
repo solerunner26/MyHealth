@@ -18,10 +18,19 @@ class SecureStore(
 ) {
     private val prefs = context.applicationContext.getSharedPreferences(name, Context.MODE_PRIVATE)
 
-    fun putString(key: String, value: String?) {
+    /**
+     * Writes an encrypted value. Returns false when the Keystore cannot encrypt right now; in that case
+     * nothing is written, so a transient key failure can never destroy a value that is already stored.
+     */
+    fun putString(key: String, value: String?): Boolean {
         val editor = prefs.edit()
-        if (value == null) editor.remove(key) else editor.putString(key, crypto.encryptString(value))
-        editor.apply()
+        if (value == null) {
+            editor.remove(key)
+            return true
+        }
+        val encrypted = crypto.encryptString(value) ?: return false
+        editor.putString(key, encrypted)
+        return true
     }
 
     fun getString(key: String): String? = crypto.decryptString(prefs.getString(key, null))

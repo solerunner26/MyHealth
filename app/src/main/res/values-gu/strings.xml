@@ -442,4 +442,6 @@
     <string name="meds_reminders_note">રિમાઇન્ડર ફક્ત આ ફોનથી જ આવે છે.</string>
     <string name="settings_design_credit">ડિઝાઇન ભાષા Rare UI થી પ્રેરિત</string>
     <string name="settings_documents">દસ્તાવેજો</string>
+    <string name="auth_pin_store_failed">આ ઉપકરણ પર તમારો PIN સુરક્ષિત થઈ શક્યો નથી. ફરી પ્રયાસ કરો.</string>
+    <string name="settings_crash_log">છેલ્લો ક્રેશ લોગ શેર કરો</string>
 </resources>

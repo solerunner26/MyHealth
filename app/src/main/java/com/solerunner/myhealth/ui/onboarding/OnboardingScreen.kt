@@ -43,12 +43,17 @@ fun OnboardingScreen(container: AppContainer) {
     val googleFailedText = stringResource(R.string.auth_google_failed)
     val nameRequiredText = stringResource(R.string.auth_name_required)
     val pinMismatchText = stringResource(R.string.auth_pin_mismatch)
+    val pinStoreFailedText = stringResource(R.string.auth_pin_store_failed)
 
     fun finish() {
         if (busy) return
         busy = true
         scope.launch {
-            container.lock.setPin(pin)
+            if (!container.lock.setPin(pin)) {
+                error = pinStoreFailedText
+                busy = false
+                return@launch
+            }
             container.settings.setAppLockEnabled(true)
             container.profiles.save(
                 Profile(

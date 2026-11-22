@@ -22,7 +22,10 @@ import java.io.File
  */
 class DocumentReader(private val context: Context) {
 
-    private val ocr by lazy { OcrEngine(context) }
+    @Volatile
+    private var ocrEngine: OcrEngine? = null
+
+    private fun ocr(): OcrEngine = ocrEngine ?: OcrEngine(context).also { ocrEngine = it }
     private val ocrThreshold = 40
 
     suspend fun read(uri: Uri, displayName: String?, mimeType: String?): ReadDocument =
@@ -38,7 +41,10 @@ class DocumentReader(private val context: Context) {
             }
         }
 
-    fun close() = ocr.close()
+    fun close() {
+        ocrEngine?.close()
+        ocrEngine = null
+    }
 
     private suspend fun readPdf(bytes: ByteArray, name: String, mime: String): ReadDocument {
         PDFBoxResourceLoader.init(context)
@@ -59,8 +65,8 @@ class DocumentReader(private val context: Context) {
                         } else {
                             usedOcr = true
                             val bitmap = renderPage(renderer, index)
-                            val ocrText = runCatching { ocr.recognize(bitmap) }.getOrDefault("")
-                            pages += ReadPage(index, ocrText.ifBlank { textLayer }, ocr.encodeJpeg(bitmap))
+                            val ocrText = runCatching { ocr().recognize(bitmap) }.getOrDefault("")
+                            pages += ReadPage(index, ocrText.ifBlank { textLayer }, ocr().encodeJpeg(bitmap))
                             bitmap.recycle()
                         }
                     }
@@ -75,8 +81,8 @@ class DocumentReader(private val context: Context) {
     private suspend fun readImage(bytes: ByteArray, name: String, mime: String): ReadDocument {
         val bitmap = android.graphics.BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
             ?: error("The image could not be decoded")
-        val text = runCatching { ocr.recognize(bitmap) }.getOrDefault("")
-        val image = ocr.encodeJpeg(bitmap)
+        val text = runCatching { ocr().recognize(bitmap) }.getOrDefault("")
+        val image = ocr().encodeJpeg(bitmap)
         bitmap.recycle()
         return ReadDocument(name, mime, bytes, listOf(ReadPage(0, text, image)), usedOcr = true)
     }

@@ -3,5 +3,6 @@
     <cache-path name="exports" path="exports/" />
     <cache-path name="shared" path="shared/" />
     <cache-path name="imports" path="imports/" />
+    <files-path name="diagnostics" path="diagnostics/" />
 </paths>
 

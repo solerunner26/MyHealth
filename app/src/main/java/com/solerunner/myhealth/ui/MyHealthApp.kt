@@ -53,7 +53,8 @@ fun MyHealthApp(container: AppContainer) {
         var profile by remember { mutableStateOf<Profile?>(null) }
         var profileLoaded by remember { mutableStateOf(false) }
 
-        LaunchedEffect(container) {
+        LaunchedEffect(container, ready) {
+            if (!ready) return@LaunchedEffect
             container.profiles.observe().collect {
                 profile = it
                 profileLoaded = true
@@ -75,6 +76,7 @@ fun MyHealthApp(container: AppContainer) {
                 failure != null -> ErrorScreen(
                     message = stringResource(R.string.error_db),
                     detail = failure,
+                    onRetry = { container.start() },
                 )
                 !ready || !profileLoaded -> LoadingState(
                     message = stringResource(R.string.common_loading),
@@ -121,9 +123,12 @@ private fun LockLifecycleObserver(
     val owner = LocalLifecycleOwner.current
     DisposableEffect(owner, hasPin, shouldLock) {
         val observer = LifecycleEventObserver { _, event ->
+            // A lifecycle callback must never throw: a keystore hiccup here used to kill the process.
             when (event) {
-                Lifecycle.Event.ON_STOP -> onStopped()
-                Lifecycle.Event.ON_START -> if (hasPin()) onStarted(shouldLock())
+                Lifecycle.Event.ON_STOP -> runCatching { onStopped() }
+                Lifecycle.Event.ON_START -> runCatching {
+                    if (hasPin()) onStarted(shouldLock())
+                }
                 else -> Unit
             }
         }
