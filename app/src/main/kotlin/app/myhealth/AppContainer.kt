@@ -35,6 +35,7 @@ class AppContainer(
 ) {
     val appScope = CoroutineScope(SupervisorJob() + Dispatchers.Default + Safe.handler)
     val preferences = Preferences(context)
+    val lock = app.myhealth.core.AppLock(preferences, clock)
     val reminders by lazy { app.myhealth.reminders.ReminderScheduler(context, clock) }
 
     private val _storage = MutableStateFlow<StorageState>(StorageState.Opening)

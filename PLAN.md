@@ -12,6 +12,6 @@ end-to-end flow test (from Phase 4), `lintDebug` with 0 errors, and a PROGRESS.m
 | 5 | Trend engine, focus engine rules, explainable health score, tests | done |
 | 6 | Adaptive navigation shell, member switcher, dashboard, records, report detail + attachment viewer, trend charts | done |
 | 7 | Vitals, medicines, treatments, local dose reminders + reboot rescheduling | done |
-| 8 | Insights screen, member profile editor, settings (theme, language, app lock, FLAG_SECURE), doctor summary PDF/CSV | todo |
+| 8 | Insights screen, member profile editor, settings (theme, language, app lock, FLAG_SECURE), doctor summary PDF/CSV | done |
 | 9 | Health Connect (opt-in), password-encrypted backup/restore via SAF, secure erase | todo |
 | 10 | Localisation audit, accessibility/contrast pass, failure-mode hardening, CI, signed release build | todo |

@@ -42,13 +42,14 @@ class Preferences(context: Context) {
     )
 
     fun update(block: SharedPreferences.Editor.() -> Unit) {
-        prefs.edit().apply(block).apply()
+        prefs.edit().apply(block).commit()
         _state.value = read()
     }
 
     fun setTheme(t: ThemeMode) = update { putString("theme", t.name) }
     fun setLanguage(tag: String) = update { putString("language", tag) }
     fun setLock(enabled: Boolean) = update { putBoolean("lock", enabled); if (!enabled) { putBoolean("biometric", false); remove("pin_hash"); remove("pin_salt") } }
+    fun setOnboardedMember(id: String) = update { putBoolean("onboarded", true); putString("active_member", id) }
     fun setBiometric(enabled: Boolean) = update { putBoolean("biometric", enabled) }
     fun setBlockScreenshots(enabled: Boolean) = update { putBoolean("secure_flag", enabled) }
     fun setActiveMember(id: String?) = update { putString("active_member", id) }

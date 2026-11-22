@@ -78,3 +78,18 @@ property). It was fixed forward in `63e5952`. Since then every commit runs only 
   background reschedule on unlock and a dose fired 12 h early, which never happens in production). The test now
   fires at a past slot like a real alarm. Fixed forward in the next commit. Commits now go through one script that
   runs the gate and stops on failure, so a shell chaining mistake cannot bypass it again.
+
+## Phase 8: insights, profile, settings, lock, summary (done)
+- Gate → exit 0
+- `AppLockTest`: hash not containing the PIN, background grace (10 s → unlocked, 31 s → locked), lockout schedule
+  (4 free attempts, then 30 s and 60 s, the correct PIN also waits), reset after success, disable; pre-API-33 language
+  switch (Robolectric sdk 32) resolves Hindi "होम" and Gujarati "હોમ" from the stored tag.
+- `SettingsAndInsightsFlowTest` (UI): FLAG_SECURE on by default and cleared when toggled off; insights → expand
+  "Why this appears" → evidence row "160 mg/dL"; score breakdown present; doctor-summary screen offers PDF/CSV; PIN
+  set through the keypad (choose + confirm); lock → wrong PIN message → correct PIN returns to the same Settings screen.
+- Domain `DoctorSummaryTest`: content selection and localisable, escaped CSV.
+- `app/src/androidTest/DeviceTests` (compiled with `assembleDebugAndroidTest`, **not run here, needs a
+  device/emulator**): real cold start, PdfDocument with Hindi/Gujarati text, real AndroidKeyStore + SQLCipher round
+  trip with a non-plaintext database header.
+- Fixes found by tests: the PIN keypad was clipped inside the dialog on small screens (now scrollable, 56 dp keys);
+  locking discarded navigation state (now an overlay).

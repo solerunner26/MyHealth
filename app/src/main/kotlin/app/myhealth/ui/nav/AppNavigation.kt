@@ -70,6 +70,8 @@ object Routes {
     const val MEDICINE = "medicine/{id}"
     const val TREATMENT_NEW = "treatment/new"
     const val TREATMENT = "treatment/{id}"
+    const val SETTINGS = "settings"
+    const val SUMMARY = "summary"
     fun vitalNew(type: String? = null) = if (type == null) "vital/new" else "vital/new?type=$type"
     fun vital(type: String) = "vital/$type"
     fun medicine(id: String) = "medicine/$id"
@@ -181,6 +183,8 @@ fun AppNavGraph(nav: NavHostController) {
         composable(Routes.MEDICINE) { entry -> MedicineRoute(entry.arguments?.getString("id")) { nav.popBackStack() } }
         composable(Routes.TREATMENT_NEW) { TreatmentRoute(null) { nav.popBackStack() } }
         composable(Routes.TREATMENT) { entry -> TreatmentRoute(entry.arguments?.getString("id")) { nav.popBackStack() } }
+        composable(Routes.SETTINGS) { app.myhealth.ui.settings.SettingsScreen(onBack = { nav.popBackStack() }, onErased = {}) }
+        composable(Routes.SUMMARY) { app.myhealth.ui.summary.SummaryScreen(onBack = { nav.popBackStack() }) }
         composable(Routes.INSIGHTS) {
             app.myhealth.ui.insights.InsightsRoute(onBack = { nav.popBackStack() }, onOpenTrend = { nav.navigate(Routes.trend(it)) })
         }
@@ -227,8 +231,11 @@ private fun MainTabs(nav: NavHostController) {
                     app.myhealth.ui.care.CareContent(state, session.container.clock, onAddMedicine = { nav.navigate(Routes.MEDICINE_NEW) }, onEditMedicine = { nav.navigate(Routes.medicine(it)) },
                         onAddTreatment = { nav.navigate(Routes.TREATMENT_NEW) }, onEditTreatment = { nav.navigate(Routes.treatment(it)) })
                 }
-                else -> MyHealthEmptyState(MyHealthIcons.Document, stringResource(R.string.shell_placeholder_title), stringResource(R.string.shell_placeholder_body),
-                    actionLabel = stringResource(R.string.import_title), onAction = onImport)
+                TopLevel.More -> app.myhealth.ui.more.MoreContent(members.orEmpty(), app.myhealth.ui.more.MoreActions(
+                    insights = { nav.navigate(Routes.INSIGHTS) }, profile = { active?.let { nav.navigate(Routes.memberEdit(it.id)) } },
+                    editMember = { nav.navigate(Routes.memberEdit(it)) }, addMember = { nav.navigate(Routes.MEMBER_NEW) }, summary = { nav.navigate(Routes.SUMMARY) },
+                    settings = { nav.navigate(Routes.SETTINGS) }, backup = null, healthConnect = null,
+                ))
             }
         }
     }

@@ -185,3 +185,29 @@ points are shown so the user can see why the score is what it is.
   the profile height (or the latest height reading), so it updates when the height is corrected.
 - Vital bands: ACC/AHA BP categories, SpO₂ ≥ 95, resting pulse 50–100, temperature 36.1–37.4 °C, breathing rate
   12–20, home glucose 70–140. BP charts show systolic solid and diastolic dashed, with square markers.
+
+## D-022 App lock (dependency: androidx.biometric 1.1.0 + fragment-ktx)
+- PIN of 4–8 digits, stored only as PBKDF2-HMAC-SHA256 (120 000 iterations, 16-byte salt) and compared in constant
+  time. The first 4 wrong attempts are free; from the 5th the wait is 30 s, doubling to a 15 min cap, persisted
+  across restarts.
+- Biometric unlock (`BIOMETRIC_STRONG`) is optional, only offered when enrolled, with PIN as the fallback.
+  `MainActivity` is a `FragmentActivity` solely because `BiometricPrompt` requires one.
+- The app locks on cold start and after 30 s in the background. The lock is an opaque overlay with the content's
+  semantics cleared, so navigation and unsaved input survive lock/unlock but nothing is visible or read out.
+- The lock gates the UI. Data at rest is protected by the Keystore-wrapped keys regardless (D-012). A forgotten
+  PIN cannot be recovered (no server); the only path is secure erase, then restoring an encrypted backup.
+- FLAG_SECURE (blocks screenshots and the recents preview) is **on by default**, user-toggleable.
+
+## D-023 Language switching
+API 33+ uses `LocaleManager.applicationLocales`, and `locales_config.xml` lists the app under Settings › App
+languages. API 26–32 store the tag and wrap Activity and receiver contexts (`LocaleSupport.localized`), then call
+`recreate()`. ViewModels and `rememberSaveable` survive recreation, so switching language loses no input.
+Notifications use the same localised context.
+
+## D-024 Doctor-visit summary
+Content is selected in the domain (`DoctorSummaryBuilder`): profile, allergies and conditions, active medicines,
+abnormal/key/recent labs (abnormal first, each with its previous value), latest vitals, non-info focus items and
+recent treatments/follow-ups. The PDF is drawn with `android.graphics.pdf.PdfDocument` and `StaticLayout`, because
+the platform text stack shapes Devanagari and Gujarati correctly; PdfBox's base-14 fonts cannot. PdfDocument has no
+JVM/Robolectric implementation, so the PDF is verified by the instrumented `DeviceTests`, which needs a device. The
+CSV path is unit-tested.
