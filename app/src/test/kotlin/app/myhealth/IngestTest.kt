@@ -14,6 +14,7 @@ import app.myhealth.ingest.TextExtractor
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.annotation.Config
@@ -22,6 +23,24 @@ import java.time.LocalDate
 @RunWith(AndroidJUnit4::class)
 @Config(application = TestApp::class)
 class IngestTest {
+    @Test @org.robolectric.annotation.GraphicsMode(org.robolectric.annotation.GraphicsMode.Mode.NATIVE)
+    fun photographedPageIsFoundCroppedAndStraightened() {
+        val bmp = android.graphics.Bitmap.createBitmap(1200, 1600, android.graphics.Bitmap.Config.ARGB_8888)
+        val cv = android.graphics.Canvas(bmp)
+        cv.drawColor(android.graphics.Color.rgb(50, 45, 40)) // desk
+        cv.save(); cv.rotate(7f, 600f, 800f)
+        cv.drawRect(250f, 300f, 950f, 1300f, android.graphics.Paint().apply { color = android.graphics.Color.rgb(235, 235, 230) }) // A4-ish page 700x1000
+        cv.restore()
+        val f = java.io.File.createTempFile("cam", ".jpg").apply { outputStream().use { bmp.compress(android.graphics.Bitmap.CompressFormat.JPEG, 92, it) } }
+        val preview = app.myhealth.ingest.PageCrop.load(f, 1200)!!
+        val q = app.myhealth.ingest.PageCrop.detect(preview)!!
+        assertEquals(0.36, q.area.toDouble(), 0.06) // 700*1000 / (1200*1600)
+        assertTrue(app.myhealth.ingest.PageCrop.cropInPlace(f, q))
+        val o = android.graphics.BitmapFactory.Options().apply { inJustDecodeBounds = true }
+        android.graphics.BitmapFactory.decodeFile(f.path, o)
+        assertEquals(0.7, o.outWidth.toDouble() / o.outHeight, 0.06) // straightened page keeps its proportions
+    }
+
     @Test fun sharedFileNamesCannotEscapeTheShareFolder() {
         val n = app.myhealth.ui.common.Share::safeName
         assertEquals("file", n("..")); assertEquals("_", n("/"))

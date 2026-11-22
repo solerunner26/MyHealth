@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="crop_title">પાનું કાપો</string>
+    <string name="crop_body">પાનાની કિનારીઓ મળી ગઈ. સુધારવા માટે ખૂણો ખેંચો.</string>
+    <string name="crop_none">પાનાની કિનારીઓ મળી નહીં. ખૂણાને પાના સુધી ખેંચો, અથવા આખો ફોટો વાપરો.</string>
+    <string name="crop_use">કાપેલું પાનું વાપરો</string>
+    <string name="crop_keep">આખો ફોટો વાપરો</string>
+    <string name="crop_corner">પાનાનો ખૂણો %1$d</string>
+</resources>

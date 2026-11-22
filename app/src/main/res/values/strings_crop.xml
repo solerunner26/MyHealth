@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="crop_title">Crop the page</string>
+    <string name="crop_body">The page edges were found. Drag a corner to adjust.</string>
+    <string name="crop_none">No page edges were found. Drag the corners to the page, or use the full photo.</string>
+    <string name="crop_use">Use cropped page</string>
+    <string name="crop_keep">Use full photo</string>
+    <string name="crop_corner">Page corner %1$d</string>
+</resources>

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="crop_title">पेज काटें</string>
+    <string name="crop_body">पेज के किनारे मिल गए। ठीक करने के लिए कोना खींचें।</string>
+    <string name="crop_none">पेज के किनारे नहीं मिले। कोनों को पेज तक खींचें, या पूरी फ़ोटो इस्तेमाल करें।</string>
+    <string name="crop_use">कटा हुआ पेज इस्तेमाल करें</string>
+    <string name="crop_keep">पूरी फ़ोटो इस्तेमाल करें</string>
+    <string name="crop_corner">पेज का कोना %1$d</string>
+</resources>

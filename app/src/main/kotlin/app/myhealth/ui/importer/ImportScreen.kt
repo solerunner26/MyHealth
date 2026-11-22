@@ -109,13 +109,20 @@ fun ImportRoute(onBack: () -> Unit, onSaved: (reportId: String) -> Unit, startMa
     val pagePicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenMultipleDocuments()) { uris: List<Uri> ->
         uris.forEach { vm.onEvent(ImportEvent.AddPage(it, fallbackName)) }
     }
+    // item 5: a photo first goes through page detection + crop, then into the import
+    var cropping by rememberSaveable { mutableStateOf<String?>(null) }
     val camera = rememberLauncherForActivityResult(ActivityResultContracts.TakePicture()) { ok ->
         val path = cameraFile
-        if (ok && path != null) {
+        if (ok && path != null) cropping = path
+        else if (path != null) runCatching { SecureDelete.overwriteAndDelete(File(path)) }
+    }
+    cropping?.let { path ->
+        CropDialog(File(path)) {
+            cropping = null
             val f = File(path)
             val u = FileProvider.getUriForFile(context, context.packageName + ".files", f)
             vm.onEvent(if (cameraForPage) ImportEvent.AddPage(u, f.name) else ImportEvent.PickUri(u, f.name))
-        } else if (path != null) runCatching { SecureDelete.overwriteAndDelete(File(path)) }
+        }
     }
     LaunchedEffect(state.phase) {
         val p = state.phase
