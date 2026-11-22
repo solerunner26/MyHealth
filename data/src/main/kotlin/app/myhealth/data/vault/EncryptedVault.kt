@@ -9,8 +9,11 @@ import java.io.IOException
  * Attachment store. Each file is AES-256-GCM sealed with the vault key and bound (AAD) to its own name,
  * so files cannot be swapped between records. Names are random ids; original names live only in the encrypted DB.
  */
-class EncryptedVault(private val dir: File, vaultKey: ByteArray) {
+class EncryptedVault(private val dir: File, private val vaultKey: ByteArray) {
     private val key = Crypto.aesKey(vaultKey)
+
+    /** Restore stages files with the same key in a sibling directory, then renames them in. */
+    internal fun keyBytesForStaging(): ByteArray = vaultKey.copyOf()
 
     init { dir.mkdirs() }
 

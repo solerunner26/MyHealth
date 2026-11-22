@@ -211,3 +211,35 @@ recent treatments/follow-ups. The PDF is drawn with `android.graphics.pdf.PdfDoc
 the platform text stack shapes Devanagari and Gujarati correctly; PdfBox's base-14 fonts cannot. PdfDocument has no
 JVM/Robolectric implementation, so the PDF is verified by the instrumented `DeviceTests`, which needs a device. The
 CSV path is unit-tested.
+
+## D-025 Encrypted backup (.myhealth)
+- Format: `MYHB` header (format version, PBKDF2-HMAC-SHA256 iterations = 600 000, 16-byte salt, 8-byte nonce
+  prefix, 16-byte password verifier), then 1 MiB AES-256-GCM chunks. Each chunk's nonce is prefix ‖ index; its AAD
+  is header ‖ index ‖ isLast. Wrong password, tampering, reordering, truncation and foreign files are each detected
+  and reported distinctly.
+- Payload: ZIP with `manifest.json` (schema version, counts), `data.json` (every table row) and `files/<id>`
+  (decrypted attachments). JSON uses the platform `org.json` (no serialization plugin or codegen).
+- Restore is two-phase. Everything is decrypted, validated (counts, authenticated final chunk) and staged first.
+  Only then are current rows replaced in one transaction and the staged attachment files renamed in. Any failure
+  leaves current data untouched. Backups from older schema versions are loaded into an in-memory database at their
+  version, migrated with the normal forward-only migrations, then copied.
+- The backup is written to and read from a location the user picks through the Storage Access Framework
+  (`CreateDocument` / `OpenDocument`). The app never chooses a cloud location itself.
+
+## D-026 Health Connect (dependency: androidx.health.connect:connect-client 1.1.0)
+- Strictly opt-in and read-only: steps, heart rate, resting heart rate, sleep and weight, aggregated per day
+  (`aggregateGroupByPeriod`) and stored encrypted as `daily_activity`. Nothing is ever written to Health Connect.
+- Health Connect data belongs to the device owner, so it is attributed to the *Self* profile only.
+- Incremental sync with a changes token. The first sync, an expired token, or any upstream deletion triggers a
+  re-aggregation of the last 30 days; otherwise only the changed days plus yesterday and today are re-aggregated.
+- Sync runs on unlock and on "Sync now". There is no background worker, so no WorkManager dependency and no
+  background-read permission are needed.
+- Disconnect revokes permissions and deletes the imported rows.
+- The manifest includes the permissions-rationale activity and the Android 14 `VIEW_PERMISSION_USAGE` alias.
+  `aapt2 dump permissions` confirms that INTERNET is still absent.
+
+## D-027 Secure erase
+Erase cancels alarms and notifications, wipes share and camera caches, destroys the Keystore key and the wrapped
+data keys, overwrites and deletes the database and vault files, resets preferences and the crash log, then opens a
+fresh empty store. A closed database refuses to reopen, so stale observers cannot recreate the old file with the old
+key.

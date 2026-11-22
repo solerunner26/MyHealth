@@ -43,11 +43,11 @@ class MutableClock(var now: Instant) : Clock() {
 @RunWith(AndroidJUnit4::class)
 @Config(application = TestApp::class)
 class AppLockTest {
-    private val app get() = ApplicationProvider.getApplicationContext<TestApp>()
+    private val ctx get() = ApplicationProvider.getApplicationContext<TestApp>()
 
     @Test fun pinVerificationLockoutAndBackgroundGrace() {
         val clock = MutableClock(Instant.parse("2025-01-01T10:00:00Z"))
-        val prefs = Preferences(app)
+        val prefs = Preferences(ctx)
         val lock = AppLock(prefs, clock)
         assertFalse(lock.enabled())
         lock.setPin("2580")
@@ -69,12 +69,12 @@ class AppLockTest {
     }
 
     @Test @Config(sdk = [32]) fun languageSwitchBelowApi33AppliesStoredTag() {
-        Preferences(app).setLanguage("hi")
-        assertEquals("होम", LocaleSupport.localized(app).getString(R.string.nav_home))
-        Preferences(app).setLanguage("gu")
-        assertEquals("હોમ", LocaleSupport.localized(app).getString(R.string.nav_home))
-        Preferences(app).setLanguage("")
-        assertEquals("Home", LocaleSupport.localized(app).getString(R.string.nav_home))
+        Preferences(ctx).setLanguage("hi")
+        assertEquals("होम", LocaleSupport.localized(ctx).getString(R.string.nav_home))
+        Preferences(ctx).setLanguage("gu")
+        assertEquals("હોમ", LocaleSupport.localized(ctx).getString(R.string.nav_home))
+        Preferences(ctx).setLanguage("")
+        assertEquals("Home", LocaleSupport.localized(ctx).getString(R.string.nav_home))
     }
 
     // SummaryPdf uses android.graphics.pdf.PdfDocument, which has no Robolectric implementation (native document is
@@ -85,7 +85,7 @@ class AppLockTest {
 @Config(application = TestApp::class)
 class SettingsAndInsightsFlowTest {
     @get:Rule val rule = createAndroidComposeRule<MainActivity>()
-    private val app get() = ApplicationProvider.getApplicationContext<TestApp>()
+    private val ctx get() = ApplicationProvider.getApplicationContext<TestApp>()
     private fun waitFor(ms: Long = 10_000, c: () -> Boolean) {
         val end = System.currentTimeMillis() + ms
         while (System.currentTimeMillis() < end) { org.robolectric.shadows.ShadowLooper.idleMainLooper(); rule.waitForIdle(); if (c()) return; Thread.sleep(20) }
@@ -93,7 +93,7 @@ class SettingsAndInsightsFlowTest {
     }
     private fun waitTag(t: String) = waitFor { rule.onAllNodes(hasTestTag(t)).fetchSemanticsNodes().isNotEmpty() }
     private fun seed() = runBlocking {
-        val s = app.container.openNow()!!
+        val s = ctx.container.openNow()!!
         s.members.upsert(FamilyMember("m1", "Ravi", Relationship.Self))
         val d = LocalDate.now().minusDays(3)
         s.records.saveImport(ImportBundle(Report("r1", "m1", ReportType.LabReport, "Lipids", d, createdAt = Instant.EPOCH),
@@ -107,8 +107,8 @@ class SettingsAndInsightsFlowTest {
         rule.activityRule.scenario.onActivity { assertTrue(it.window.attributes.flags and WindowManager.LayoutParams.FLAG_SECURE != 0) }
 
         // Insights: expand "why" → evidence row with the exact value; score breakdown present
-        rule.onNodeWithText(app.getString(R.string.nav_more)).performClick()
-        waitTag("more"); rule.onNodeWithText(app.getString(R.string.more_insights)).performClick()
+        rule.onNodeWithText(ctx.getString(R.string.nav_more)).performClick()
+        waitTag("more"); rule.onNodeWithText(ctx.getString(R.string.more_insights)).performClick()
         waitTag("insights")
         rule.onNodeWithTag("why_range:ldl").performClick()
         waitTag("evidence")
@@ -129,13 +129,13 @@ class SettingsAndInsightsFlowTest {
         rule.onNodeWithTag("lockSwitch").performScrollTo().performClick()
         waitTag("pinSetup")
         repeat(2) { listOf("1", "2", "3", "4", "ok").forEach { rule.onNodeWithTag("key_$it").performScrollTo().performClick() } }
-        waitFor { app.container.lock.enabled() }
+        waitFor { ctx.container.lock.enabled() }
 
         // Lock: wrong PIN shows a message, correct PIN unlocks
-        rule.runOnUiThread { app.container.lock.lockNow() }
+        rule.runOnUiThread { ctx.container.lock.lockNow() }
         waitTag("lockScreen")
         listOf("9", "9", "9", "9").forEach { rule.onNodeWithTag("key_$it").performClick() }; rule.onNodeWithTag("key_ok").performClick()
-        waitFor { rule.onAllNodes(hasText(app.getString(R.string.lock_wrong))).fetchSemanticsNodes().isNotEmpty() }
+        waitFor { rule.onAllNodes(hasText(ctx.getString(R.string.lock_wrong))).fetchSemanticsNodes().isNotEmpty() }
         listOf("1", "2", "3", "4").forEach { rule.onNodeWithTag("key_$it").performClick() }; rule.onNodeWithTag("key_ok").performClick()
         waitTag("settings")
     }

@@ -55,10 +55,10 @@ import java.time.LocalDate
 @Config(application = TestApp::class)
 class ImportFlowTest {
     @get:Rule val rule = createComposeRule()
-    private val app get() = ApplicationProvider.getApplicationContext<TestApp>()
+    private val ctx get() = ApplicationProvider.getApplicationContext<TestApp>()
 
     private fun pdf(lines: List<String>): ByteArray {
-        PDFBoxResourceLoader.init(app)
+        PDFBoxResourceLoader.init(ctx)
         PDDocument().use { doc ->
             val page = PDPage(); doc.addPage(page)
             PDPageContentStream(doc, page).use { cs ->
@@ -83,8 +83,8 @@ class ImportFlowTest {
     }
 
     private fun session(): Session {
-        val stack = runBlocking { app.container.openNow() }!!
-        return Session(app.container, stack)
+        val stack = runBlocking { ctx.container.openNow() }!!
+        return Session(ctx.container, stack)
     }
 
     private val failingOcr = object : OcrEngine { override suspend fun recognize(bitmap: android.graphics.Bitmap) = error("text layer expected") }
@@ -93,7 +93,7 @@ class ImportFlowTest {
         val s = session()
         val member = FamilyMember("m1", "Ravi", Relationship.Self, LocalDate.of(1980, 1, 1), Sex.Male)
         runBlocking { s.stack.members.upsert(member) }
-        val vm = ImportViewModel(s, DocumentReader(app.contentResolver), ImportPipeline(AndroidTextExtractor(app, failingOcr), s.stack.records), app.container.clock)
+        val vm = ImportViewModel(s, DocumentReader(ctx.contentResolver), ImportPipeline(AndroidTextExtractor(ctx, failingOcr), s.stack.records), ctx.container.clock)
 
         rule.setContent {
             MyHealthTheme { CompositionLocalProvider(LocalSession provides s) {
@@ -142,9 +142,9 @@ class ImportFlowTest {
         val s = session()
         runBlocking {
             s.stack.members.upsert(FamilyMember("m1", "Ravi", Relationship.Self))
-            app.container.preferences.setActiveMember("m1")
+            ctx.container.preferences.setActiveMember("m1")
         }
-        val vm = ImportViewModel(s, DocumentReader(app.contentResolver), ImportPipeline(AndroidTextExtractor(app, failingOcr), s.stack.records), app.container.clock)
+        val vm = ImportViewModel(s, DocumentReader(ctx.contentResolver), ImportPipeline(AndroidTextExtractor(ctx, failingOcr), s.stack.records), ctx.container.clock)
         waitFor(5_000) { vm.state.value.member != null }
         vm.onDocument(PickedDocument(pdf(listOf("City Pathology Laboratory", "Date: 05/01/2024", "Thyroid Function Test", "TSH 5.9 uIU/mL 0.27 - 4.2")), "thyroid.pdf", AttachmentKind.Pdf))
         waitFor(15_000) { vm.state.value.phase == ImportPhase.Review }

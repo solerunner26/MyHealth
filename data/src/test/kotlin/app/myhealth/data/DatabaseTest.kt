@@ -156,10 +156,11 @@ class DatabaseTest {
         // Every byte of storage is gone and the wrapping key is destroyed: the old ciphertext is unrecoverable.
         assertTrue("no files may survive erase", !root.exists() || root.walkTopDown().none { it.isFile })
         assertTrue(!wrapper.exists())
-        // A clean start afterwards works and uses brand-new key material.
-        // (Robolectric's SQLite shim caches native connections per path, so row-level emptiness after re-open is
-        // asserted in the app-level erase flow test with a fresh path instead.)
+        // A clean start afterwards works, uses brand-new key material and contains no old rows.
         stack = opener().open()
         assertTrue(!File(root, "keys/keys.bin").readBytes().contentEquals(oldKeys))
+        assertTrue(runBlocking { stack.members.all() }.isEmpty())
+        // the database file really lives where erase looks for it
+        assertTrue(File(root, "myhealth.db").exists())
     }
 }

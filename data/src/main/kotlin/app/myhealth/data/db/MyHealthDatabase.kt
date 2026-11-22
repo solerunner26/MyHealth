@@ -28,10 +28,14 @@ class MyHealthDatabase(
     private val io: CoroutineDispatcher = Dispatchers.IO,
 ) {
     private val writeLock = Mutex()
+    @Volatile private var closed = false
     private val changes = MutableSharedFlow<Set<String>>(extraBufferCapacity = 64)
 
     /** Forces the open (and key check / migration) now, surfacing failures as [SecureStorageException]. */
     fun open(): SupportSQLiteDatabase = try {
+        // A closed database never reopens itself (e.g. from a stale observer after secure erase), which could
+        // otherwise recreate the old file with the old key.
+        if (closed) throw SecureStorageException(SecureFailure.DatabaseUnavailable)
         helper.writableDatabase
     } catch (e: SecureStorageException) {
         throw e
@@ -68,7 +72,7 @@ class MyHealthDatabase(
             .distinctUntilChanged()
             .flowOn(io)
 
-    fun close() = runCatching { helper.close() }
+    fun close() = runCatching { closed = true; helper.close() }
 
     companion object {
         fun callback() = object : SupportSQLiteOpenHelper.Callback(Schema.VERSION) {

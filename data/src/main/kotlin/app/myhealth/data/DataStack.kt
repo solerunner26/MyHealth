@@ -21,7 +21,8 @@ import net.zetetic.database.sqlcipher.SupportOpenHelperFactory
 import java.io.File
 
 /** Opened storage: every repository, backed by one encrypted database and one encrypted vault. */
-class DataStack internal constructor(val database: MyHealthDatabase, val vault: EncryptedVault) {
+class DataStack internal constructor(val database: MyHealthDatabase, val vault: EncryptedVault, private val vaultDir: java.io.File) {
+    fun backups(context: Context) = app.myhealth.data.backup.BackupManager(context, this, vaultDir)
     val members = MemberRepositoryImpl(database, vault)
     val records = RecordRepositoryImpl(database, vault)
     val vitals = VitalRepositoryImpl(database)
@@ -57,7 +58,8 @@ class StorageOpener(
         val config = SupportSQLiteOpenHelper.Configuration.builder(context)
             .name(paths.database.absolutePath)
             .callback(MyHealthDatabase.callback())
-            .noBackupDirectory(true)
+            // `name` is already an absolute path inside noBackupFilesDir. Do NOT also set noBackupDirectory(true):
+            // the framework helper would then nest the path a second time and the real file would escape erase.
             .build()
         val helper = helperFactory(keys.dbPassphrase).create(config)
         val db = MyHealthDatabase(helper)
@@ -66,7 +68,7 @@ class StorageOpener(
         } catch (e: SecureStorageException) {
             db.close(); throw e
         }
-        return DataStack(db, EncryptedVault(paths.vault, keys.vaultKey))
+        return DataStack(db, EncryptedVault(paths.vault, keys.vaultKey), paths.vault)
     }
 
     /** Cryptographic erase: destroy keys first (renders data unreadable), then overwrite and delete files. */

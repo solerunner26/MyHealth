@@ -30,8 +30,8 @@ import java.time.LocalDate
 @Config(application = TestApp::class)
 class AppFlowTest {
     @get:Rule val rule = createAndroidComposeRule<MainActivity>()
-    private val app get() = ApplicationProvider.getApplicationContext<TestApp>()
-    private fun str(id: Int, vararg a: Any) = app.getString(id, *a)
+    private val ctx get() = ApplicationProvider.getApplicationContext<TestApp>()
+    private fun str(id: Int, vararg a: Any) = ctx.getString(id, *a)
 
     private fun waitTag(tag: String, ms: Long = 10_000) = waitFor(ms) { rule.onAllNodes(hasTestTag(tag)).fetchSemanticsNodes().isNotEmpty() }
     private fun waitText(t: String, ms: Long = 10_000) = waitFor(ms) { rule.onAllNodes(hasText(t, substring = true)).fetchSemanticsNodes().isNotEmpty() }
@@ -51,7 +51,7 @@ class AppFlowTest {
     }
 
     private fun seed(memberId: String) = runBlocking {
-        val stack = app.container.stackOrNull!!
+        val stack = ctx.container.stackOrNull!!
         fun r(id: String, d: LocalDate, title: String) = Report(id, memberId, ReportType.LabReport, title, d, "Sunrise Lab", createdAt = Instant.EPOCH)
         fun v(id: String, rep: String, a: String, d: LocalDate, x: Double, lo: Double?, hi: Double?) = LabResult(id, memberId, rep, a, d, x, "", refLow = lo, refHigh = hi, printedName = a, printedValue = x.toString())
         val d1 = LocalDate.now().minusMonths(7); val d2 = LocalDate.now().minusDays(10)
@@ -63,7 +63,7 @@ class AppFlowTest {
         onboard("Ravi")
         // clean profile → designed empty state with one primary action
         waitTag("homeEmpty")
-        val self = runBlocking { app.container.stackOrNull!!.members.all() }.single()
+        val self = runBlocking { ctx.container.stackOrNull!!.members.all() }.single()
         seed(self.id)
         waitTag("scoreCard")
         // focus: LDL 65 % above range → shown on the dashboard with its rationale
@@ -112,8 +112,8 @@ class AppFlowTest {
 class WideLayoutTest {
     @get:Rule val rule = createAndroidComposeRule<MainActivity>()
     @Test fun tabletUsesNavigationRail() {
-        val app = ApplicationProvider.getApplicationContext<TestApp>()
-        runBlocking { app.container.openNow()!!.members.upsert(FamilyMember("m1", "Asha", Relationship.Self)) }
+        val ctx = ApplicationProvider.getApplicationContext<TestApp>()
+        runBlocking { ctx.container.openNow()!!.members.upsert(FamilyMember("m1", "Asha", Relationship.Self)) }
         rule.waitUntil(10_000) { rule.onAllNodes(hasTestTag("navRail")).fetchSemanticsNodes().isNotEmpty() }
         rule.onNodeWithTag("bottomBar").assertDoesNotExist()
     }

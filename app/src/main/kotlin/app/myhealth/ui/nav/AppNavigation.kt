@@ -72,6 +72,8 @@ object Routes {
     const val TREATMENT = "treatment/{id}"
     const val SETTINGS = "settings"
     const val SUMMARY = "summary"
+    const val BACKUP = "backup"
+    const val HEALTH_CONNECT = "healthconnect"
     fun vitalNew(type: String? = null) = if (type == null) "vital/new" else "vital/new?type=$type"
     fun vital(type: String) = "vital/$type"
     fun medicine(id: String) = "medicine/$id"
@@ -184,6 +186,8 @@ fun AppNavGraph(nav: NavHostController) {
         composable(Routes.TREATMENT_NEW) { TreatmentRoute(null) { nav.popBackStack() } }
         composable(Routes.TREATMENT) { entry -> TreatmentRoute(entry.arguments?.getString("id")) { nav.popBackStack() } }
         composable(Routes.SETTINGS) { app.myhealth.ui.settings.SettingsScreen(onBack = { nav.popBackStack() }, onErased = {}) }
+        composable(Routes.BACKUP) { app.myhealth.ui.backup.BackupScreen(onBack = { nav.popBackStack() }) }
+        composable(Routes.HEALTH_CONNECT) { app.myhealth.ui.backup.HealthConnectScreen(onBack = { nav.popBackStack() }) }
         composable(Routes.SUMMARY) { app.myhealth.ui.summary.SummaryScreen(onBack = { nav.popBackStack() }) }
         composable(Routes.INSIGHTS) {
             app.myhealth.ui.insights.InsightsRoute(onBack = { nav.popBackStack() }, onOpenTrend = { nav.navigate(Routes.trend(it)) })
@@ -234,7 +238,7 @@ private fun MainTabs(nav: NavHostController) {
                 TopLevel.More -> app.myhealth.ui.more.MoreContent(members.orEmpty(), app.myhealth.ui.more.MoreActions(
                     insights = { nav.navigate(Routes.INSIGHTS) }, profile = { active?.let { nav.navigate(Routes.memberEdit(it.id)) } },
                     editMember = { nav.navigate(Routes.memberEdit(it)) }, addMember = { nav.navigate(Routes.MEMBER_NEW) }, summary = { nav.navigate(Routes.SUMMARY) },
-                    settings = { nav.navigate(Routes.SETTINGS) }, backup = null, healthConnect = null,
+                    settings = { nav.navigate(Routes.SETTINGS) }, backup = { nav.navigate(Routes.BACKUP) }, healthConnect = { nav.navigate(Routes.HEALTH_CONNECT) },
                 ))
             }
         }

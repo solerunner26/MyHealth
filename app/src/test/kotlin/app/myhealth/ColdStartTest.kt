@@ -18,7 +18,7 @@ import org.robolectric.annotation.Config
 class ColdStartTest {
     @get:Rule val rule = createAndroidComposeRule<MainActivity>()
 
-    private val app get() = ApplicationProvider.getApplicationContext<TestApp>()
+    private val ctx get() = ApplicationProvider.getApplicationContext<TestApp>()
 
     // The rule launches the app before @Before runs, so only clear injected failures afterwards.
     @After fun clearFailure() { TestHooks.wrapper.failWith = null }
@@ -34,26 +34,26 @@ class ColdStartTest {
         awaitTag("welcome")
         // simulate the keystore going away and a fresh process start
         TestHooks.wrapper.failWith = SecureFailure.KeystoreUnavailable
-        rule.runOnUiThread { app.container.eraseStateForTest() }
+        rule.runOnUiThread { ctx.container.eraseStateForTest() }
         rule.runOnIdle { }
-        kotlinx.coroutines.runBlocking { app.container.openNow() }
+        kotlinx.coroutines.runBlocking { ctx.container.openNow() }
         awaitTag("storageError")
-        rule.onNodeWithText(app.getString(R.string.storage_keystore_title)).assertExists()
+        rule.onNodeWithText(ctx.getString(R.string.storage_keystore_title)).assertExists()
         // the keystore comes back: Retry opens the same data
         TestHooks.wrapper.failWith = null
-        rule.onNodeWithText(app.getString(R.string.action_retry)).performClick()
+        rule.onNodeWithText(ctx.getString(R.string.action_retry)).performClick()
         awaitTag("welcome")
     }
 
     @Test fun eraseFromErrorScreenStartsFresh() {
         awaitTag("welcome")
         TestHooks.wrapper.destroy() // key invalidated: data cannot be decrypted
-        rule.runOnUiThread { app.container.eraseStateForTest() }
-        kotlinx.coroutines.runBlocking { app.container.openNow() }
+        rule.runOnUiThread { ctx.container.eraseStateForTest() }
+        kotlinx.coroutines.runBlocking { ctx.container.openNow() }
         awaitTag("storageError")
-        rule.onNodeWithText(app.getString(R.string.storage_invalidated_title)).assertExists()
-        rule.onNodeWithText(app.getString(R.string.storage_action_erase)).performClick()
-        rule.onNodeWithText(app.getString(R.string.storage_erase_confirm)).performClick()
+        rule.onNodeWithText(ctx.getString(R.string.storage_invalidated_title)).assertExists()
+        rule.onNodeWithText(ctx.getString(R.string.storage_action_erase)).performClick()
+        rule.onNodeWithText(ctx.getString(R.string.storage_erase_confirm)).performClick()
         awaitTag("welcome")
     }
 }

@@ -31,8 +31,8 @@ class IngestTest {
     }
 
     @Test fun ocrPathProducesDraftWithOcrCount() = runBlocking {
-        val app = ApplicationProvider.getApplicationContext<TestApp>()
-        val stack = app.container.openNow()!!
+        val ctx = ApplicationProvider.getApplicationContext<TestApp>()
+        val stack = ctx.container.openNow()!!
         val ocrText = "Report Date 02-Feb-2024\nHAEMOGLOBIN 10.9 L g/dl 12.0-15.5\nPLATELET COUNT 1.2 lakhs/cumm 1.5-4.1"
         val fake = object : TextExtractor {
             override suspend fun extract(doc: PickedDocument, progress: ExtractionProgress) = ExtractedText(listOf(ocrText), 1, 1)

@@ -93,3 +93,20 @@ property). It was fixed forward in `63e5952`. Since then every commit runs only 
   trip with a non-plaintext database header.
 - Fixes found by tests: the PIN keypad was clipped inside the dialog on small screens (now scrollable, 56 dp keys);
   locking discarded navigation state (now an overlay).
+
+## Phase 9: Health Connect, encrypted backup/restore, secure erase (done)
+- Gate → exit 0
+- `BackupTest` (data): chunked GCM round trip at 0/1/CHUNK±1/3×CHUNK+7 bytes; wrong password, tamper (first and
+  later chunk), dropped final chunk, foreign file; export → restore into another install replaces data and
+  attachments; a wrong password leaves existing data untouched.
+- `HealthSyncTest`: first sync = 30 days + token; incremental = changed day + yesterday + today; expired token →
+  full; not installed / no permission → no-op; disconnect revokes and clears.
+- `BackupRestoreFlowTest`: BackupViewModel export to a file URI → secure erase → wrong password rejected → restore
+  brings back members and the attachment bytes.
+- `SecureEraseFlowTest` (UI): Settings → Erase → confirm → Welcome screen; new keys, empty vault, preferences reset.
+- **Bug found and fixed.** The database was opened with an absolute path *and* `noBackupDirectory(true)`, so the
+  framework helper nested the path and the real file escaped erase. Phase 3's `eraseEverything` test had shown this
+  (old rows readable after erase), and I wrongly blamed a Robolectric artefact and weakened the assertion. A probe
+  test showed Robolectric behaves correctly; the flag is removed and the strict assertion (no old rows, file at the
+  expected path) is restored. SQLCipher in production may not have been affected, but that cannot be verified here.
+- Not run here: the real Health Connect provider, permission UI and SAF pickers (need a device).
