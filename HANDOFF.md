@@ -63,6 +63,15 @@ what is left, gotchas. Keep it short and factual; the code is the source of trut
 - `values-hi` and `values-gu` now hold all 439 translatable keys; `I18nParityTest` enforces key and
   format-placeholder parity, so no screen can fall back silently.
 
+### Installable preview and screenshots
+- Debug APK attached to the GitHub release
+  `preview-rare-ui-2026-11-22` (package `com.solerunner.myhealth.debug`, Android 8+).
+- Screenshots are **rendered from the real Compose UI** by `ScreenshotGalleryTest`, a Robolectric test with
+  native graphics that draws the activity decor view into a bitmap. No mockups, no screenshot service.
+  Images live in `docs/screenshots/` and are attached to the release as well.
+- The screenshot test both proves the UI composes without a device and regenerates the images:
+  `./gradlew :app:testDebugUnitTest --tests "*ScreenshotGalleryTest"`.
+
 ### Gotchas
 - `compileSdkMinor = 2` is still required (Compose 1.13 metadata needs 37.1+).
 - Never add `org.jetbrains.kotlin.android`; AGP 9 has built-in Kotlin.

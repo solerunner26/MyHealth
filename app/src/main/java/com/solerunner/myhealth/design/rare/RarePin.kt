@@ -61,10 +61,7 @@ fun RarePinEntry(
     note: String? = null,
 ) {
     val spacing = MyHealthTokens.spacing
-    val rows = when {
-        pin.length < 4 -> 1
-        else -> ((pin.length + 1 + 3) / 4).coerceIn(1, 3)
-    }
+    val rows = ((pin.length.coerceAtLeast(1) + 3) / 4).coerceIn(1, 3)
     val slots = rows * 4
 
     Column(

@@ -63,14 +63,12 @@ import java.util.Locale
  * reports. Every block is a hairline card on porcelain, with generous whitespace instead of dividers.
  */
 @Composable
-fun DashboardScreen(
-    container: AppContainer,
+fun DashboardContent(
+    state: DashboardUiState,
     profile: Profile,
     onNavigate: (String) -> Unit,
     onOpenReport: (Long) -> Unit,
 ) {
-    val viewModel = containerViewModel(container) { DashboardViewModel(it) }
-    val state by viewModel.state.collectAsStateWithLifecycle()
     val snapshot = state.snapshot
     val scroll = rememberScrollState()
     val spacing = MyHealthTokens.spacing
@@ -341,4 +339,23 @@ fun greetingText(): String {
         else -> R.string.home_greeting_night
     }
     return stringResource(res)
+}
+
+
+/** Stateful entry point: observes the encrypted database and hands a snapshot to [DashboardContent]. */
+@Composable
+fun DashboardScreen(
+    container: AppContainer,
+    profile: Profile,
+    onNavigate: (String) -> Unit,
+    onOpenReport: (Long) -> Unit,
+) {
+    val viewModel = containerViewModel(container) { DashboardViewModel(it) }
+    val state by viewModel.state.collectAsStateWithLifecycle()
+    DashboardContent(
+        state = state,
+        profile = profile,
+        onNavigate = onNavigate,
+        onOpenReport = onOpenReport,
+    )
 }

@@ -86,7 +86,7 @@ fun LineChart(
             val chartWidth = size.width
             fun x(index: Int): Float = if (points.size == 1) chartWidth / 2f else chartWidth * index / (points.size - 1)
             fun y(value: Double): Float =
-                (chartHeight - ((value - low) / span * chartHeight * 0.86f)).toFloat() + chartHeight * 0.07f
+                (chartHeight - ((value - low) / span * chartHeight * 0.74f)).toFloat() + chartHeight * 0.16f
 
             if (referenceLow != null && referenceHigh != null) {
                 val top = y(referenceHigh)
@@ -97,6 +97,19 @@ fun LineChart(
                     size = Size(chartWidth, (bottom - top).coerceAtLeast(2f)),
                     cornerRadius = CornerRadius(8f, 8f),
                 )
+            } else {
+                // One-sided ranges still deserve a visible threshold line.
+                val bound = referenceHigh ?: referenceLow
+                if (bound != null) {
+                    val gy = y(bound)
+                    drawLine(
+                        color = colors.lineSoft.copy(alpha = 0.55f),
+                        start = Offset(0f, gy),
+                        end = Offset(chartWidth, gy),
+                        strokeWidth = 1.2f,
+                        pathEffect = dash,
+                    )
+                }
             }
             repeat(3) { line ->
                 val gy = chartHeight * line / 2f
@@ -136,6 +149,7 @@ fun LineChart(
                 drawCircle(color = colors.referenceBand, radius = 2f, center = Offset(x(selected), y(point.value)))
             }
         }
+        androidx.compose.foundation.layout.Spacer(Modifier.height(6.dp))
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
             Text(Dates.format(points.first().date, locale, "MMM yy"), style = MaterialTheme.typography.labelSmall, color = colors.axisLabel)
             Text(Dates.format(points.last().date, locale, "MMM yy"), style = MaterialTheme.typography.labelSmall, color = colors.axisLabel)

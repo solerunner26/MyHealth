@@ -18,6 +18,16 @@ years, and turned into explainable trends, focus cards and a health score.
   Clause + Attribution, © Swami Malode), reimplemented natively in Compose under the single-hue rule.
   See [`docs/DESIGN_SYSTEM.md`](docs/DESIGN_SYSTEM.md).
 
+## Screenshots
+
+Rendered from the real Compose UI by a Robolectric screenshot test (`ScreenshotGalleryTest`), not
+mockups. More in [`docs/screenshots`](docs/screenshots) and on the
+[preview release](https://github.com/solerunner26/MyHealth/releases/tag/preview-rare-ui-2026-11-22).
+
+| Home | Home (dark) | Unlock | Trends |
+| --- | --- | --- | --- |
+| ![](docs/screenshots/home.png) | ![](docs/screenshots/home-dark.png) | ![](docs/screenshots/pin.png) | ![](docs/screenshots/trend.png) |
+
 ## Build
 
 ```bash

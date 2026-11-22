@@ -92,6 +92,7 @@ fun TrendDetailScreen(container: AppContainer, analyteKey: String, onBack: () ->
                     MetricTile(
                         label = stringResource(R.string.trends_per_month),
                         value = state.summary.perMonth?.let { formatNumber(it) } ?: "—",
+                        unit = series.unit,
                         modifier = Modifier.weight(1f),
                     )
                 }
