@@ -1,5 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="home_action_report">Add report</string>
+    <string name="dash_log_short">Log</string>
+    <string name="join_comma">%1$s, %2$s</string>
     <string name="home_action_visit">Visit prep</string>
+    <plurals name="records_out_of_range">
+        <item quantity="one">%1$d not in range</item>
+        <item quantity="other">%1$d not in range</item>
+    </plurals>
 </resources>

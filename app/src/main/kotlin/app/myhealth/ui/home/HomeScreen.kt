@@ -68,6 +68,13 @@ data class HomeState(
     val latest: List<AnalyteTrend> = emptyList(),
 )
 
+/** Vitals that always have a tile on the dashboard (an invitation to log when there is no reading yet). */
+val CORE_VITALS = listOf(
+    app.myhealth.domain.model.VitalType.BloodPressure, app.myhealth.domain.model.VitalType.Pulse, app.myhealth.domain.model.VitalType.SpO2,
+    app.myhealth.domain.model.VitalType.BloodGlucose, app.myhealth.domain.model.VitalType.Weight, app.myhealth.domain.model.VitalType.Temperature,
+    app.myhealth.domain.model.VitalType.RespiratoryRate,
+)
+
 val VITAL_ORDER = listOf(
     app.myhealth.domain.model.VitalType.BloodPressure, app.myhealth.domain.model.VitalType.Pulse, app.myhealth.domain.model.VitalType.SpO2,
     app.myhealth.domain.model.VitalType.Weight, app.myhealth.domain.model.VitalType.Bmi, app.myhealth.domain.model.VitalType.Temperature,
@@ -84,11 +91,12 @@ class HomeViewModel(session: Session) : ViewModel() {
             score = HealthScoreCalculator.calculate(inputs),
             focus = FocusEngine.evaluate(inputs),
             // abnormal first, then key markers, then most recent
+            // not in range first, then slightly off, then in range (same order as tests)
             vitals = VITAL_ORDER.mapNotNull { t ->
                 val list = s.vitals.filter { it.type == t }.sortedByDescending { it.measuredAt }
                 list.firstOrNull()?.let { Triple(t, it, list.getOrNull(1)) }
-            },
-            allTests = trends.sortedWith(compareByDescending<AnalyteTrend> { it.latest.status.isAbnormal }.thenByDescending { it.analyte.keyMarker }.thenByDescending { it.latest.date }),
+            }.sortedBy { (_, v, _) -> app.myhealth.domain.analytics.VitalRules.band(v).let { b -> if (b == app.myhealth.domain.analytics.VitalBand.Unknown) null else b.kind() }.urgency() },
+            allTests = trends.sortedWith(compareBy<AnalyteTrend> { it.latest.status.kind().urgency() }.thenByDescending { it.analyte.keyMarker }.thenByDescending { it.latest.date }),
             latest = trends.sortedWith(compareByDescending<AnalyteTrend> { it.latest.status.isAbnormal }.thenByDescending { it.analyte.keyMarker }.thenByDescending { it.latest.date }).take(6),
         )
     }.flowOn(kotlinx.coroutines.Dispatchers.Default).stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), HomeState())
@@ -105,6 +113,7 @@ fun HomeContent(
     onOpenVital: (app.myhealth.domain.model.VitalType) -> Unit = {},
     onAllTests: () -> Unit = {},
     onVisitPrep: () -> Unit = {},
+    onLogVitalType: (app.myhealth.domain.model.VitalType) -> Unit = { onLogVital() },
     header: @Composable () -> Unit = {},
 ) {
     val sp = MyHealthTheme.spacing
@@ -132,21 +141,31 @@ fun HomeContent(
                 app.myhealth.core.designsystem.components.MyHealthQuickAction(MyHealthIcons.Document, stringResource(R.string.home_action_visit), onVisitPrep, Modifier.weight(1f).testTag("homeVisitPrep"))
             }
         }
-        if (state.vitals.isNotEmpty()) {
+        run {
+            // every core vital gets a tile: readings first (not in range on top), then invitations to log the rest
+            val have = state.vitals.map { it.first }.toSet()
+            val missing = CORE_VITALS.filter { it !in have && !(it == app.myhealth.domain.model.VitalType.Weight && app.myhealth.domain.model.VitalType.Bmi in have) }
+            val cells: List<Any> = state.vitals + missing
             item { MyHealthSectionHeader(stringResource(R.string.dash_vitals)) { MyHealthTextButton(stringResource(R.string.home_quick_vital), onLogVital, icon = MyHealthIcons.Add) } }
-            items(state.vitals.chunked(2)) { pair ->
+            items(cells.chunked(TILE_COLUMNS)) { row ->
                 TileRow { m ->
-                    pair.forEach { (t, latest, prev) -> VitalTile(t, latest, prev, state.member?.heightCm, zone, { onOpenVital(t) }, index++, m) }
-                    if (pair.size == 1) Spacer(m)
+                    row.forEach { cell ->
+                        @Suppress("UNCHECKED_CAST")
+                        if (cell is Triple<*, *, *>) {
+                            val (t, latest, prev) = cell as Triple<app.myhealth.domain.model.VitalType, app.myhealth.domain.model.Vital, app.myhealth.domain.model.Vital?>
+                            VitalTile(t, latest, prev, state.member?.heightCm, zone, { onOpenVital(t) }, index++, m)
+                        } else { val t = cell as app.myhealth.domain.model.VitalType; EmptyVitalTile(t, { onLogVitalType(t) }, index++, m) }
+                    }
+                    repeat(TILE_COLUMNS - row.size) { Spacer(m) }
                 }
             }
         }
         if (state.allTests.isNotEmpty()) {
-            item { MyHealthSectionHeader(stringResource(R.string.dash_tests)) { if (state.allTests.size > 8) MyHealthTextButton(stringResource(R.string.home_focus_all), onAllTests) } }
-            items(state.allTests.take(8).chunked(2)) { pair ->
+            item { MyHealthSectionHeader(stringResource(R.string.dash_tests)) { if (state.allTests.size > 9) MyHealthTextButton(stringResource(R.string.home_focus_all), onAllTests) } }
+            items(state.allTests.take(9).chunked(TILE_COLUMNS)) { row ->
                 TileRow { m ->
-                    pair.forEach { t -> TestTile(t, { onOpenTrend(t.analyte.id) }, index++, m) }
-                    if (pair.size == 1) Spacer(m)
+                    row.forEach { t -> TestTile(t, { onOpenTrend(t.analyte.id) }, index++, m) }
+                    repeat(TILE_COLUMNS - row.size) { Spacer(m) }
                 }
             }
         }

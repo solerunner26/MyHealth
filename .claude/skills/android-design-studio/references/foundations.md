@@ -21,6 +21,10 @@ Reference hue families observed on the boards (use as starting points, still sin
 | Iris | 255° violet | white + lavender wash | violet gradient card | trustworthy |
 | Ember | 24° orange | white with orange glows | full-orange premium card | playful, energetic |
 
+## Status red (the only second colour)
+danger light #C62828 / dark #FF6B6B, onDanger white / #2A0606, dangerSoft #FDECEC / #3A1416. All pairs ≥ 4.5:1
+on every theme's surfaces (tested). Only for not-in-range values.
+
 ## Type
 Geometric sans (Manrope/Plus Jakarta/Sora class). Scale: display 34/40, headline 24/30, title 18/24, body 15/22,
 label 13/18 (+0.2 tracking), overline 11/14 caps +1.2 tracking. **Numbers**: tabular, light or semibold at 34–44 sp
@@ -53,6 +57,6 @@ rounded bars on accentSoft track, or rings around an icon. Always print the numb
 | State | Treatment |
 |---|---|
 | In range | normal card (glass or solid), small check icon, quiet label |
-| Slightly out | card gets accentSoft fill + accent border 1.5 dp + "▲ Slightly high" pill |
-| Out of range | card switches to **hero material**: accentDeep fill (solid) / bright glow rim + inner gradient (glass), onAccent text, warning icon badge, slow breathe glow, arrow showing direction |
+| Slightly out (e.g. BP elevated) | still outside the normal range → same red treatment |
+| Out of range | **red**: dangerSoft fill, 1.5 dp danger edge with a slow breathing glow, solid red pill "▲ High" / "▼ Low" with white text; sorted first |
 | Unknown | dashed outline, tertiary text |

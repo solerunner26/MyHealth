@@ -97,4 +97,23 @@ class ImportDraftTest {
         val (b, att) = ImportDrafts.toBundle(withRow, ids(), Instant.EPOCH, ZoneOffset.UTC, today)
         assertTrue(att.isEmpty()); assertEquals(6.2, b.results.single().value, 0.0); assertEquals("HbA1c", b.results.single().printedName)
     }
+
+    @Test fun filesPickedTogetherSplitByTestDateAndMergeOnTheSameDate() {
+        fun d(text: String, sha: String) = ImportDrafts.fromParsed(ReportParser(today).parse(listOf(text), Sex.Male, 45), member,
+            SourceFile("$sha.pdf", AttachmentKind.Pdf, sha, 10, 1, 0), null, "Lab report")
+        val nov = d("Patient Name: Ravi Shah\nCollected: 16/11/2024\nLDL Cholesterol 165 mg/dL", "a")
+        val jul = d("Patient Name: Ravi Shah\nCollected: 22/07/2024\nHaemoglobin 13.1 g/dL 13-17", "b")
+        val nov2 = d("Patient Name: Ravi Shah\nCollected: 16/11/2024\nHbA1c 5.4 %\nLDL Cholesterol 999 mg/dL", "c")
+        val undated = d("Discharge summary", "d")
+        val otherPerson = d("Patient Name: Meera Shah\nCollected: 16/11/2024\nTSH 2.0 µIU/mL", "e")
+        val groups = ImportDrafts.groupByDate(listOf(nov to "a", jul to "b", nov2 to "c", undated to "d", otherPerson to "e"))
+        assertEquals(listOf(listOf("a", "c"), listOf("e"), listOf("b"), listOf("d")), groups.map { it.second })
+        val merged = groups.first().first
+        assertEquals(LocalDate.of(2024, 11, 16), merged.reportDate)
+        assertEquals(listOf("ldl", "hba1c"), merged.labRows.map { it.analyteId }) // first file's LDL kept
+        assertEquals("165", merged.labRows.first().valueText)
+        assertEquals(listOf("a", "c"), merged.sources.map { it.sha256 })
+        assertEquals(merged.labRows.size, merged.labRows.map { it.key }.toSet().size)
+        assertEquals(null, groups.last().first.reportDate)
+    }
 }

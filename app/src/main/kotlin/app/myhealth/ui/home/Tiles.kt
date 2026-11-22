@@ -72,7 +72,18 @@ fun ladderScale(analyteId: String): List<Double> = when (analyteId) {
     else -> listOf(60.0, 140.0, 200.0, 300.0)
 }
 
-/** Shared tile frame: title, status, instrument, big value, change line. Same size and rhythm for every tile. */
+/** How urgent a status is, for ordering: not-in-range first, then "slightly off", then in range. */
+fun StatusKind?.urgency(): Int = when (this) {
+    StatusKind.Critical -> 0; StatusKind.High, StatusKind.Low -> 1; StatusKind.Attention, StatusKind.Worsening -> 2; else -> 3
+}
+
+fun urgencyOf(k: StatusKind?): Int = k.urgency()
+
+/**
+ * Compact tile frame (three per row): name, small instrument, value, status pill. Not in range = red-tinted tile
+ * with a red edge that breathes and a red High/Low pill; slightly off = tinted tile; in range = plain card.
+ * The change since last time is in the spoken description and on the detail screen.
+ */
 @Composable
 fun GaugeTile(
     title: String,
@@ -83,38 +94,61 @@ fun GaugeTile(
     onClick: () -> Unit,
     index: Int,
     modifier: Modifier = Modifier,
+    note: String? = null,
     gauge: @Composable () -> Unit,
 ) {
-    val c = MyHealthTheme.colors
     val cd = stringResource(R.string.dash_tile_cd, title, listOf(value, unit).filter { it.isNotBlank() }.joinToString(" "), status?.first ?: "", footer)
-    // Out of range = a different MATERIAL (hero fill + breathing glow rim), slightly off = tinted container with an
-    // accent edge, in range = the plain card. Checked in greyscale too: material, icon and label all change.
     val k = status?.second
-    val outOfRange = k == StatusKind.Low || k == StatusKind.High || k == StatusKind.Critical
-    val slightly = k == StatusKind.Attention || k == StatusKind.Worsening
+    // anything outside the normal range (including "slightly high") is red; trend-only warnings stay tinted
+    val outOfRange = k.urgency() <= 1 || k == StatusKind.Attention
+    val slightly = k == StatusKind.Worsening
     MyHealthCard(modifier.fillMaxHeight().appear(index).semantics(mergeDescendants = true) { contentDescription = cd }, onClick = onClick,
-        emphasis = if (slightly) Emphasis.Medium else Emphasis.Subtle, alert = outOfRange) {
+        emphasis = if (slightly) Emphasis.Medium else Emphasis.Subtle, alert = outOfRange, padding = MyHealthTheme.spacing.md) {
         val c = MyHealthTheme.colors
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(title.uppercase(), style = MyHealthTheme.typography.overline, color = c.textSecondary, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
-            if (status != null) Icon(status.second.icon, null, tint = c.accent, modifier = Modifier.size(18.dp))
+        Row(verticalAlignment = Alignment.Top) {
+            // names shrink to fit instead of breaking mid-word
+            BasicText(title.uppercase(), style = MyHealthTheme.typography.overline.copy(color = c.textSecondary), maxLines = if (title.trim().contains(' ')) 2 else 1, overflow = TextOverflow.Ellipsis,
+                autoSize = TextAutoSize.StepBased(minFontSize = 8.sp, maxFontSize = MyHealthTheme.typography.overline.fontSize, stepSize = 0.5.sp), modifier = Modifier.weight(1f))
+            if (status != null) Icon(status.second.icon, null, tint = if (outOfRange) c.danger else c.accent, modifier = Modifier.size(14.dp))
         }
-        Box(Modifier.fillMaxWidth().heightIn(min = 96.dp).padding(vertical = MyHealthTheme.spacing.sm), contentAlignment = Alignment.Center) { gauge() }
+        Box(Modifier.fillMaxWidth().height(60.dp).padding(vertical = 4.dp), contentAlignment = Alignment.Center) { gauge() }
         Spacer(Modifier.weight(1f))
         Row(verticalAlignment = Alignment.Bottom) {
-            BasicText(value, style = MyHealthTheme.typography.metric.copy(color = c.textPrimary), maxLines = 1,
-                autoSize = TextAutoSize.StepBased(minFontSize = 16.sp, maxFontSize = MyHealthTheme.typography.metric.fontSize), modifier = Modifier.weight(1f, fill = false))
-            if (unit.isNotBlank()) Text(unit, style = MyHealthTheme.typography.caption, color = c.textSecondary, maxLines = 1, modifier = Modifier.padding(start = 4.dp, bottom = 4.dp))
+            BasicText(value, style = MyHealthTheme.typography.metric.copy(color = c.textPrimary, fontSize = 24.sp), maxLines = 1,
+                autoSize = TextAutoSize.StepBased(minFontSize = 13.sp, maxFontSize = 24.sp), modifier = Modifier.weight(1f, fill = false))
+            if (unit.isNotBlank()) Text(unit, style = MyHealthTheme.typography.caption.copy(fontSize = 10.sp), color = c.textSecondary, maxLines = 1, softWrap = false,
+                modifier = Modifier.padding(start = 2.dp, bottom = 3.dp))
         }
-        if (status != null) Box(Modifier.padding(top = 4.dp)) { MyHealthStatusBadge(status.first, if (outOfRange) StatusKind.Critical else status.second) }
-        Text(footer, style = MyHealthTheme.typography.caption, color = c.textTertiary, maxLines = 2, overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(top = 4.dp))
+        if (status != null) Box(Modifier.padding(top = 4.dp)) { MyHealthStatusBadge(status.first, if (outOfRange && k == StatusKind.Attention) StatusKind.High else status.second, compact = true) }
+        else if (note != null) Text(note, style = MyHealthTheme.typography.caption, color = c.textSecondary, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(top = 4.dp))
     }
 }
 
-/** Two tiles side by side with equal heights (no overlap at any font scale: the row grows instead). */
+/** Tiles three across with equal heights (no overlap at any font scale: the row grows instead). */
+const val TILE_COLUMNS = 3
+
 @Composable
 fun TileRow(content: @Composable (Modifier) -> Unit) {
-    Row(Modifier.fillMaxWidth().height(IntrinsicSize.Max), horizontalArrangement = Arrangement.spacedBy(MyHealthTheme.spacing.md)) { content(Modifier.weight(1f)) }
+    Row(Modifier.fillMaxWidth().height(IntrinsicSize.Max), horizontalArrangement = Arrangement.spacedBy(MyHealthTheme.spacing.sm)) { content(Modifier.weight(1f)) }
+}
+
+/** An invitation tile for a vital with no reading yet: dashed-feel quiet card, "+ Log". */
+@Composable
+fun EmptyVitalTile(type: VitalType, onClick: () -> Unit, index: Int, modifier: Modifier = Modifier) {
+    val c = MyHealthTheme.colors
+    val title = label(type)
+    val add = stringResource(R.string.dash_log_short)
+    val cd = stringResource(R.string.join_comma, title, add)
+    MyHealthCard(modifier.fillMaxHeight().appear(index).semantics(mergeDescendants = true) { contentDescription = cd }.testTag("vempty_${type.name}"),
+        onClick = onClick, padding = MyHealthTheme.spacing.md) {
+        Text(title.uppercase(), style = MyHealthTheme.typography.overline, color = c.textTertiary, maxLines = 2, overflow = TextOverflow.Ellipsis)
+        Spacer(Modifier.weight(1f))
+        Box(Modifier.fillMaxWidth().height(60.dp), contentAlignment = Alignment.Center) {
+            Icon(app.myhealth.core.designsystem.components.MyHealthIcons.Add, null, tint = c.accent, modifier = Modifier.size(28.dp))
+        }
+        Spacer(Modifier.weight(1f))
+        Text(add, style = MyHealthTheme.typography.label, color = c.accent, maxLines = 1)
+    }
 }
 
 @Composable
@@ -131,22 +165,18 @@ fun TestTile(t: AnalyteTrend, onClick: () -> Unit, index: Int, modifier: Modifie
         when (gaugeFor(a.id)) {
             TestGauge.Ladder -> {
                 val s = ladderScale(a.id)
-                LadderGauge(gaugeFraction(v, s.first(), s.last()), s.drop(1).dropLast(1).map { gaugeFraction(it, s.first(), s.last()) })
+                LadderGauge(gaugeFraction(v, s.first(), s.last()), s.drop(1).dropLast(1).map { gaugeFraction(it, s.first(), s.last()) }, height = 48.dp)
             }
             TestGauge.Vial -> {
                 val top = maxOf((t.bandHigh ?: v) * 1.25, v * 1.1, (t.bandLow ?: 0.0) * 2.5)
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    VialGauge(gaugeFraction(v, 0.0, top), listOfNotNull(t.bandLow, t.bandHigh).map { gaugeFraction(it, 0.0, top) })
-                    Spacer(Modifier.width(MyHealthTheme.spacing.md))
-                    Sparkline(t.points.map { it.value }, Modifier.width(72.dp), height = 48.dp)
-                }
+                VialGauge(gaugeFraction(v, 0.0, top), listOfNotNull(t.bandLow, t.bandHigh).map { gaugeFraction(it, 0.0, top) }, width = 22.dp, height = 52.dp)
             }
             TestGauge.Track -> Column {
                 val lo = t.bandLow; val hi = t.bandHigh
                 val span = if (lo != null && hi != null) hi - lo else (hi ?: lo ?: v).coerceAtLeast(1e-6) * 0.5
                 val min = (lo ?: (hi ?: v) - span * 2) - span * 0.6; val max = (hi ?: (lo ?: v) + span * 2) + span * 0.6
-                ZoneTrackGauge(gaugeFraction(v, min, max), lo?.let { gaugeFraction(it, min, max) }, hi?.let { gaugeFraction(it, min, max) })
-                Sparkline(t.points.map { it.value }, Modifier.padding(top = 6.dp), height = 34.dp)
+                ZoneTrackGauge(gaugeFraction(v, min, max), lo?.let { gaugeFraction(it, min, max) }, hi?.let { gaugeFraction(it, min, max) }, height = 22.dp)
+                Sparkline(t.points.map { it.value }, Modifier.padding(top = 4.dp), height = 24.dp)
             }
         }
     }
@@ -160,30 +190,24 @@ fun VitalTile(type: VitalType, latest: Vital, previous: Vital?, heightCm: Double
     val value = app.myhealth.ui.common.vitalValue(type, latest.value, latest.value2, "")
     val dec = if (type in setOf(VitalType.BloodPressure, VitalType.Pulse, VitalType.SpO2, VitalType.RespiratoryRate, VitalType.BloodGlucose)) 0 else 1
     val footer = changeLine(previous?.let { latest.value - it.value }, dec, unit, previous?.measuredAt?.atZone(zone)?.toLocalDate())
-    GaugeTile(label(type), value, unit, status, footer, onClick, index, modifier.testTag("vtile_${type.name}")) {
+    val bmiNote = if (type == VitalType.Weight) heightCm?.let { VitalRules.bmi(latest.value, it) }?.let { stringResource(R.string.dash_bmi, ValueFormat.number(it, 1)) } else null
+    GaugeTile(label(type), value, unit, status, footer, onClick, index, modifier.testTag("vtile_${type.name}"), note = bmiNote) {
         when (type) {
             VitalType.BloodPressure -> Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 TwinRailGauge(gaugeFraction(latest.value, 80.0, 200.0), gaugeFraction(latest.value2 ?: 0.0, 40.0, 130.0),
-                    gaugeFraction(90.0, 80.0, 200.0) to gaugeFraction(129.0, 80.0, 200.0), gaugeFraction(60.0, 40.0, 130.0) to gaugeFraction(79.0, 40.0, 130.0), height = 96.dp)
-                Row(Modifier.fillMaxWidth().clearAndSetSemantics { }, horizontalArrangement = Arrangement.SpaceAround) {
-                    Text(stringResource(R.string.dash_sys), style = MyHealthTheme.typography.overline, color = MyHealthTheme.colors.textTertiary)
-                    Text(stringResource(R.string.dash_dia), style = MyHealthTheme.typography.overline, color = MyHealthTheme.colors.textTertiary)
-                }
+                    gaugeFraction(90.0, 80.0, 200.0) to gaugeFraction(129.0, 80.0, 200.0), gaugeFraction(60.0, 40.0, 130.0) to gaugeFraction(79.0, 40.0, 130.0), height = 52.dp)
             }
-            VitalType.Pulse -> RingGauge(gaugeFraction(latest.value, 30.0, 150.0))
-            VitalType.SpO2 -> RingGauge(gaugeFraction(latest.value, 80.0, 100.0), secondary = 0.95f)
+            VitalType.Pulse -> RingGauge(gaugeFraction(latest.value, 30.0, 150.0), diameter = 52.dp)
+            VitalType.SpO2 -> RingGauge(gaugeFraction(latest.value, 80.0, 100.0), secondary = 0.95f, diameter = 52.dp)
             VitalType.Weight, VitalType.Bmi -> {
                 val bmi = if (type == VitalType.Bmi) latest.value else heightCm?.let { VitalRules.bmi(latest.value, it) }
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    DialGauge(gaugeFraction(bmi ?: 22.0, 14.0, 40.0), gaugeFraction(18.5, 14.0, 40.0), gaugeFraction(24.9, 14.0, 40.0), width = 128.dp)
-                    if (type == VitalType.Weight && bmi != null) Text(stringResource(R.string.dash_bmi, ValueFormat.number(bmi, 1)), style = MyHealthTheme.typography.caption, color = MyHealthTheme.colors.textSecondary)
-                }
+                DialGauge(gaugeFraction(bmi ?: 22.0, 14.0, 40.0), gaugeFraction(18.5, 14.0, 40.0), gaugeFraction(24.9, 14.0, 40.0), width = 72.dp)
             }
-            VitalType.BloodGlucose -> LadderGauge(gaugeFraction(latest.value, 60.0, 300.0), listOf(140.0, 200.0).map { gaugeFraction(it, 60.0, 300.0) })
+            VitalType.BloodGlucose -> LadderGauge(gaugeFraction(latest.value, 60.0, 300.0), listOf(140.0, 200.0).map { gaugeFraction(it, 60.0, 300.0) }, height = 48.dp)
             else -> {
                 val r = VitalRules.normalRange(type) ?: (latest.value * 0.8 to latest.value * 1.2)
                 val span = r.second - r.first
-                ZoneTrackGauge(gaugeFraction(latest.value, r.first - span, r.second + span), 1f / 3f, 2f / 3f)
+                ZoneTrackGauge(gaugeFraction(latest.value, r.first - span, r.second + span), 1f / 3f, 2f / 3f, height = 22.dp)
             }
         }
     }

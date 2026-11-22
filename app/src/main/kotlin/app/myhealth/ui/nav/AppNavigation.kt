@@ -247,7 +247,7 @@ private fun MainTabs(nav: NavHostController) {
                     val vm = rememberVm { HomeViewModel(session) }
                     val state by vm.state.collectAsStateWithLifecycle()
                     val photo = app.myhealth.ui.member.rememberMemberPhoto(active)
-                    HomeContent(state, onAddDocument = onImport, onVisitPrep = { nav.navigate(Routes.SUMMARY) }, onLogVital = { nav.navigate(Routes.vitalNew()) }, onAddMedicine = { nav.navigate(Routes.MEDICINE_NEW) },
+                    HomeContent(state, onAddDocument = onImport, onVisitPrep = { nav.navigate(Routes.SUMMARY) }, onLogVitalType = { nav.navigate(Routes.vitalNew(it.name)) }, onLogVital = { nav.navigate(Routes.vitalNew()) }, onAddMedicine = { nav.navigate(Routes.MEDICINE_NEW) },
                         onOpenTrend = { nav.navigate(Routes.trend(it)) }, onOpenInsights = { nav.navigate(Routes.INSIGHTS) },
                         onOpenVital = { nav.navigate(Routes.vital(it.name)) }, onAllTests = { tab = TopLevel.Records },
                         header = { active?.let { a -> app.myhealth.ui.home.DashboardHeader(a, photo, members.orEmpty(), session::select) { picker = true } } })

@@ -63,6 +63,14 @@ data class MyHealthColors(
     val glassTop: Color,
     val glassBottom: Color,
     val glassBorder: Color,
+    /**
+     * The ONE exception to the single-hue rule (owner's request): red marks a value that is NOT IN RANGE, so it can
+     * be spotted at a glance. Used only for out-of-range status labels and the out-of-range tile edge, always with an
+     * icon and a word (High/Low), never as decoration.
+     */
+    val danger: Color,
+    val onDanger: Color,
+    val dangerSoft: Color,
     /** Soft, hue-tinted drop shadow (Solid family). */
     val shadow: Color,
     val outline: Color,
@@ -106,6 +114,13 @@ object Contrast {
     private fun ch(v: Long): Double { val s = v / 255.0; return if (s <= 0.03928) s / 12.92 else Math.pow((s + 0.055) / 1.055, 2.4) }
     fun luminance(c: Long) = 0.2126 * ch((c shr 16) and 0xFF) + 0.7152 * ch((c shr 8) and 0xFF) + 0.0722 * ch(c and 0xFF)
     fun ratio(a: Long, b: Long): Double { val x = luminance(a); val y = luminance(b); return (maxOf(x, y) + 0.05) / (minOf(x, y) + 0.05) }
+}
+
+/** Out-of-range red (see [MyHealthColors.danger]); same for every theme so "red = not in range" never changes. */
+object Danger {
+    fun danger(dark: Boolean): Long = if (dark) 0xFFFF6B6B else 0xFFC62828
+    fun onDanger(dark: Boolean): Long = if (dark) 0xFF2A0606 else 0xFFFFFFFF
+    fun soft(dark: Boolean): Long = if (dark) 0xFF3A1416 else 0xFFFDECEC
 }
 
 object MyHealthColorRoles {
@@ -157,6 +172,7 @@ fun ColorRoles.toColors(isDark: Boolean, theme: MyHealthThemeId): MyHealthColors
         accent = acc, onAccent = onAccent.c(), accentContainer = accentContainer.c(), onAccentContainer = onAccentContainer.c(), accentSoft = accentSoft.c(),
         accentBright = bright, glow = bright.copy(alpha = if (isDark) 0.45f else 0.22f),
         hero = hero.c(), onHero = onHero.c(), heroAccent = heroAccent.c(),
+        danger = Color(Danger.danger(isDark).toInt()), onDanger = Color(Danger.onDanger(isDark).toInt()), dangerSoft = Color(Danger.soft(isDark).toInt()),
         shadow = if (isDark) Color(0x66000000) else Color(Hsl.argb(theme.hue, 0.35f, 0.18f).toInt()).copy(alpha = 0.16f),
         background = background.c(), backgroundAlt = backgroundAlt.c(), surface = surface.c(), surfaceRaised = surfaceRaised.c(), surfaceSunken = surfaceSunken.c(),
         glassTop = if (isDark) surfaceRaised.c().copy(alpha = 0.78f) else Color.White.copy(alpha = 0.86f),

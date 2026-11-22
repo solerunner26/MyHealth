@@ -22,6 +22,9 @@ before writing code.
    neutrals that lean slightly toward it. Tints, shades, glows and chart series are lightness/chroma steps of that
    hue. No second brand colour. Status never relies on a new colour: it uses icon + label + fill weight + shape.
    (Neon is allowed only as the *brightest step* of the same hue, for glows and small highlights.)
+   **One exception, owner's rule:** values NOT IN RANGE use a fixed status red (`danger`) for their label pill and
+   tile edge, in every theme, always with an icon and a word (High/Low), so problems are found at a glance. Red is
+   never decoration, never a brand colour, never on in-range values.
 2. **Nothing overlaps or truncates badly.** Numbers auto-size, units never wrap, every row reserves space for its
    longest translation (Hindi/Gujarati are ~30 % longer), touch targets ≥ 48 dp.
 3. **Calm motion with purpose.** Every screen change, tab change and value reveal animates (see foundations), but
@@ -30,8 +33,9 @@ before writing code.
    behind content.
 5. **A hero per screen.** One element is the focus (balance card / score / most urgent value); everything else is
    quieter.
-6. **Out-of-range is unmistakable**: the tile changes *material* (solid accent fill or deep ink, glow ring, badge),
-   not just a colour.
+6. **Out-of-range is unmistakable and comes first**: the tile turns red-tinted with a red edge that slowly breathes
+   and a red High/Low pill; not-in-range tiles and rows are sorted to the top, in-range ones below. Tiles are
+   compact (three across on phones) with small gauges; every core vital has a tile (an invitation to log if empty).
 7. **Verify by looking.** Render screenshots (light + dark, smallest phone width, 2x font) and inspect before calling
    a design done.
 

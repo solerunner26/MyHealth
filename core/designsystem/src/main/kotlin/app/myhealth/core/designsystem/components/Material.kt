@@ -24,7 +24,7 @@ import app.myhealth.core.designsystem.theme.MyHealthTheme
  * The surface materials of the two theme families (android-design-studio skill):
  * - [SurfaceKind.Card]: Glass = translucent gradient + hairline light edge; Solid = opaque paper + soft tinted shadow.
  * - [SurfaceKind.Hero]: the screen's focal card. Solid = deep shade of the hue; Glass = accent-tinted glass with glow.
- * - [SurfaceKind.Alert]: hero material plus a slowly breathing glow rim, for values out of range.
+ * - [SurfaceKind.Alert]: values NOT IN RANGE: the card turns red-tinted with a red edge that breathes slowly.
  * - [SurfaceKind.Soft]: tinted container for "slightly off" values and callouts.
  */
 enum class SurfaceKind { Card, Hero, Alert, Soft }
@@ -41,7 +41,12 @@ fun Modifier.material(kind: SurfaceKind, shape: Shape = MyHealthTheme.radii.lgSh
             .then(if (c.isGlass) Modifier else Modifier.shadow(4.dp, shape, ambientColor = c.shadow, spotColor = c.shadow))
             .background(if (c.isGlass) Brush.verticalGradient(listOf(c.accentSoft.copy(alpha = 0.9f), c.glassBottom)) else Brush.verticalGradient(listOf(c.accentSoft, c.accentSoft)), shape)
             .border(MyHealthTheme.stroke.regular, c.accent.copy(alpha = if (c.isGlass) 0.55f else 0.9f), shape)
-        SurfaceKind.Hero, SurfaceKind.Alert -> {
+        SurfaceKind.Alert -> this
+            .then(if (c.isGlass) Modifier else Modifier.shadow(10.dp, shape, ambientColor = c.danger.copy(alpha = 0.3f), spotColor = c.danger.copy(alpha = 0.4f)))
+            .background(Brush.verticalGradient(listOf(c.dangerSoft, if (c.isGlass) c.dangerSoft.copy(alpha = 0.75f) else c.surfaceRaised)), shape)
+            .border(MyHealthTheme.stroke.regular, c.danger, shape)
+            .alertRim(shape)
+        SurfaceKind.Hero -> {
             val base = if (c.isGlass) this
                 .shadow(18.dp, shape, ambientColor = c.glow, spotColor = c.glow)
                 .background(Brush.linearGradient(listOf(c.hero, androidx.compose.ui.graphics.lerp(c.hero, c.accent, if (c.isDark) 0.35f else 0.15f))), shape)
@@ -49,7 +54,7 @@ fun Modifier.material(kind: SurfaceKind, shape: Shape = MyHealthTheme.radii.lgSh
             else this
                 .shadow(16.dp, shape, ambientColor = c.hero, spotColor = c.hero.copy(alpha = 0.55f))
                 .background(Brush.linearGradient(listOf(c.hero, androidx.compose.ui.graphics.lerp(c.hero, c.heroAccent, 0.10f))), shape)
-            if (kind == SurfaceKind.Alert) base.alertRim(shape) else base
+            base
         }
     }
 }
@@ -63,7 +68,7 @@ private fun Modifier.alertRim(shape: Shape): Modifier {
     return this.drawBehind {
         val v = p?.value ?: 0.5f
         val outline = shape.createOutline(size, layoutDirection, this)
-        val ring = if (c.isGlass) c.heroAccent else c.hero
+        val ring = c.danger
         drawOutline(outline, ring.copy(alpha = 0.25f + 0.45f * v), style = Stroke(width = (2f + 4f * v).dp.toPx()))
     }
 }

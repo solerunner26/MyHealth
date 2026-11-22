@@ -125,13 +125,15 @@ fun VitalsSection(state: VitalsState, onAdd: () -> Unit, onOpen: (VitalType) -> 
             }
         }
         var index = 0
-        types.chunked(2).forEach { pair ->
+        // not in range first, then slightly off, then in range
+        val ordered = types.sortedBy { t -> app.myhealth.domain.analytics.VitalRules.band(state.series(t).last()).let { b -> if (b == app.myhealth.domain.analytics.VitalBand.Unknown) null else b.kind() }.let { app.myhealth.ui.home.urgencyOf(it) } }
+        ordered.chunked(app.myhealth.ui.home.TILE_COLUMNS).forEach { row ->
             app.myhealth.ui.home.TileRow { m ->
-                pair.forEach { t ->
+                row.forEach { t ->
                     val series = state.series(t)
                     app.myhealth.ui.home.VitalTile(t, series.last(), series.getOrNull(series.size - 2), state.member?.heightCm, zone, { onOpen(t) }, index++, m.testTag("vital_${t.name}"))
                 }
-                if (pair.size == 1) Spacer(m)
+                repeat(app.myhealth.ui.home.TILE_COLUMNS - row.size) { Spacer(m) }
             }
         }
         state.stepsAverage(LocalDate.now())?.let { avg ->

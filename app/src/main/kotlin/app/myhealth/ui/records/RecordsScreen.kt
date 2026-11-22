@@ -53,6 +53,8 @@ data class RecordsState(
     val reports: List<Report> = emptyList(),
     val trends: List<AnalyteTrend> = emptyList(),
     val windowStart: LocalDate? = null,
+    /** reportId → how many of its results are NOT IN RANGE (shown as a red label on the report). */
+    val outOfRange: Map<String, Int> = emptyMap(),
 )
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -61,7 +63,13 @@ class RecordsViewModel(session: Session) : ViewModel() {
         combine(session.stack.records.observeReports(m.id), session.stack.records.observeResults(m.id), session.container.preferences.state) { reports, results, prefs ->
             val today = LocalDate.now(session.container.clock)
             val start = TrendEngine.windowStart(today, prefs.historyYears)
-            RecordsState(false, reports.filter { !it.reportDate.isBefore(start) }, TrendEngine.all(results, today, prefs.historyYears, m.sex, m.ageYears(today)), start)
+            val age = m.ageYears(today)
+            val abnormal = results.filter { r ->
+                val a = app.myhealth.domain.catalogue.AnalyteCatalogue.byId(r.analyteId) ?: return@filter false
+                val ref = a.rangeFor(m.sex, age)
+                TrendEngine.status(a, r.value, r.refLow ?: ref?.low, r.refHigh ?: ref?.high).isAbnormal
+            }.mapNotNull { it.reportId }.groupingBy { it }.eachCount()
+            RecordsState(false, reports.filter { !it.reportDate.isBefore(start) }, TrendEngine.all(results, today, prefs.historyYears, m.sex, age), start, abnormal)
         }
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), RecordsState())
 }
@@ -97,7 +105,7 @@ fun RecordsContent(state: RecordsState, onOpenReport: (String) -> Unit, onOpenTr
                     (type == null || r.type == type) && (q.isEmpty() || listOfNotNull(r.title, r.labName, r.doctorName, typeLabels[r.type], dates[r.id], r.reportDate.toString())
                         .any { it.lowercase().contains(q) })
                 }
-                ReportList(shown, onOpenReport) { query = ""; type = null }
+                ReportList(shown, state.outOfRange, onOpenReport) { query = ""; type = null }
             }
             RecordsTab.Results -> {
                 if (state.trends.isEmpty()) {
@@ -127,15 +135,19 @@ fun RecordsContent(state: RecordsState, onOpenReport: (String) -> Unit, onOpenTr
 }
 
 @Composable
-private fun ReportList(reports: List<Report>, onOpen: (String) -> Unit, onClear: () -> Unit) {
+private fun ReportList(reports: List<Report>, outOfRange: Map<String, Int>, onOpen: (String) -> Unit, onClear: () -> Unit) {
     if (reports.isEmpty()) { NoMatch(onClear); return }
     val sp = MyHealthTheme.spacing
     LazyColumn(Modifier.fillMaxSize().testTag("recordsList"), contentPadding = PaddingValues(sp.gutter), verticalArrangement = Arrangement.spacedBy(sp.sm)) {
         items(reports, key = { it.id }) { r ->
             MyHealthCard(onClick = { onOpen(r.id) }, modifier = Modifier.testTag("report_${r.id}")) {
                 val base = stringResource(R.string.join_dot, label(r.type), formatDate(r.reportDate))
+                val bad = outOfRange[r.id] ?: 0
                 MyHealthListRow(r.title, subtitle = r.labName?.let { stringResource(R.string.join_dot, base, it) } ?: base,
-                    leadingIcon = if (r.type == ReportType.Prescription) MyHealthIcons.Medicines else MyHealthIcons.Document)
+                    leadingIcon = if (r.type == ReportType.Prescription) MyHealthIcons.Medicines else MyHealthIcons.Document) {
+                    if (bad > 0) MyHealthStatusBadge(androidx.compose.ui.res.pluralStringResource(R.plurals.records_out_of_range, bad, bad),
+                        app.myhealth.core.designsystem.components.StatusKind.High, Modifier.testTag("outOfRange_${r.id}"))
+                }
             }
         }
     }

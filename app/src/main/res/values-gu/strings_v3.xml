@@ -1,5 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="home_action_report">રિપોર્ટ ઉમેરો</string>
+    <string name="dash_log_short">નોંધો</string>
+    <string name="join_comma">%1$s, %2$s</string>
     <string name="home_action_visit">મુલાકાતની તૈયારી</string>
+    <plurals name="records_out_of_range">
+        <item quantity="one">%1$d મર્યાદા બહાર</item>
+        <item quantity="other">%1$d મર્યાદા બહાર</item>
+    </plurals>
 </resources>

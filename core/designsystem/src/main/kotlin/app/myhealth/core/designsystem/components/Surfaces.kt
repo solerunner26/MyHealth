@@ -47,6 +47,7 @@ fun MyHealthCard(
     onClick: (() -> Unit)? = null,
     emphasis: Emphasis = Emphasis.Subtle,
     alert: Boolean = false,
+    padding: androidx.compose.ui.unit.Dp = MyHealthTheme.spacing.lg,
     content: @Composable ColumnScope.() -> Unit,
 ) {
     val shape = MyHealthTheme.radii.lgShape
@@ -58,8 +59,8 @@ fun MyHealthCard(
     }
     val base = modifier.fillMaxWidth().material(kind, shape).clip(shape)
     val clickable = if (onClick != null) base.clickable(role = Role.Button, onClick = onClick) else base
-    if (kind == SurfaceKind.Hero || kind == SurfaceKind.Alert) ProvideHeroColors { Column(clickable.padding(MyHealthTheme.spacing.lg), content = content) }
-    else Column(clickable.padding(MyHealthTheme.spacing.lg), content = content)
+    if (kind == SurfaceKind.Hero) ProvideHeroColors { Column(clickable.padding(padding), content = content) }
+    else Column(clickable.padding(padding), content = content)
 }
 
 @Composable
@@ -121,10 +122,12 @@ fun MyHealthDivider(modifier: Modifier = Modifier) {
 
 /** Status pill. Status = icon + label + fill weight; colour is the single accent at varying weights. */
 @Composable
-fun MyHealthStatusBadge(label: String, kind: StatusKind, modifier: Modifier = Modifier) {
+fun MyHealthStatusBadge(label: String, kind: StatusKind, modifier: Modifier = Modifier, compact: Boolean = false) {
     val c = MyHealthTheme.colors
     val shape = MyHealthTheme.radii.pillShape
-    val (bg, fg, border) = when (kind.emphasis) {
+    // Not in range (low, high, critical) = RED pill with icon and word, so it is found at a glance.
+    val outOfRange = kind == StatusKind.Low || kind == StatusKind.High || kind == StatusKind.Critical || kind == StatusKind.Attention
+    val (bg, fg, border) = if (outOfRange) Triple(c.danger, c.onDanger, BorderStroke(MyHealthTheme.stroke.regular, c.danger)) else when (kind.emphasis) {
         Emphasis.Subtle -> Triple(c.surface, c.textSecondary, BorderStroke(MyHealthTheme.stroke.hairline, c.outlineStrong))
         Emphasis.Medium -> Triple(c.accentContainer, c.onAccentContainer, BorderStroke(MyHealthTheme.stroke.regular, c.accent))
         Emphasis.Strong -> Triple(c.accent, c.onAccent, BorderStroke(MyHealthTheme.stroke.strong, c.accent))
@@ -136,7 +139,11 @@ fun MyHealthStatusBadge(label: String, kind: StatusKind, modifier: Modifier = Mo
     ) {
         Icon(kind.icon, contentDescription = null, tint = fg, modifier = Modifier.size(14.dp))
         Spacer(Modifier.width(MyHealthTheme.spacing.xs))
-        Text(label, style = MyHealthTheme.typography.caption, color = fg)
+        val style = MyHealthTheme.typography.caption.copy(fontWeight = if (outOfRange) androidx.compose.ui.text.font.FontWeight.Bold else null, color = fg)
+        // compact (tiles): the word shrinks to fit rather than being cut off
+        if (compact) androidx.compose.foundation.text.BasicText(label, style = style, maxLines = 1,
+            autoSize = androidx.compose.foundation.text.TextAutoSize.StepBased(minFontSize = 8.sp, maxFontSize = style.fontSize, stepSize = 0.5.sp))
+        else Text(label, style = style, maxLines = 1, overflow = TextOverflow.Ellipsis)
     }
 }
 

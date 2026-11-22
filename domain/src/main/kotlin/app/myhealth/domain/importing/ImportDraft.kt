@@ -161,6 +161,43 @@ object ImportDrafts {
         )
     }
 
+    /**
+     * Combines two drafts of the SAME test date into one record (files picked together): [b]'s files become extra
+     * sources of [a]; values already present in [a] are kept from [a] (first file wins, like extra pages).
+     */
+    fun combine(a: ImportDraft, b: ImportDraft): ImportDraft {
+        val tag = "f${a.sources.size}-"
+        val haveA = a.labRows.mapNotNull { it.analyteId }.toSet(); val haveV = a.vitals.map { it.type }.toSet(); val haveM = a.medicines.map { it.name.lowercase() }.toSet()
+        return a.copy(
+            extraSources = a.extraSources + b.sources,
+            reportDate = a.reportDate ?: b.reportDate, labName = a.labName.ifBlank { b.labName }, patientName = a.patientName ?: b.patientName,
+            title = a.title.ifBlank { b.title }, duplicateOf = a.duplicateOf ?: b.duplicateOf,
+            labRows = a.labRows + b.labRows.filter { it.analyteId == null || it.analyteId !in haveA }.map { it.copy(key = tag + it.key) },
+            vitals = a.vitals + b.vitals.filter { it.type !in haveV }.map { it.copy(key = tag + it.key) },
+            medicines = a.medicines + b.medicines.filter { it.name.lowercase() !in haveM }.map { it.copy(key = tag + it.key) },
+        )
+    }
+
+    /**
+     * Files picked together become one record per TEST DATE: drafts with the same printed date (and the same printed
+     * patient, when both name one) merge; different dates stay separate. A file with no date found stays on its own.
+     * Order follows the dates (newest first), files keep their pick order inside a group.
+     */
+    fun <T> groupByDate(items: List<Pair<ImportDraft, T>>): List<Pair<ImportDraft, List<T>>> {
+        val groups = mutableListOf<Pair<ImportDraft, MutableList<T>>>()
+        for ((d, tag) in items) {
+            val i = if (d.reportDate == null) -1 else groups.indexOfFirst { (g, _) ->
+                g.reportDate == d.reportDate && samePerson(g.patientName, d.patientName)
+            }
+            if (i < 0) groups += d to mutableListOf(tag)
+            else { val (g, tags) = groups[i]; groups[i] = combine(g, d) to tags.also { it += tag } }
+        }
+        return groups.sortedWith(compareByDescending<Pair<ImportDraft, MutableList<T>>> { it.first.reportDate ?: LocalDate.MIN }).map { it.first to it.second.toList() }
+    }
+
+    private fun samePerson(a: String?, b: String?): Boolean =
+        a.isNullOrBlank() || b.isNullOrBlank() || NameMatcher.tokens(a) == NameMatcher.tokens(b) || NameMatcher.score(a, FamilyMember("", b, app.myhealth.domain.model.Relationship.Other)) >= 0.8
+
     fun toBundle(d: ImportDraft, ids: IdGenerator, now: Instant, zone: ZoneId, today: LocalDate, fallbackTitle: String = "Report"): Pair<ImportBundle, List<Attachment>> {
         require(validate(d, today).isEmpty()) { "draft has validation issues" }
         val date = d.reportDate!!

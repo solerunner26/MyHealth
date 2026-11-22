@@ -60,4 +60,14 @@ class PaletteTest {
             assertTrue("$tag outlineStrong ${contrast(r.outlineStrong, r.surface)}", contrast(r.outlineStrong, r.surface) >= 3.0)
         }
     }
+
+    @Test fun outOfRangeRedIsLegibleInEveryTheme() {
+        for (t in MyHealthThemeId.entries) for (dark in listOf(false, true)) {
+            val r = MyHealthColorRoles.roles(t, dark)
+            val red = app.myhealth.core.designsystem.tokens.Danger.danger(dark)
+            assertTrue("$t dark=$dark onDanger", contrast(app.myhealth.core.designsystem.tokens.Danger.onDanger(dark), red) >= 4.5)
+            for (bg in listOf(r.surface, r.surfaceRaised, r.background)) assertTrue("$t dark=$dark red text on page ${contrast(red, bg)}", contrast(red, bg) >= 4.5)
+            assertTrue("$t dark=$dark red on its soft fill", contrast(red, app.myhealth.core.designsystem.tokens.Danger.soft(dark)) >= 4.5)
+        }
+    }
 }
