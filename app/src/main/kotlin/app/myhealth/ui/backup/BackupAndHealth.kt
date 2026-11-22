@@ -151,6 +151,8 @@ fun BackupScreen(onBack: () -> Unit) {
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password))
             MyHealthSecondaryButton(stringResource(R.string.restore_choose), { confirmRestore = true }, Modifier.fillMaxWidth(), icon = MyHealthIcons.Restore,
                 enabled = restorePw.isNotEmpty() && phase != BackupPhase.Working)
+            AutoBackupSection()
+            ShareSection()
             Spacer(Modifier.height(sp.xl))
         }
     }

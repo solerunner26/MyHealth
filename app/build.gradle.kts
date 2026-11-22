@@ -86,6 +86,8 @@ dependencies {
     implementation(libs.androidx.biometric)
     implementation(libs.androidx.health.connect)
     implementation(libs.androidx.exifinterface)
+    implementation(libs.androidx.work.runtime)
+    implementation(libs.zxing.core)
     implementation(libs.androidx.fragment)
     implementation(libs.pdfbox.android)
     implementation(libs.mlkit.text.recognition)

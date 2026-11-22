@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="auto_title">Automatic backups</string>
+    <string name="auto_body">Encrypted backups are written on a schedule to a folder you choose, such as an SD card or a USB drive. The newest 5 are kept.</string>
+    <string name="auto_off">Off</string>
+    <string name="auto_daily">Daily</string>
+    <string name="auto_weekly">Weekly</string>
+    <string name="auto_choose_folder">Choose folder</string>
+    <string name="auto_folder">Folder: %1$s</string>
+    <string name="auto_password">Password for automatic backups</string>
+    <string name="auto_password_hint">Kept protected by this phone\'s secure hardware so backups can run on their own. You need it to restore, so note it down.</string>
+    <string name="auto_save">Save schedule</string>
+    <string name="auto_now">Back up now</string>
+    <string name="auto_last_ok">Last automatic backup: %1$s</string>
+    <string name="auto_last_failed">The automatic backup on %1$s did not finish. Check that the folder is still available.</string>
+    <string name="auto_need_setup">Choose a folder and set a password first.</string>
+    <string name="auto_saved">Automatic backups are set.</string>
+    <string name="auto_unavailable">This phone could not protect the password, so automatic backups are not available.</string>
+    <string name="share_title">Share with another phone</string>
+    <string name="share_body">Creates an encrypted file with one member\'s record. Send the file any way you like; the other phone also needs the code (scan the QR or type it). No server is involved.</string>
+    <string name="share_create">Create share file</string>
+    <string name="share_code_title">Share code</string>
+    <string name="share_code_body">On the other phone open Backup, then Receive from another phone, pick the file and scan this code. Send the code separately from the file.</string>
+    <string name="share_receive_title">Receive from another phone</string>
+    <string name="share_code_field">Share code</string>
+    <string name="share_scan">Read the code from a photo of the QR</string>
+    <string name="share_pick_file">Choose shared file</string>
+    <string name="share_received">The shared record was added to this phone.</string>
+    <string name="share_scan_failed">No share code was found in that photo.</string>
+    <string name="share_bad_code">This code does not open that file.</string>
+    <string name="share_not_member_file">This is not a shared member file.</string>
+    <string name="share_failed">Sharing did not work. Please try again.</string>
+    <string name="share_qr_cd">QR code with the share code</string>
+</resources>

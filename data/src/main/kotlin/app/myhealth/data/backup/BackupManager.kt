@@ -33,15 +33,30 @@ class BackupManager(private val context: Context, private val stack: DataStack, 
     /** Tables in FK-safe insert order. */
     private val tables = listOf("members", "reports", "attachments", "lab_results", "vitals", "medicines", "dose_logs", "treatments", "daily_activity", "vaccinations", "health_cards", "family_history", "visit_questions", "media", "meta")
 
-    suspend fun export(out: OutputStream, password: CharArray, nowMs: Long, appVersion: String): BackupInfo {
-        val dump = stack.database.read { db -> tables.associateWith { t -> rows(db, t) } }
+    suspend fun export(out: OutputStream, password: CharArray, nowMs: Long, appVersion: String): BackupInfo =
+        write(out, password, nowMs, appVersion, memberId = null)
+
+    /**
+     * Item 4 (shared family view, no server): ONE member's record, for another phone to read. Family-wide relatives,
+     * app settings and other members are never included.
+     */
+    suspend fun exportMember(out: OutputStream, password: CharArray, nowMs: Long, appVersion: String, memberId: String): BackupInfo =
+        write(out, password, nowMs, appVersion, memberId)
+
+    private suspend fun write(out: OutputStream, password: CharArray, nowMs: Long, appVersion: String, memberId: String?): BackupInfo {
+        val dump = stack.database.read { db ->
+            if (memberId == null) tables.associateWith { t -> rows(db, t) }
+            else memberTables.associateWith { t -> rows(db, t, memberFilter(t), memberId) }
+        }
         val attachmentIds = dump.getValue("attachments").map { (it as JSONObject).getString("id") }
-        val photoNames = stack.vault.names().filter { it.startsWith("photo-") || it.startsWith("media-") }
+        val photoNames = if (memberId == null) stack.vault.names().filter { it.startsWith("photo-") || it.startsWith("media-") }
+            else (listOf("photo-$memberId") + dump.getValue("media").map { "media-" + (it as JSONObject).getString("id") }).filter { stack.vault.exists(it) }
         val info = BackupInfo(Schema.VERSION, nowMs, dump.getValue("members").size, dump.getValue("reports").size, attachmentIds.size)
         try {
             ZipOutputStream(BackupCrypto.encrypting(out, password)).use { zip ->
                 zip.putNextEntry(ZipEntry("manifest.json"))
                 zip.write(JSONObject().put("schema", Schema.VERSION).put("created", nowMs).put("app", appVersion).put("members", info.members)
+                    .put("kind", if (memberId == null) KIND_FULL else KIND_MEMBER)
                     .put("reports", info.reports).put("attachments", info.attachments).toString().toByteArray())
                 zip.closeEntry()
                 zip.putNextEntry(ZipEntry("data.json"))
@@ -58,7 +73,15 @@ class BackupManager(private val context: Context, private val stack: DataStack, 
     }
 
     /** Decrypts and validates fully, then replaces all current data. Current data is untouched on any failure. */
-    suspend fun restore(input: InputStream, password: CharArray): BackupInfo {
+    suspend fun restore(input: InputStream, password: CharArray): BackupInfo = read(input, password, member = false)
+
+    /**
+     * Reads a member export from another phone: that member's record is added, or replaced if the same person was
+     * shared before. Every row must belong to that one member (a crafted file cannot write into anyone else's record).
+     */
+    suspend fun importMember(input: InputStream, password: CharArray): BackupInfo = read(input, password, member = true)
+
+    private suspend fun read(input: InputStream, password: CharArray, member: Boolean): BackupInfo {
         val staging = File(vaultDir.parentFile, "restore-staging").apply { if (exists()) SecureDelete.overwriteAndDelete(this); mkdirs() }
         val stagingVault = EncryptedVault(staging, vaultKeyBytes())
         var manifest: JSONObject? = null; var data: JSONObject? = null
@@ -91,7 +114,19 @@ class BackupManager(private val context: Context, private val stack: DataStack, 
             if (m.optInt("attachments", files.size) != files.count { !it.startsWith("photo-") && !it.startsWith("media-") }) throw BackupException(BackupFailure.Corrupt)
             val version = m.getInt("schema")
             if (version > Schema.VERSION) throw BackupException(BackupFailure.NewerVersion)
+            if ((m.optString("kind", KIND_FULL) == KIND_MEMBER) != member) throw BackupException(BackupFailure.NotABackup)
             val rows = upgrade(d, version)
+            if (member) {
+                val memberId = checkMemberOnly(rows, files)
+                val old = stack.database.read { db -> oldFilesOf(db, memberId) }
+                stack.database.write(tables.toSet()) { db ->
+                    db.delete("members", "id = ?", arrayOf(memberId)) // cascades to every table of that member
+                    memberTables.forEach { t -> rows[t]?.forEach { cv -> db.insert(t, SQLiteDatabase.CONFLICT_ABORT, cv) } }
+                }
+                old.forEach { runCatching { stack.vault.delete(it) } }
+                files.forEach { id -> File(staging, id).renameTo(File(vaultDir, id)) }
+                return BackupInfo(version, m.optLong("created"), 1, m.optInt("reports"), files.count { !it.startsWith("photo-") && !it.startsWith("media-") })
+            }
             stack.database.write(tables.toSet()) { db ->
                 tables.reversed().forEach { db.delete(it, null, null) }
                 tables.forEach { t -> rows[t]?.forEach { cv -> db.insert(t, SQLiteDatabase.CONFLICT_ABORT, cv) } }
@@ -130,6 +165,45 @@ class BackupManager(private val context: Context, private val stack: DataStack, 
 
     private fun vaultKeyBytes(): ByteArray = stack.vault.keyBytesForStaging()
 
+    /** Tables that hold one member's record (FK-safe order). */
+    private val memberTables = listOf("members", "reports", "attachments", "lab_results", "vitals", "medicines", "dose_logs", "treatments", "daily_activity",
+        "vaccinations", "health_cards", "visit_questions", "media")
+
+    private fun memberFilter(t: String) = when (t) {
+        "members" -> "id = ?"
+        "attachments" -> "report_id IN (SELECT id FROM reports WHERE member_id = ?)"
+        "dose_logs" -> "medicine_id IN (SELECT id FROM medicines WHERE member_id = ?)"
+        else -> "member_id = ?"
+    }
+
+    /** Every row of a member file must belong to its single member; links must stay inside that member's rows. */
+    private fun checkMemberOnly(rows: Map<String, List<ContentValues>>, files: List<String>): String {
+        val members = rows["members"].orEmpty()
+        require(members.size == 1) { "member file must hold exactly one member" }
+        val id = members.single().getAsString("id")
+        require(id != null && id.matches(Regex("[A-Za-z0-9-]{1,64}"))) { "bad member id" }
+        memberTables.filter { it !in setOf("members", "attachments", "dose_logs") }.forEach { t ->
+            rows[t].orEmpty().forEach { require(it.getAsString("member_id") == id) { "row of another member" } }
+        }
+        val reports = rows["reports"].orEmpty().map { it.getAsString("id") }.toSet()
+        val meds = rows["medicines"].orEmpty().map { it.getAsString("id") }.toSet()
+        rows["attachments"].orEmpty().forEach { require(it.getAsString("report_id") in reports) { "attachment outside the record" } }
+        rows["dose_logs"].orEmpty().forEach { require(it.getAsString("medicine_id") in meds) { "dose log outside the record" } }
+        val allowedFiles = rows["attachments"].orEmpty().map { it.getAsString("id") }.toSet() + "photo-$id" +
+            rows["media"].orEmpty().map { "media-" + it.getAsString("id") }
+        require(files.all { it in allowedFiles }) { "file outside the record" }
+        return id
+    }
+
+    /** Vault files of a member already on this phone, removed when a newer share of the same member replaces it. */
+    private fun oldFilesOf(db: SupportSQLiteDatabase, memberId: String): List<String> =
+        rows(db, "attachments", memberFilter("attachments"), memberId).map { it.getString("id") } + "photo-$memberId" +
+            rows(db, "media", memberFilter("media"), memberId).map { "media-" + it.getString("id") }
+
+    private fun rows(db: SupportSQLiteDatabase, table: String, where: String, arg: String): List<JSONObject> = db.query("SELECT * FROM $table WHERE $where", arrayOf(arg)).use { c ->
+        buildList { while (c.moveToNext()) add(JSONObject().apply { for (i in 0 until c.columnCount) put(c.getColumnName(i), value(c, i)) }) }
+    }
+
     private fun rows(db: SupportSQLiteDatabase, table: String): List<JSONObject> = db.query("SELECT * FROM $table").use { c ->
         buildList { while (c.moveToNext()) add(JSONObject().apply { for (i in 0 until c.columnCount) put(c.getColumnName(i), value(c, i)) }) }
     }
@@ -164,6 +238,8 @@ class BackupManager(private val context: Context, private val stack: DataStack, 
     }
 
     companion object {
+        const val KIND_FULL = "full"
+        const val KIND_MEMBER = "member"
         const val MAX_ENTRIES = 20_000
         const val MAX_MANIFEST = 64 * 1024
         const val MAX_DATA = 96 * 1024 * 1024

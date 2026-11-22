@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="auto_title">अपने आप बैकअप</string>
+    <string name="auto_body">चुने हुए फ़ोल्डर (जैसे एसडी कार्ड या यूएसबी ड्राइव) में तय समय पर एन्क्रिप्टेड बैकअप बनते हैं। सबसे नए 5 रखे जाते हैं।</string>
+    <string name="auto_off">बंद</string>
+    <string name="auto_daily">रोज़</string>
+    <string name="auto_weekly">हर हफ़्ते</string>
+    <string name="auto_choose_folder">फ़ोल्डर चुनें</string>
+    <string name="auto_folder">फ़ोल्डर: %1$s</string>
+    <string name="auto_password">अपने आप बैकअप का पासवर्ड</string>
+    <string name="auto_password_hint">इसे फ़ोन के सुरक्षित हार्डवेयर से सुरक्षित रखा जाता है ताकि बैकअप अपने आप चल सकें। रिस्टोर के लिए इसकी ज़रूरत होगी, इसलिए इसे लिख लें।</string>
+    <string name="auto_save">शेड्यूल सहेजें</string>
+    <string name="auto_now">अभी बैकअप लें</string>
+    <string name="auto_last_ok">पिछला अपने आप बैकअप: %1$s</string>
+    <string name="auto_last_failed">%1$s का अपने आप बैकअप पूरा नहीं हुआ। देखें कि फ़ोल्डर अभी उपलब्ध है।</string>
+    <string name="auto_need_setup">पहले फ़ोल्डर चुनें और पासवर्ड रखें।</string>
+    <string name="auto_saved">अपने आप बैकअप तय हो गए।</string>
+    <string name="auto_unavailable">यह फ़ोन पासवर्ड सुरक्षित नहीं कर सका, इसलिए अपने आप बैकअप उपलब्ध नहीं है।</string>
+    <string name="share_title">दूसरे फ़ोन के साथ शेयर करें</string>
+    <string name="share_body">एक सदस्य के रिकॉर्ड की एन्क्रिप्टेड फ़ाइल बनती है। फ़ाइल किसी भी तरह भेजें; दूसरे फ़ोन को कोड भी चाहिए (क्यूआर स्कैन करें या टाइप करें)। कोई सर्वर इस्तेमाल नहीं होता।</string>
+    <string name="share_create">शेयर फ़ाइल बनाएँ</string>
+    <string name="share_code_title">शेयर कोड</string>
+    <string name="share_code_body">दूसरे फ़ोन पर बैकअप खोलें, फिर \"दूसरे फ़ोन से पाएँ\", फ़ाइल चुनें और यह कोड स्कैन करें। कोड फ़ाइल से अलग भेजें।</string>
+    <string name="share_receive_title">दूसरे फ़ोन से पाएँ</string>
+    <string name="share_code_field">शेयर कोड</string>
+    <string name="share_scan">क्यूआर की फ़ोटो से कोड पढ़ें</string>
+    <string name="share_pick_file">शेयर की गई फ़ाइल चुनें</string>
+    <string name="share_received">शेयर किया गया रिकॉर्ड इस फ़ोन में जोड़ दिया गया।</string>
+    <string name="share_scan_failed">उस फ़ोटो में कोई शेयर कोड नहीं मिला।</string>
+    <string name="share_bad_code">यह कोड उस फ़ाइल को नहीं खोलता।</string>
+    <string name="share_not_member_file">यह शेयर की गई सदस्य फ़ाइल नहीं है।</string>
+    <string name="share_failed">शेयर नहीं हो सका। फिर से कोशिश करें।</string>
+    <string name="share_qr_cd">शेयर कोड वाला क्यूआर कोड</string>
+</resources>

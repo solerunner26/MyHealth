@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="auto_title">આપમેળે બેકઅપ</string>
+    <string name="auto_body">પસંદ કરેલા ફોલ્ડર (જેમ કે એસડી કાર્ડ કે યુએસબી ડ્રાઇવ) માં નક્કી સમયે એન્ક્રિપ્ટેડ બેકઅપ બને છે. સૌથી નવા 5 રાખવામાં આવે છે.</string>
+    <string name="auto_off">બંધ</string>
+    <string name="auto_daily">દરરોજ</string>
+    <string name="auto_weekly">દર અઠવાડિયે</string>
+    <string name="auto_choose_folder">ફોલ્ડર પસંદ કરો</string>
+    <string name="auto_folder">ફોલ્ડર: %1$s</string>
+    <string name="auto_password">આપમેળે બેકઅપનો પાસવર્ડ</string>
+    <string name="auto_password_hint">તે ફોનના સુરક્ષિત હાર્ડવેર વડે સુરક્ષિત રહે છે જેથી બેકઅપ આપમેળે ચાલી શકે. રિસ્ટોર માટે તેની જરૂર પડશે, તેથી લખી રાખો.</string>
+    <string name="auto_save">શેડ્યૂલ સાચવો</string>
+    <string name="auto_now">હમણાં બેકઅપ લો</string>
+    <string name="auto_last_ok">છેલ્લો આપમેળે બેકઅપ: %1$s</string>
+    <string name="auto_last_failed">%1$s નો આપમેળે બેકઅપ પૂરો થયો નહીં. તપાસો કે ફોલ્ડર હજી ઉપલબ્ધ છે.</string>
+    <string name="auto_need_setup">પહેલાં ફોલ્ડર પસંદ કરો અને પાસવર્ડ રાખો.</string>
+    <string name="auto_saved">આપમેળે બેકઅપ ગોઠવાઈ ગયા.</string>
+    <string name="auto_unavailable">આ ફોન પાસવર્ડ સુરક્ષિત કરી શક્યો નહીં, તેથી આપમેળે બેકઅપ ઉપલબ્ધ નથી.</string>
+    <string name="share_title">બીજા ફોન સાથે શેર કરો</string>
+    <string name="share_body">એક સભ્યના રેકોર્ડની એન્ક્રિપ્ટેડ ફાઇલ બને છે. ફાઇલ કોઈ પણ રીતે મોકલો; બીજા ફોનને કોડ પણ જોઈએ (ક્યુઆર સ્કેન કરો કે ટાઇપ કરો). કોઈ સર્વર વપરાતું નથી.</string>
+    <string name="share_create">શેર ફાઇલ બનાવો</string>
+    <string name="share_code_title">શેર કોડ</string>
+    <string name="share_code_body">બીજા ફોન પર બેકઅપ ખોલો, પછી \"બીજા ફોનમાંથી મેળવો\", ફાઇલ પસંદ કરો અને આ કોડ સ્કેન કરો. કોડ ફાઇલથી અલગ મોકલો.</string>
+    <string name="share_receive_title">બીજા ફોનમાંથી મેળવો</string>
+    <string name="share_code_field">શેર કોડ</string>
+    <string name="share_scan">ક્યુઆરના ફોટામાંથી કોડ વાંચો</string>
+    <string name="share_pick_file">શેર કરેલી ફાઇલ પસંદ કરો</string>
+    <string name="share_received">શેર કરેલો રેકોર્ડ આ ફોનમાં ઉમેરાયો.</string>
+    <string name="share_scan_failed">તે ફોટામાં કોઈ શેર કોડ મળ્યો નહીં.</string>
+    <string name="share_bad_code">આ કોડ તે ફાઇલ ખોલતો નથી.</string>
+    <string name="share_not_member_file">આ શેર કરેલી સભ્ય ફાઇલ નથી.</string>
+    <string name="share_failed">શેર થઈ શક્યું નહીં. ફરી પ્રયાસ કરો.</string>
+    <string name="share_qr_cd">શેર કોડવાળો ક્યુઆર કોડ</string>
+</resources>

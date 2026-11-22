@@ -1,5 +1,6 @@
 # Pinned toolchain. Every entry is justified in DECISIONS.md (D-002, D-003).
 [versions]
+zxing = "3.5.3"
 agp = "9.5.2"
 kotlin = "2.4.21"
 coroutines = "1.11.0"
@@ -38,6 +39,7 @@ androidx-sqlite = { module = "androidx.sqlite:sqlite", version.ref = "sqlite" }
 androidx-sqlite-framework = { module = "androidx.sqlite:sqlite-framework", version.ref = "sqlite" }
 sqlcipher-android = { module = "net.zetetic:sqlcipher-android", version.ref = "sqlcipher" }
 androidx-work-runtime = { module = "androidx.work:work-runtime-ktx", version.ref = "work" }
+zxing-core = { module = "com.google.zxing:core", version.ref = "zxing" }
 androidx-exifinterface = { module = "androidx.exifinterface:exifinterface", version.ref = "exif" }
 androidx-biometric = { module = "androidx.biometric:biometric", version.ref = "biometric" }
 androidx-health-connect = { module = "androidx.health.connect:connect-client", version.ref = "healthConnect" }

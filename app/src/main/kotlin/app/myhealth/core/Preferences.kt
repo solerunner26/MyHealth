@@ -81,6 +81,17 @@ class Preferences(context: Context) {
 
     data class Lockout(val boot: Long, val startElapsed: Long, val durationMs: Long) { companion object { val NONE = Lockout(0, 0, 0) } }
 
+    // ---- automatic backups (item 3) ----
+    fun autoBackupFolder(): String? = prefs.getString("ab_folder", null)
+    fun autoBackupSecret(): String? = prefs.getString("ab_secret", null)
+    fun autoBackupFrequency(): AutoBackupFrequency = runCatching { AutoBackupFrequency.valueOf(prefs.getString("ab_freq", "Off")!!) }.getOrDefault(AutoBackupFrequency.Off)
+    fun autoBackupLast(): Pair<Long, Boolean>? = prefs.getLong("ab_last", 0).takeIf { it > 0 }?.let { it to prefs.getBoolean("ab_last_ok", false) }
+    fun setAutoBackup(folder: String?, secret: String?, freq: AutoBackupFrequency) = update {
+        if (folder != null) putString("ab_folder", folder); if (secret != null) putString("ab_secret", secret); putString("ab_freq", freq.name)
+    }
+    fun setAutoBackupResult(at: Long, ok: Boolean) = update { putLong("ab_last", at); putBoolean("ab_last_ok", ok) }
+    fun clearAutoBackup() = update { remove("ab_folder"); remove("ab_secret"); putString("ab_freq", "Off") }
+
     @android.annotation.SuppressLint("ApplySharedPref", "UseKtx")
     fun clearAll() { prefs.edit().clear().commit(); _state.value = read() }
 }

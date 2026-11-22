@@ -64,3 +64,56 @@ class FamilyDataTest {
         assertEquals(1, b.familyHistory.observe().first().size)
     }
 }
+
+@RunWith(RobolectricTestRunner::class)
+class MemberShareTest {
+    private val context: Context = ApplicationProvider.getApplicationContext()
+    private fun newStack(name: String) = StorageOpener(context, StoragePaths(File(context.noBackupFilesDir, "$name-${System.nanoTime()}")), SoftwareKeyWrapper()) { FrameworkSQLiteOpenHelperFactory() }.open()
+    private val code = "ABCD-EFGH-JKLM-NPQR-STUV".toCharArray()
+
+    @Test fun oneMemberTravelsToAnotherPhoneAndReplacesTheOlderCopy() = runBlocking {
+        val a = newStack("share-a")
+        val ravi = TestData.member("m1", "Ravi"); val meera = TestData.member("m2", "Meera", app.myhealth.domain.model.Relationship.Spouse)
+        a.members.upsert(ravi); a.members.upsert(meera)
+        a.records.saveImport(app.myhealth.domain.repository.ImportBundle(TestData.report("r1", "m1"), listOf(TestData.result("x1", v = 13.2)), emptyList(), emptyList()),
+            listOf(app.myhealth.domain.repository.NewAttachment(TestData.attachment(), "ravi's pdf".toByteArray())))
+        a.records.saveImport(app.myhealth.domain.repository.ImportBundle(TestData.report("r2", "m2"), emptyList(), emptyList(), emptyList()), emptyList())
+        a.healthCards.upsert(HealthCard("c1", "m1", HealthCardKind.Abha, number = "1"))
+        a.familyHistory.upsert(RelativeCondition("fh", "Grandfather", "Diabetes"))
+
+        val out = ByteArrayOutputStream(); a.backups(context).exportMember(out, code, 0, "t", "m1")
+        val b = newStack("share-b")
+        b.members.upsert(TestData.member("me", "Phone owner"))
+        val info = b.backups(context).importMember(ByteArrayInputStream(out.toByteArray()), code)
+        assertEquals(1, info.members)
+        assertEquals(setOf("me", "m1"), b.members.all().map { it.id }.toSet()) // Meera was never shared
+        assertEquals(1, b.records.observeReports("m1").first().size)
+        assertArrayEquals("ravi's pdf".toByteArray(), b.records.attachmentBytes(b.records.observeReports("m1").first().single().attachments.single().id))
+        assertTrue(b.familyHistory.observe().first().isEmpty()) // family-wide notes stay on the sender's phone
+
+        // the sender adds a report and shares again: the copy is replaced, not duplicated
+        a.records.saveImport(app.myhealth.domain.repository.ImportBundle(TestData.report("r3", "m1", LocalDate.of(2024, 5, 1)), emptyList(), emptyList(), emptyList()), emptyList())
+        val out2 = ByteArrayOutputStream(); a.backups(context).exportMember(out2, code, 0, "t", "m1")
+        b.backups(context).importMember(ByteArrayInputStream(out2.toByteArray()), code)
+        assertEquals(setOf("r1", "r3"), b.records.observeReports("m1").first().map { it.id }.toSet())
+
+        // a full backup is not accepted as a member share, and vice versa
+        try { b.backups(context).restore(ByteArrayInputStream(out2.toByteArray()), code); org.junit.Assert.fail() } catch (e: app.myhealth.data.backup.BackupException) { assertEquals(app.myhealth.data.backup.BackupFailure.NotABackup, e.failure) }
+    }
+
+    @Test fun aCraftedShareCannotWriteIntoAnotherMembersRecord() = runBlocking {
+        val b = newStack("share-evil")
+        b.members.upsert(TestData.member("me", "Owner"))
+        val manifest = """{"schema":3,"kind":"member","attachments":0}"""
+        val data = """{"members":[{"id":"x","name":"X","relationship":"Self","sex":"Unknown","blood_group":"Unknown","allergies":"","conditions":"","ec_name":"","ec_phone":"","ec_relation":"","created_at":0}],
+            "vitals":[{"id":"v","member_id":"me","type":"Pulse","value":200.0,"unit":"bpm","measured_at":0,"source":"Manual"}]}"""
+        val out = ByteArrayOutputStream()
+        java.util.zip.ZipOutputStream(app.myhealth.data.backup.BackupCrypto.encrypting(out, code, iterations = 10_000)).use { z ->
+            z.putNextEntry(java.util.zip.ZipEntry("manifest.json")); z.write(manifest.toByteArray()); z.closeEntry()
+            z.putNextEntry(java.util.zip.ZipEntry("data.json")); z.write(data.toByteArray()); z.closeEntry()
+        }
+        try { b.backups(context).importMember(ByteArrayInputStream(out.toByteArray()), code); org.junit.Assert.fail() } catch (e: app.myhealth.data.backup.BackupException) { assertEquals(app.myhealth.data.backup.BackupFailure.Corrupt, e.failure) }
+        assertTrue(b.vitals.all("me").isEmpty())
+        assertEquals(listOf("me"), b.members.all().map { it.id })
+    }
+}
