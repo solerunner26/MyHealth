@@ -1,0 +1,81 @@
+name: release
+
+# Publishes installable APKs as a GitHub pre-release.
+# Runs when this file changes on the development branch, or manually from the Actions tab.
+on:
+  workflow_dispatch:
+  push:
+    branches: [claude/elegant-sagan-tkw90w]
+    paths: [.github/workflows/release.yml]
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    env:
+      KEYSTORE_B64: ${{ secrets.MYHEALTH_KEYSTORE_B64 }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+      - uses: android-actions/setup-android@v3
+        with:
+          packages: "platforms;android-37.2 build-tools;37.0.0"
+      - uses: gradle/actions/setup-gradle@v4
+
+      - name: Signing key (repository secret, or a one-off test key)
+        run: |
+          KS="$RUNNER_TEMP/release.jks"
+          if [ -n "$KEYSTORE_B64" ]; then
+            echo "$KEYSTORE_B64" | base64 -d > "$KS"
+            echo "MYHEALTH_KEYSTORE_PASSWORD=${{ secrets.MYHEALTH_KEYSTORE_PASSWORD }}" >> "$GITHUB_ENV"
+            echo "MYHEALTH_KEY_ALIAS=${{ secrets.MYHEALTH_KEY_ALIAS }}" >> "$GITHUB_ENV"
+            echo "MYHEALTH_KEY_PASSWORD=${{ secrets.MYHEALTH_KEY_PASSWORD }}" >> "$GITHUB_ENV"
+            echo "SIGNING_NOTE=Signed with the project release key." >> "$GITHUB_ENV"
+          else
+            PW=$(openssl rand -hex 24)
+            keytool -genkeypair -keystore "$KS" -storepass "$PW" -keypass "$PW" -alias test -keyalg RSA -keysize 3072 -validity 3650 -dname "CN=MyHealth test build"
+            echo "::add-mask::$PW"
+            echo "MYHEALTH_KEYSTORE_PASSWORD=$PW" >> "$GITHUB_ENV"
+            echo "MYHEALTH_KEY_ALIAS=test" >> "$GITHUB_ENV"
+            echo "MYHEALTH_KEY_PASSWORD=$PW" >> "$GITHUB_ENV"
+            echo "SIGNING_NOTE=Signed with a one-off test key: uninstall this build before installing a later one." >> "$GITHUB_ENV"
+          fi
+          echo "MYHEALTH_KEYSTORE=$KS" >> "$GITHUB_ENV"
+
+      - name: Build release and debug APKs
+        run: ./gradlew assembleRelease assembleDebug
+
+      - name: Verify and name artifacts
+        run: |
+          VERSION=$(grep -oP 'versionName = "\K[^"]+' app/build.gradle.kts)
+          echo "VERSION=$VERSION" >> "$GITHUB_ENV"
+          mkdir dist
+          cp app/build/outputs/apk/release/app-release.apk "dist/MyHealth-$VERSION-release.apk"
+          cp app/build/outputs/apk/debug/app-debug.apk "dist/MyHealth-$VERSION-debug.apk"
+          $ANDROID_HOME/build-tools/37.0.0/apksigner verify --verbose "dist/MyHealth-$VERSION-release.apk"
+          ! $ANDROID_HOME/build-tools/37.0.0/aapt2 dump permissions "dist/MyHealth-$VERSION-release.apk" | grep -E "INTERNET|ACCESS_NETWORK_STATE"
+          (cd dist && sha256sum *.apk > SHA256SUMS.txt)
+
+      - uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ env.VERSION }}-test.${{ github.run_number }}
+          target_commitish: ${{ github.sha }}
+          name: MyHealth ${{ env.VERSION }} (test build ${{ github.run_number }})
+          prerelease: true
+          files: dist/*
+          body: |
+            Test build for installing on a phone (Android 8.0 / API 26 or newer).
+
+            - **MyHealth-${{ env.VERSION }}-release.apk**: optimised (R8) build. Install this one.
+            - **MyHealth-${{ env.VERSION }}-debug.apk**: unoptimised build with a separate app id; use it only if the release build misbehaves.
+
+            ${{ env.SIGNING_NOTE }}
+
+            To install: download the APK on the phone, open it, and allow "Install unknown apps" for your browser or file manager when asked.
+            The app has no internet permission; all data stays encrypted on the phone.
