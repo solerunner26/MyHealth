@@ -33,6 +33,7 @@ import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import app.myhealth.core.designsystem.theme.MyHealthTheme
 
 /**
@@ -100,9 +101,9 @@ fun MyHealthListRow(
     ) {
         if (leadingIcon != null) {
             Box(
-                Modifier.size(40.dp).clip(CircleShape).background(c.surfaceSunken),
+                Modifier.size(40.dp).clip(CircleShape).background(c.accentSoft).border(MyHealthTheme.stroke.hairline, c.glassBorder, CircleShape),
                 contentAlignment = Alignment.Center,
-            ) { Icon(leadingIcon, null, tint = c.textSecondary, modifier = Modifier.size(20.dp)) }
+            ) { Icon(leadingIcon, null, tint = c.accent, modifier = Modifier.size(20.dp)) }
             Spacer(Modifier.width(MyHealthTheme.spacing.md))
         }
         Column(Modifier.weight(1f)) {
@@ -159,10 +160,12 @@ fun MyHealthMetricTile(
         Text(label, style = MyHealthTheme.typography.label, color = c.textSecondary, maxLines = 2, overflow = TextOverflow.Ellipsis)
         Spacer(Modifier.padding(top = MyHealthTheme.spacing.xs))
         Row(verticalAlignment = Alignment.Bottom) {
-            Text(value, style = MyHealthTheme.typography.metric, color = c.textPrimary)
+            androidx.compose.foundation.text.BasicText(value, style = MyHealthTheme.typography.metric.copy(color = c.textPrimary), maxLines = 1,
+                autoSize = androidx.compose.foundation.text.TextAutoSize.StepBased(minFontSize = 16.sp, maxFontSize = MyHealthTheme.typography.metric.fontSize),
+                modifier = Modifier.weight(1f, fill = false))
             if (unit != null) {
                 Spacer(Modifier.width(MyHealthTheme.spacing.xs))
-                Text(unit, style = MyHealthTheme.typography.bodySmall, color = c.textSecondary, modifier = Modifier.padding(bottom = 4.dp))
+                Text(unit, style = MyHealthTheme.typography.bodySmall, color = c.textSecondary, maxLines = 1, softWrap = false, modifier = Modifier.padding(bottom = 4.dp))
             }
         }
         if (status != null) {
@@ -180,13 +183,14 @@ fun MyHealthMetricTile(
 fun MyHealthInfoBanner(text: String, modifier: Modifier = Modifier, icon: ImageVector = MyHealthIcons.Info) {
     val c = MyHealthTheme.colors
     Row(
-        modifier.fillMaxWidth().clip(MyHealthTheme.radii.mdShape).background(c.surfaceSunken)
+        modifier.fillMaxWidth().clip(MyHealthTheme.radii.mdShape).background(c.accentSoft.copy(alpha = 0.85f))
+            .border(MyHealthTheme.stroke.hairline, c.glassBorder, MyHealthTheme.radii.mdShape)
             .padding(MyHealthTheme.spacing.md),
         verticalAlignment = Alignment.Top,
     ) {
-        Icon(icon, null, tint = c.textSecondary, modifier = Modifier.size(20.dp))
+        Icon(icon, null, tint = c.accent, modifier = Modifier.size(20.dp))
         Spacer(Modifier.width(MyHealthTheme.spacing.sm))
-        Text(text, style = MyHealthTheme.typography.bodySmall, color = c.textSecondary)
+        Text(text, style = MyHealthTheme.typography.bodySmall, color = c.textPrimary)
     }
 }
 

@@ -80,7 +80,7 @@ fun MyHealthTextField(
             errorTrailingIconColor = c.textPrimary, errorCursorColor = c.textPrimary,
             focusedLabelColor = c.accent, unfocusedLabelColor = c.textSecondary, cursorColor = c.accent,
             focusedTextColor = c.textPrimary, unfocusedTextColor = c.textPrimary,
-            focusedContainerColor = c.surface, unfocusedContainerColor = c.surface, errorContainerColor = c.surface,
+            focusedContainerColor = c.glassTop, unfocusedContainerColor = c.glassTop, errorContainerColor = c.glassTop,
             disabledContainerColor = c.surfaceSunken, disabledTextColor = c.textTertiary,
         ),
     )

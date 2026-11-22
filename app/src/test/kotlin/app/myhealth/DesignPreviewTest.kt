@@ -53,6 +53,9 @@ class DesignPreviewTest {
             waitTag("shell")
             rule.onNodeWithText(ctx.getString(R.string.nav_home)).performClick(); waitTag("home"); shot("${t}_${m}_home")
             rule.onNodeWithTag("home").performScrollToNode(hasTestTag("tile_vitd")); shot("${t}_${m}_home_tests")
+            rule.onNodeWithText(ctx.getString(R.string.nav_records)).performClick(); waitTag("recordsList"); shot("${t}_${m}_records")
+            rule.onNodeWithText(ctx.getString(R.string.nav_trends)).performClick(); waitTag("trendsList"); shot("${t}_${m}_trends")
+            rule.onNodeWithText(ctx.getString(R.string.nav_care)).performClick(); waitTag("care"); shot("${t}_${m}_care")
             rule.onNodeWithText(ctx.getString(R.string.nav_more)).performClick(); waitTag("more")
             rule.onNodeWithTag("more").performScrollToNode(hasTestTag("openSettings")); rule.onNodeWithTag("openSettings").performClick(); waitTag("settings"); shot("${t}_${m}_settings")
             rule.activityRule.scenario.onActivity { it.onBackPressedDispatcher.onBackPressed() }

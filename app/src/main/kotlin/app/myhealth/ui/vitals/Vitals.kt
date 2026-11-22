@@ -124,16 +124,14 @@ fun VitalsSection(state: VitalsState, onAdd: () -> Unit, onOpen: (VitalType) -> 
                 Text(stringResource(R.string.vitals_empty_body), style = MyHealthTheme.typography.bodySmall, color = MyHealthTheme.colors.textSecondary)
             }
         }
+        var index = 0
         types.chunked(2).forEach { pair ->
-            Row(horizontalArrangement = Arrangement.spacedBy(sp.sm)) {
+            app.myhealth.ui.home.TileRow { m ->
                 pair.forEach { t ->
-                    val v = state.latest(t)!!
-                    val band = VitalRules.band(v)
-                    MyHealthMetricTile(label(t), vitalValue(t, v.value, v.value2, ""), Modifier.weight(1f).testTag("vital_${t.name}"), unit = v.unit.ifBlank { null },
-                        caption = formatDate(v.measuredAt.atZone(zone).toLocalDate()), status = if (band == app.myhealth.domain.analytics.VitalBand.Unknown) null else label(band) to band.kind(),
-                        onClick = { onOpen(t) })
+                    val series = state.series(t)
+                    app.myhealth.ui.home.VitalTile(t, series.last(), series.getOrNull(series.size - 2), state.member?.heightCm, zone, { onOpen(t) }, index++, m.testTag("vital_${t.name}"))
                 }
-                if (pair.size == 1) Spacer(Modifier.weight(1f))
+                if (pair.size == 1) Spacer(m)
             }
         }
         state.stepsAverage(LocalDate.now())?.let { avg ->
