@@ -2,7 +2,7 @@ name: release
 
 # Publishes installable APKs as a GitHub pre-release.
 # Runs when this file changes on the development branch, or manually from the Actions tab.
-# Last requested build: 0.2.0 (redesign, import routing, trend alerts, security hardening).
+# Last requested build: 0.3.0 (design skill themes, family features, sharing, self-update).
 on:
   workflow_dispatch:
   push:
