@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -105,7 +106,7 @@ fun RareBottomBar(
     onNavigate: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Column(modifier = modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surface)) {
+    Column(modifier = modifier.fillMaxWidth().navigationBarsPadding().background(MaterialTheme.colorScheme.surface)) {
         RareDivider()
         BoxWithConstraints(Modifier.fillMaxWidth().height(64.dp)) {
             val itemWidth = maxWidth / items.size

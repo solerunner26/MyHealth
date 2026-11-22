@@ -476,6 +476,7 @@
     <string name="snackbar_undo">Undo</string>
     <string name="meds_reminders_note">Reminders fire from this phone only.</string>
     <string name="settings_design_credit">Design language inspired by Rare UI</string>
+    <string name="settings_documents">Documents</string>
 </resources>
 
 

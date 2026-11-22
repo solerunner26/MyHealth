@@ -179,7 +179,7 @@ fun SettingsScreen(container: AppContainer) {
                 RareCard {
                     RareSectionLabel(text = stringResource(R.string.settings_data))
                     RareKeyValue(
-                        label = stringResource(R.string.settings_data),
+                        label = stringResource(R.string.settings_documents),
                         value = extra.storageBytes?.let { "%.1f MB".format(it / 1_048_576.0) } ?: "—",
                     )
                     Spacer(Modifier.height(4.dp))

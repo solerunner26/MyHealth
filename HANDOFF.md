@@ -35,6 +35,11 @@ what is left, gotchas. Keep it short and factual; the code is the source of trut
 - Old `design/components` names are thin aliases over the Rare primitives, so the whole product inherited
   the new language in one step; `PinPad.kt` was deleted.
 
+### Polish after the first pass
+- Bottom bar now applies navigation-bar insets; onboarding shows the offline note again.
+- Treatments editor moved from an AlertDialog to the Rare sheet; import progress and error states use the
+  Rare spinner and empty state; Settings shows a real "Documents" label for storage.
+
 ### Medicine reminders (T-034) — manifest debt cleared
 - `MedicineReminders` uses **AlarmManager** (exact when the platform allows it, inexact otherwise),
   one alarm per reminder time, re-armed after firing and skipped past the course end date.

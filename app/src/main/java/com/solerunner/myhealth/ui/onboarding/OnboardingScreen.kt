@@ -140,5 +140,12 @@ fun OnboardingScreen(container: AppContainer) {
                 },
             )
         }
+        Spacer(Modifier.height(MyHealthTokens.spacing.xl))
+        Text(
+            stringResource(R.string.auth_privacy_note),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.Center,
+        )
     }
 }

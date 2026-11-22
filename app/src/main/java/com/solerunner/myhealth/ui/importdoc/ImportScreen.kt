@@ -14,6 +14,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
 import androidx.core.content.FileProvider
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.solerunner.myhealth.R
@@ -65,7 +66,14 @@ fun ImportScreen(
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            LoadingState(message = stringResource(R.string.import_reading))
+            com.solerunner.myhealth.design.rare.RareSpinner(size = 26)
+            Spacer(Modifier.height(spacing.md))
+            Text(
+                stringResource(R.string.import_reading),
+                style = MaterialTheme.typography.titleMedium,
+                textAlign = TextAlign.Center,
+            )
+            Spacer(Modifier.height(4.dp))
             Text(
                 stringResource(R.string.import_ocr_running),
                 style = MaterialTheme.typography.bodySmall,
@@ -87,18 +95,13 @@ fun ImportScreen(
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            Text(stringResource(R.string.import_failed), style = MaterialTheme.typography.titleLarge)
-            Spacer(Modifier.height(spacing.sm))
-            Text(
-                stringResource(R.string.import_failed_body),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                textAlign = TextAlign.Center,
+            com.solerunner.myhealth.design.rare.RareEmptyState(
+                title = stringResource(R.string.import_failed),
+                body = stringResource(R.string.import_failed_body),
+                actionLabel = stringResource(R.string.common_retry),
+                onAction = viewModel::reset,
             )
-            Spacer(Modifier.height(spacing.md))
-            Text(current.message, style = MaterialTheme.typography.bodySmall)
-            Spacer(Modifier.height(spacing.lg))
-            Button(onClick = viewModel::reset) { Text(stringResource(R.string.common_retry)) }
+            Text(current.message, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
 }

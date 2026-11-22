@@ -441,4 +441,5 @@
     <string name="snackbar_undo">पूर्ववत</string>
     <string name="meds_reminders_note">रिमाइंडर केवल इसी फ़ोन से आते हैं।</string>
     <string name="settings_design_credit">डिज़ाइन भाषा Rare UI से प्रेरित</string>
+    <string name="settings_documents">दस्तावेज़</string>
 </resources>

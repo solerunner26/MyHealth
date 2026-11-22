@@ -441,4 +441,5 @@
     <string name="snackbar_undo">પાછું ફેરવો</string>
     <string name="meds_reminders_note">રિમાઇન્ડર ફક્ત આ ફોનથી જ આવે છે.</string>
     <string name="settings_design_credit">ડિઝાઇન ભાષા Rare UI થી પ્રેરિત</string>
+    <string name="settings_documents">દસ્તાવેજો</string>
 </resources>
