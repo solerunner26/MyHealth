@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="nav_home">હોમ</string>
+    <string name="nav_records">રેકોર્ડ</string>
+    <string name="nav_trends">ટ્રેન્ડ</string>
+    <string name="nav_care">સંભાળ</string>
+    <string name="nav_more">વધુ</string>
+    <string name="action_back">પાછા</string>
+    <string name="action_save">સેવ કરો</string>
+    <string name="action_cancel">રદ કરો</string>
+    <string name="action_done">થઈ ગયું</string>
+    <string name="action_retry">ફરી પ્રયત્ન કરો</string>
+    <string name="action_delete">કાઢી નાખો</string>
+    <string name="action_edit">બદલો</string>
+    <string name="action_add">ઉમેરો</string>
+    <string name="action_continue">આગળ વધો</string>
+    <string name="action_skip">છોડો</string>
+    <string name="action_close">બંધ કરો</string>
+    <string name="action_share">શેર કરો</string>
+    <string name="action_ok">બરાબર</string>
+    <string name="state_loading">લોડ થઈ રહ્યું છે…</string>
+    <string name="state_error_title">કંઈક ખોટું થયું</string>
+    <string name="state_error_body">તમારા રેકોર્ડ આ ફોનમાં સુરક્ષિત છે. કૃપા કરી ફરી પ્રયત્ન કરો.</string>
+    <string name="state_offline_banner">સંપૂર્ણ ઓફલાઇન ચાલે છે. તમારો ડેટા આ ફોનની બહાર જતો નથી.</string>
+    <string name="shell_placeholder_title">હજી અહીં કંઈ નથી</string>
+    <string name="shell_placeholder_body">રિપોર્ટ, વાઇટલ્સ અને દવાઓ ઉમેરશો એટલે આ ભાગ ભરાઈ જશે.</string>
+    <string name="disclaimer_short">આ તમારો અંગત રેકોર્ડ છે, નિદાન નથી. કોઈ પણ ચિંતા માટે તમારા ડૉક્ટર સાથે વાત કરો.</string>
+    <string name="crash_title">છેલ્લી વખતે MyHealth અચાનક બંધ થઈ ગયું હતું</string>
+    <string name="crash_body">ભૂલનો રિપોર્ટ ફક્ત આ ફોનમાં જ સેવ થયો છે. મદદ જોઈતી હોય તો તમે તેને શેર કરી શકો છો; આપમેળે કંઈ અપલોડ થતું નથી.</string>
+    <string name="crash_share">ભૂલનો રિપોર્ટ શેર કરો</string>
+    <string name="crash_dismiss">દૂર કરો</string>
+    <string name="crash_chooser_title">ભૂલનો રિપોર્ટ શેર કરો</string>
+</resources>

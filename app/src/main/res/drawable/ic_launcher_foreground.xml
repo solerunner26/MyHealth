@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp" android:height="108dp" android:viewportWidth="108" android:viewportHeight="108">
+    <!-- rounded record sheet -->
+    <path android:fillColor="@color/brand_on_accent"
+        android:pathData="M40,30h28a4,4 0,0 1,4 4v40a4,4 0,0 1,-4 4h-28a4,4 0,0 1,-4 -4v-40a4,4 0,0 1,4 -4z" />
+    <!-- heart -->
+    <path android:fillColor="@color/brand_accent"
+        android:pathData="M54,66 L45.5,57.8 C42.5,54.9 42.7,50.4 45.8,48.6 C48.3,47.2 51.6,48 54,50.9 C56.4,48 59.7,47.2 62.2,48.6 C65.3,50.4 65.5,54.9 62.5,57.8 Z" />
+    <!-- pulse line -->
+    <path android:strokeColor="@color/brand_accent" android:strokeWidth="2.5" android:strokeLineCap="round" android:strokeLineJoin="round"
+        android:pathData="M42,40 h8 l2,-4 l3,8 l2,-4 h9" />
+</vector>
