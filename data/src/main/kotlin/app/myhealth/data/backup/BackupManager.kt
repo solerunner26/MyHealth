@@ -66,15 +66,20 @@ class BackupManager(private val context: Context, private val stack: DataStack, 
         try {
             val dec = BackupCrypto.decrypting(input, password)
             ZipInputStream(dec).use { zip ->
+                var entries = 0
                 while (true) {
                     val e = zip.nextEntry ?: break
+                    // A backup is password-authenticated, but the password may be an attacker's ("restore my file"):
+                    // bound everything so a crafted archive cannot exhaust memory or storage (zip bomb).
+                    require(++entries <= MAX_ENTRIES) { "too many entries" }
                     when {
-                        e.name == "manifest.json" -> manifest = JSONObject(String(zip.readBytes()))
-                        e.name == "data.json" -> data = JSONObject(String(zip.readBytes()))
+                        e.name == "manifest.json" -> manifest = JSONObject(String(readBounded(zip, MAX_MANIFEST)))
+                        e.name == "data.json" -> data = JSONObject(String(readBounded(zip, MAX_DATA)))
                         e.name.startsWith("files/") -> {
                             val id = e.name.removePrefix("files/")
-                            require(id.matches(Regex("[A-Za-z0-9-]{1,64}"))) { "bad entry" }
-                            stagingVault.put(id, zip.readBytes()); files += id
+                            require(id.matches(ENTRY_ID)) { "bad entry" }
+                            require(id !in files) { "duplicate entry" }
+                            stagingVault.put(id, readBounded(zip, EncryptedVault.MAX_BYTES)); files += id
                         }
                     }
                 }
@@ -138,6 +143,8 @@ class BackupManager(private val context: Context, private val stack: DataStack, 
 
     private fun toValues(o: JSONObject) = ContentValues().apply {
         o.keys().forEach { k ->
+            // Keys become column names in an INSERT statement: accept plain identifiers only.
+            require(k.matches(COLUMN)) { "bad column" }
             when (val v = o.get(k)) {
                 JSONObject.NULL -> putNull(k)
                 is Int -> put(k, v.toLong()); is Long -> put(k, v); is Double -> put(k, v); is Number -> put(k, v.toDouble())
@@ -153,6 +160,26 @@ class BackupManager(private val context: Context, private val stack: DataStack, 
                 Cursor.FIELD_TYPE_NULL -> putNull(k); Cursor.FIELD_TYPE_INTEGER -> put(k, c.getLong(i)); Cursor.FIELD_TYPE_FLOAT -> put(k, c.getDouble(i))
                 else -> put(k, c.getString(i))
             }
+        }
+    }
+
+    companion object {
+        const val MAX_ENTRIES = 20_000
+        const val MAX_MANIFEST = 64 * 1024
+        const val MAX_DATA = 96 * 1024 * 1024
+        private val ENTRY_ID = Regex("[A-Za-z0-9-]{1,64}")
+        private val COLUMN = Regex("[a-z_][a-z0-9_]{0,63}")
+
+        /** Reads the current zip entry, failing once it exceeds [max] bytes (sizes in the zip header are not trusted). */
+        internal fun readBounded(input: java.io.InputStream, max: Int): ByteArray {
+            val out = java.io.ByteArrayOutputStream(); val buf = ByteArray(64 * 1024); var total = 0L
+            while (true) {
+                val n = input.read(buf); if (n < 0) break
+                total += n
+                require(total <= max) { "entry too large" }
+                out.write(buf, 0, n)
+            }
+            return out.toByteArray()
         }
     }
 }

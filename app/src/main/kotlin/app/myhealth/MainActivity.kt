@@ -42,15 +42,23 @@ class MainActivity : FragmentActivity() {
             val storage by c.storage.collectAsStateWithLifecycle()
             val locked by c.lock.locked.collectAsStateWithLifecycle()
             LaunchedEffect(prefs.blockScreenshots) { applySecureFlag(prefs.blockScreenshots) }
+            // With a PIN set, the recents switcher shows a blank card even if screenshots are allowed.
+            LaunchedEffect(prefs.lockEnabled) { if (android.os.Build.VERSION.SDK_INT >= 33) runCatching { setRecentsScreenshotEnabled(!prefs.lockEnabled) } }
+            // Tapjacking: while the PIN pad is up, ignore touches that pass through another app's overlay.
+            LaunchedEffect(locked) { window.decorView.filterTouchesWhenObscured = locked }
+            val saved = androidx.compose.runtime.saveable.rememberSaveableStateHolder()
             MyHealthTheme(prefs.theme, prefs.colorTheme) {
                 app.myhealth.core.designsystem.components.MyHealthAmbientBackground {
-                // The lock is an opaque overlay: the app underneath keeps its navigation and unsaved input, but is
-                // hidden from the screen and from accessibility services while locked.
+                // While locked the app's screens are not composed at all: nothing is drawn, nothing reaches
+                // accessibility services, and no dialog or popup window (which would float above an overlay) can
+                // stay open. Navigation and unsaved input come back on unlock from the saveable state holder.
                 Box(Modifier.fillMaxSize()) {
                     Box(Modifier.fillMaxSize().then(if (locked) Modifier.clearAndSetSemantics { } else Modifier)) {
                         StorageGate(storage, onRetry = c::retry, onErase = { SecureErase.run(this@MainActivity) }) { stack ->
                             val session = remember(stack) { Session(c, stack) }
-                            CompositionLocalProvider(LocalSession provides session) { AppRoot() }
+                            if (!locked) saved.SaveableStateProvider(APP_STATE) {
+                                CompositionLocalProvider(LocalSession provides session) { AppRoot() }
+                            }
                         }
                     }
                     if (locked) LockScreen(c.lock, prefs.biometricEnabled, onForgot = { SecureErase.run(this@MainActivity) })
@@ -59,6 +67,8 @@ class MainActivity : FragmentActivity() {
             }
         }
     }
+
+    private companion object { const val APP_STATE = "app" }
 
     override fun onStart() { super.onStart(); runCatching { container.lock.onForeground() } }
 

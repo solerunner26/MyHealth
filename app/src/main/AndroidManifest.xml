@@ -35,9 +35,10 @@
         android:theme="@style/Theme.MyHealth"
         tools:targetApi="37">
 
+        <!-- Not exported: only the launcher aliases below are reachable from other apps (no data-carrying intents). -->
         <activity
             android:name=".MainActivity"
-            android:exported="true"
+            android:exported="false"
             android:windowSoftInputMode="adjustResize"
             android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize|keyboardHidden" />
         <!-- Launcher entry for the Aurora theme; the app enables exactly one (see LauncherIcons). -->

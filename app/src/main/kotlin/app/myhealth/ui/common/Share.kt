@@ -14,7 +14,8 @@ import java.io.File
 object Share {
     private fun dir(context: Context) = File(context.cacheDir, "share").apply { mkdirs() }
 
-    fun safeName(name: String): String = name.replace(Regex("[^\\p{L}\\p{N}._ -]"), "_").take(80).ifBlank { "file" }
+    /** Letters, digits, dot, dash, underscore and space only; no leading dots ("..", hidden files). */
+    fun safeName(name: String): String = name.replace(Regex("[^\\p{L}\\p{N}._ -]"), "_").trimStart('.', ' ').take(80).ifBlank { "file" }
 
     fun write(context: Context, name: String, bytes: ByteArray): File = File(dir(context), safeName(name)).apply { writeBytes(bytes) }
 

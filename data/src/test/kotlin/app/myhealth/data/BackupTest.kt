@@ -76,4 +76,27 @@ class BackupTest {
         try { c.backups(context).restore(ByteArrayInputStream(out.toByteArray()), "wrong".toCharArray()); fail() } catch (e: BackupException) { assertEquals(BackupFailure.WrongPassword, e.failure) }
         assertEquals(listOf("keep"), c.members.all().map { it.id })
     }
+
+    /** A validly encrypted archive (the attacker knows its password) with arbitrary entries. */
+    private fun crafted(vararg entries: Pair<String, ByteArray>): ByteArray {
+        val out = ByteArrayOutputStream()
+        java.util.zip.ZipOutputStream(BackupCrypto.encrypting(out, pw, iterations = 10_000)).use { z ->
+            entries.forEach { (n, b) -> z.putNextEntry(java.util.zip.ZipEntry(n)); z.write(b); z.closeEntry() }
+        }
+        return out.toByteArray()
+    }
+
+    @Test fun craftedBackupsAreRejectedWithoutTouchingCurrentData() = runBlocking {
+        val s = newStack("crafted")
+        s.members.upsert(TestData.member())
+        val manifest = """{"schema":1,"attachments":0}""".toByteArray()
+        // column names are SQL identifiers: an injected key is refused
+        val evil = """{"members":[{"id":"x","name":"y","relationship":"Self","created_at":0,"updated_at":0,"name) VALUES('a','b');--":1}]}"""
+        expect(BackupFailure.Corrupt) { runBlocking { s.backups(context).restore(ByteArrayInputStream(crafted("manifest.json" to manifest, "data.json" to evil.toByteArray())), pw) } }
+        // path-like attachment names are refused (no writes outside the staging folder)
+        expect(BackupFailure.Corrupt) { runBlocking { s.backups(context).restore(ByteArrayInputStream(crafted("manifest.json" to manifest, "files/../../x" to ByteArray(1))), pw) } }
+        // an oversized manifest (decompression bomb shape) is refused before it is parsed
+        expect(BackupFailure.Corrupt) { runBlocking { s.backups(context).restore(ByteArrayInputStream(crafted("manifest.json" to ByteArray(app.myhealth.data.backup.BackupManager.MAX_MANIFEST + 1) { ' '.code.toByte() })), pw) } }
+        assertEquals(1, s.members.all().size)
+    }
 }

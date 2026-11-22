@@ -25,6 +25,8 @@ object Images {
         if (bounds.outWidth <= 0 || bounds.outHeight <= 0) return null
         var sample = 1
         while (minOf(bounds.outWidth, bounds.outHeight) / (sample * 2) >= size) sample *= 2
+        // Extreme aspect ratios (e.g. 400 × 60000) would still decode huge: also bound the long edge.
+        while (maxOf(bounds.outWidth, bounds.outHeight) / sample > MAX_EDGE) sample *= 2
         val src = BitmapFactory.decodeByteArray(bytes, 0, bytes.size, BitmapFactory.Options().apply { inSampleSize = sample }) ?: return null
         val rotation = runCatching {
             when (ExifInterface(ByteArrayInputStream(bytes)).getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL)) {
@@ -36,4 +38,6 @@ object Images {
         val square = Bitmap.createBitmap(src, (src.width - side) / 2, (src.height - side) / 2, side, side, m, true)
         ByteArrayOutputStream().also { square.compress(Bitmap.CompressFormat.JPEG, 86, it); if (square !== src) square.recycle(); src.recycle() }.toByteArray()
     }.getOrNull()
+
+    private const val MAX_EDGE = 4096
 }

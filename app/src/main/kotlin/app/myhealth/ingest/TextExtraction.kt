@@ -84,7 +84,11 @@ class AndroidTextExtractor(private val context: Context, private val ocr: OcrEng
                 if (text.count { it.isLetterOrDigit() } >= MIN_TEXT_CHARS) text
                 else {
                     // Scanned page: OCR it, but never let a failed or weaker OCR result discard a usable text layer.
-                    val bmp = runCatching { renderer.renderImageWithDPI(pageNo - 1, OCR_DPI, com.tom_roush.pdfbox.rendering.ImageType.RGB) }.getOrNull()
+                    // A crafted page can declare an enormous media box: cap the rendered size, not just the DPI.
+                    val box = runCatching { pdf.getPage(pageNo - 1).mediaBox }.getOrNull()
+                    val longest = box?.let { maxOf(it.width, it.height) }?.takeIf { it > 0f } ?: 612f
+                    val dpi = minOf(OCR_DPI, MAX_IMAGE_EDGE * 72f / longest).coerceAtLeast(1f)
+                    val bmp = runCatching { renderer.renderImageWithDPI(pageNo - 1, dpi, com.tom_roush.pdfbox.rendering.ImageType.RGB) }.getOrNull()
                         ?: return@map text
                     val ocrText = try { runCatching { ocr.recognize(bmp) }.getOrNull() } finally { bmp.recycle() }
                     if (ocrText != null && ocrText.count { it.isLetterOrDigit() } > text.count { it.isLetterOrDigit() }) { ocrPages++; ocrText } else text

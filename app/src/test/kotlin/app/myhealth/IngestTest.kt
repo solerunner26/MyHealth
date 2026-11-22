@@ -22,6 +22,13 @@ import java.time.LocalDate
 @RunWith(AndroidJUnit4::class)
 @Config(application = TestApp::class)
 class IngestTest {
+    @Test fun sharedFileNamesCannotEscapeTheShareFolder() {
+        val n = app.myhealth.ui.common.Share::safeName
+        assertEquals("file", n("..")); assertEquals("_", n("/"))
+        assertEquals("_.._etc_passwd", n("/../etc/passwd")); assertEquals("hidden", n(".hidden"))
+        assertEquals("Ravi Shah-summary.pdf", n("Ravi Shah-summary.pdf"))
+    }
+
     @Test fun sniffsByMagicBytesNotName() {
         assertEquals(AttachmentKind.Pdf, DocumentSniffer.kind("%PDF-1.7\n...".toByteArray()))
         assertEquals(AttachmentKind.Jpeg, DocumentSniffer.kind(byteArrayOf(0xFF.toByte(), 0xD8.toByte(), 0xFF.toByte(), 0xE0.toByte())))

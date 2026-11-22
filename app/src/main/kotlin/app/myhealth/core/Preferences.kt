@@ -71,8 +71,15 @@ class Preferences(context: Context) {
     }
     fun setPinMaterial(hashB64: String, saltB64: String) = update { putString("pin_hash", hashB64); putString("pin_salt", saltB64) }
     fun failedAttempts(): Int = prefs.getInt("pin_fail", 0)
-    fun setFailedAttempts(n: Int, lockoutUntil: Long) = update { putInt("pin_fail", n); putLong("pin_lockout_until", lockoutUntil) }
-    fun lockoutUntil(): Long = prefs.getLong("pin_lockout_until", 0)
+    /** Failed-attempt counter plus the running lockout, measured on the monotonic clock of one boot (see [AppLock]). */
+    fun setFailedAttempts(n: Int, lockout: Lockout = Lockout.NONE) = update {
+        putInt("pin_fail", n); putLong("pin_lock_boot", lockout.boot); putLong("pin_lock_start", lockout.startElapsed); putLong("pin_lock_ms", lockout.durationMs)
+        remove("pin_lockout_until") // legacy wall-clock field
+    }
+    fun lockout(): Lockout = Lockout(prefs.getLong("pin_lock_boot", 0), prefs.getLong("pin_lock_start", 0), prefs.getLong("pin_lock_ms", 0))
+    fun setLockout(l: Lockout) = update { putLong("pin_lock_boot", l.boot); putLong("pin_lock_start", l.startElapsed); putLong("pin_lock_ms", l.durationMs) }
+
+    data class Lockout(val boot: Long, val startElapsed: Long, val durationMs: Long) { companion object { val NONE = Lockout(0, 0, 0) } }
 
     @android.annotation.SuppressLint("ApplySharedPref", "UseKtx")
     fun clearAll() { prefs.edit().clear().commit(); _state.value = read() }
