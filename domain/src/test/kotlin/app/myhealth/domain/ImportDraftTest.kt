@@ -32,7 +32,7 @@ class ImportDraftTest {
         assertTrue(ImportDrafts.validate(d, today).isEmpty())
         val (bundle, att) = ImportDrafts.toBundle(d, ids(), Instant.EPOCH, ZoneOffset.UTC, today)
         assertEquals(LocalDate.of(2024, 3, 12), bundle.report.reportDate)
-        assertEquals("sha", att!!.sha256); assertEquals(bundle.report.id, att.reportId)
+        assertEquals("sha", att.single().sha256); assertEquals(bundle.report.id, att.single().reportId)
         assertEquals(2, bundle.results.size)
         assertEquals(100.9, bundle.results.first { it.analyteId == "fbs" }.value, 0.1)
         assertEquals("7,800", bundle.results.first { it.analyteId == "wbc" }.printedValue)
@@ -78,10 +78,23 @@ class ImportDraftTest {
         assertEquals(2, m.reminderTimes.size); assertFalse(m.remindersEnabled)
     }
 
+    @Test fun morePagesMergeIntoOneRecordWithoutDuplicates() {
+        val first = draft("Collected: 12/03/2024\nHaemoglobin 13.1 g/dL 13-17")
+        val edited = first.copy(labRows = first.labRows.map { it.copy(valueText = "13.4") })
+        val page2 = ReportParser(today).parse(listOf("Haemoglobin 99 g/dL 13-17\nTSH 2.0 µIU/mL 0.27-4.2\nBP 120/80"), Sex.Male, 45)
+        val merged = ImportDrafts.merge(edited, page2, SourceFile("p2.jpg", AttachmentKind.Jpeg, "sha2", 50, 1, 1))
+        assertEquals(listOf("hb", "tsh"), merged.labRows.map { it.analyteId })
+        assertEquals("13.4", merged.labRows.first().valueText) // user edit kept, page-2 duplicate ignored
+        assertEquals(1, merged.vitals.size); assertEquals(2, merged.sources.size)
+        assertEquals(merged.labRows.size, merged.labRows.map { it.key }.toSet().size) // keys stay unique
+        val (b, att) = ImportDrafts.toBundle(merged, ids(), Instant.EPOCH, ZoneOffset.UTC, today)
+        assertEquals(listOf("sha", "sha2"), att.map { it.sha256 }); assertEquals(2, b.report.attachments.size)
+    }
+
     @Test fun manualDraftAndNewRow() {
         val d = ImportDrafts.emptyManual(member, today, "Manual entry")
         val withRow = d.copy(labRows = listOf(ImportDrafts.newLabRow("k", "hba1c").copy(valueText = "6.2")))
         val (b, att) = ImportDrafts.toBundle(withRow, ids(), Instant.EPOCH, ZoneOffset.UTC, today)
-        assertEquals(null, att); assertEquals(6.2, b.results.single().value, 0.0); assertEquals("HbA1c", b.results.single().printedName)
+        assertTrue(att.isEmpty()); assertEquals(6.2, b.results.single().value, 0.0); assertEquals("HbA1c", b.results.single().printedName)
     }
 }

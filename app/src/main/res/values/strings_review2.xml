@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="choose_member_title">Whose report is this?</string>
+    <string name="choose_member_body">The report says \"%1$s\". Choose who it belongs to.</string>
+    <string name="choose_member_add">Add \"%1$s\" as a new family member</string>
+    <string name="choose_member_closest">Closest match</string>
+    <string name="review_auto_member">The name on the report is \"%1$s\", so it will be saved to %2$s.</string>
+    <string name="review_for">For %1$s</string>
+    <string name="review_change_person">Change</string>
+    <string name="review_summary_date">Report date %1$s</string>
+    <string name="review_tap_to_edit">Tap any value to correct it. Untick anything you do not want to keep.</string>
+    <string name="review_show_details">Show full details</string>
+    <string name="review_hide_details">Hide full details</string>
+    <string name="review_document_only">No values were found. The document itself will be kept in the record.</string>
+    <string name="review_edit_row">Edit %1$s</string>
+    <plurals name="review_found">
+        <item quantity="one">%d value found</item>
+        <item quantity="other">%d values found</item>
+    </plurals>
+    <plurals name="review_needs_check">
+        <item quantity="one">%d value needs a quick check</item>
+        <item quantity="other">%d values need a quick check</item>
+    </plurals>
+</resources>

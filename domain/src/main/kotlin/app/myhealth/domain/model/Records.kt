@@ -3,9 +3,9 @@ package app.myhealth.domain.model
 import java.time.Instant
 import java.time.LocalDate
 
-enum class ReportType { LabReport, Prescription, PharmacyBill, Imaging, Discharge, Other }
+enum class ReportType { LabReport, Prescription, PharmacyBill, Imaging, Discharge, Hospital, Other }
 
-enum class AttachmentKind { Pdf, Jpeg, Png }
+enum class AttachmentKind { Pdf, Jpeg, Png, Webp, Heic }
 
 /** Encrypted file stored in the vault; [sha256] is of the original plaintext bytes (duplicate detection). */
 data class Attachment(

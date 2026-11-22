@@ -38,6 +38,8 @@ sealed interface ImportPhase {
     data object Choose : ImportPhase
     data class Reading(val done: Int, val total: Int) : ImportPhase
     data object Review : ImportPhase
+    /** The printed patient name matched nobody (or several people): the user picks, or adds a new member. */
+    data class ChooseMember(val printedName: String, val ranked: List<app.myhealth.domain.importing.MemberMatch>) : ImportPhase
     data object Saving : ImportPhase
     data class Saved(val reportId: String, val memberName: String) : ImportPhase
     data class Failed(val error: IngestError) : ImportPhase
@@ -53,6 +55,10 @@ data class ImportUiState(
     /** analyteId → value that would be replaced (same member, analyte and date). */
     val conflicts: Map<String, LabResult> = emptyMap(),
     val saveFailed: Boolean = false,
+    /** Set when the draft was assigned to a member because the printed name matched (shown as a banner). */
+    val autoMatchedName: String? = null,
+    /** An extra page could not be read (the record keeps everything else). */
+    val pageFailed: IngestError? = null,
 ) {
     val ocrUsed get() = (draft?.source?.ocrPages ?: 0) > 0
     fun issuesFor(key: String?) = if (showIssues) issues.filter { it.rowKey == key } else emptyList()
@@ -60,6 +66,10 @@ data class ImportUiState(
 
 sealed interface ImportEvent {
     data class PickUri(val uri: Uri, val fallbackName: String) : ImportEvent
+    /** Several files picked at once: the first starts the record, the rest become extra pages. */
+    data class PickUris(val uris: List<Uri>, val fallbackName: String) : ImportEvent
+    /** Another page/file for the record under review. */
+    data class AddPage(val uri: Uri, val fallbackName: String) : ImportEvent
     data object Manual : ImportEvent
     data class SetMember(val id: String) : ImportEvent
     data class SetDate(val date: LocalDate) : ImportEvent
@@ -73,7 +83,11 @@ sealed interface ImportEvent {
     data class RemoveLab(val key: String) : ImportEvent
     data class Save(val fallbackTitle: String) : ImportEvent
     data object Reset : ImportEvent
+    data class ChooseMember(val id: String) : ImportEvent
+    data class AddMemberFromReport(val name: String) : ImportEvent
 }
+
+const val MAX_FILES = 20
 
 class ImportViewModel(
     private val session: Session,
@@ -84,7 +98,11 @@ class ImportViewModel(
 ) : ViewModel() {
     private val _state = MutableStateFlow(ImportUiState())
     val state: StateFlow<ImportUiState> = _state.asStateFlow()
-    private var document: PickedDocument? = null
+    /** Every file of the record being reviewed, in order (first = the one that started the import). */
+    private val documents = mutableListOf<PickedDocument>()
+    private var document: PickedDocument?
+        get() = documents.firstOrNull()
+        set(v) { documents.clear(); if (v != null) documents += v }
     private var addCounter = 0
 
     init {
@@ -99,6 +117,8 @@ class ImportViewModel(
     fun onEvent(e: ImportEvent) {
         when (e) {
             is ImportEvent.PickUri -> read(e.uri, e.fallbackName)
+            is ImportEvent.PickUris -> if (e.uris.isNotEmpty()) read(e.uris.first(), e.fallbackName, more = e.uris.drop(1).take(MAX_FILES - 1))
+            is ImportEvent.AddPage -> addPages(listOf(e.uri), e.fallbackName)
             ImportEvent.Manual -> _state.value.member?.let { m -> document = null; setDraft(ImportDrafts.emptyManual(m, today)); _state.update { it.copy(phase = ImportPhase.Review) } }
             is ImportEvent.SetMember -> {
                 val m = _state.value.members.firstOrNull { it.id == e.id } ?: return
@@ -116,6 +136,12 @@ class ImportViewModel(
             is ImportEvent.RemoveLab -> mutate { d -> d.copy(labRows = d.labRows.filterNot { it.key == e.key }) }
             is ImportEvent.Save -> save(e.fallbackTitle)
             ImportEvent.Reset -> { document = null; _state.update { ImportUiState(member = it.member, members = it.members) } }
+            is ImportEvent.ChooseMember -> {
+                val m = _state.value.members.firstOrNull { it.id == e.id } ?: return
+                _state.update { it.copy(member = m, phase = ImportPhase.Review, autoMatchedName = null) }
+                _state.value.draft?.let { setDraft(it.copy(memberId = m.id)) }
+            }
+            is ImportEvent.AddMemberFromReport -> addMember(e.name)
         }
     }
 
@@ -130,7 +156,9 @@ class ImportViewModel(
                     pipeline.prepare(doc, member, today, "", ExtractionProgress { done, total -> _state.update { s -> s.copy(phase = ImportPhase.Reading(done, total)) } })
                 }
                 setDraft(prepared.draft)
-                _state.update { it.copy(phase = ImportPhase.Review) }
+                val rest = pendingPages; pendingPages = emptyList()
+                if (rest.isNotEmpty()) addPagesNow(rest, doc.displayName)
+                routeByName(_state.value.draft?.patientName)
             } catch (ex: IngestException) {
                 _state.update { it.copy(phase = ImportPhase.Failed(ex.error)) }
             } catch (ex: Exception) {
@@ -139,11 +167,64 @@ class ImportViewModel(
         }
     }
 
-    private fun read(uri: Uri, fallbackName: String) {
+    private var pendingPages: List<Uri> = emptyList()
+
+    private fun addPages(uris: List<Uri>, fallbackName: String) {
+        if (_state.value.draft == null) return
+        _state.update { it.copy(phase = ImportPhase.Reading(0, 0)) }
+        viewModelScope.launch(Safe.handler) {
+            val failed = addPagesNow(uris, fallbackName)
+            _state.update { it.copy(phase = ImportPhase.Review, pageFailed = failed) }
+        }
+    }
+
+    /** Reads and merges extra pages; returns the first error, keeping everything merged so far. */
+    private suspend fun addPagesNow(uris: List<Uri>, fallbackName: String): IngestError? {
+        var error: IngestError? = null
+        for (u in uris) {
+            if (documents.size >= MAX_FILES) break
+            try {
+                val doc = withContext(Dispatchers.IO) { reader.read(u, fallbackName) }
+                val member = _state.value.member ?: return null
+                val merged = withContext(Dispatchers.Default) { pipeline.addPage(_state.value.draft!!, doc, member, today, ExtractionProgress { _, _ -> }) }
+                documents += doc
+                setDraft(merged)
+            } catch (ex: IngestException) { error = error ?: ex.error } catch (ex: Exception) { error = error ?: IngestError.Unreadable }
+        }
+        return error
+    }
+
+    /** Item 4: file the report under the person whose name is printed on it, or ask. */
+    private fun routeByName(printed: String?) {
+        val members = _state.value.members
+        if (printed.isNullOrBlank() || members.isEmpty()) { _state.update { it.copy(phase = ImportPhase.Review) }; return }
+        val best = app.myhealth.domain.importing.NameMatcher.best(printed, members)
+        if (best != null) {
+            val changed = best.member.id != _state.value.member?.id
+            _state.update { it.copy(member = best.member, phase = ImportPhase.Review, autoMatchedName = if (changed) printed else null) }
+            _state.value.draft?.let { setDraft(it.copy(memberId = best.member.id)) }
+        } else {
+            _state.update { it.copy(phase = ImportPhase.ChooseMember(printed, app.myhealth.domain.importing.NameMatcher.rank(printed, members))) }
+        }
+    }
+
+    private fun addMember(name: String) {
+        val clean = app.myhealth.domain.importing.NameMatcher.cleanName(name).ifBlank { return }
+        viewModelScope.launch(Safe.handler) {
+            val m = FamilyMember(ids.next(), clean.take(80), app.myhealth.domain.model.Relationship.Other, createdAtEpochMs = clock.millis())
+            runCatching { session.stack.members.upsert(m) }.onSuccess {
+                _state.update { s -> s.copy(member = m, members = s.members + m, phase = ImportPhase.Review, autoMatchedName = null) }
+                _state.value.draft?.let { d -> setDraft(d.copy(memberId = m.id)) }
+            }.onFailure { _state.update { it.copy(saveFailed = true, phase = ImportPhase.Review) } }
+        }
+    }
+
+    private fun read(uri: Uri, fallbackName: String, more: List<Uri> = emptyList()) {
         _state.update { it.copy(phase = ImportPhase.Reading(0, 0)) }
         viewModelScope.launch(Safe.handler) {
             try {
                 val doc = withContext(Dispatchers.IO) { reader.read(uri, fallbackName) }
+                pendingPages = more
                 onDocument(doc)
             } catch (ex: IngestException) {
                 _state.update { it.copy(phase = ImportPhase.Failed(ex.error)) }
@@ -178,8 +259,9 @@ class ImportViewModel(
         _state.update { it.copy(phase = ImportPhase.Saving, saveFailed = false) }
         viewModelScope.launch(Safe.handler) {
             try {
-                val (bundle, attachment) = ImportDrafts.toBundle(d, ids, clock.instant(), clock.zone, today, fallbackTitle)
-                val files = listOfNotNull(attachment?.let { a -> document?.let { NewAttachment(a, it.bytes) } })
+                val (bundle, attachments) = ImportDrafts.toBundle(d, ids, clock.instant(), clock.zone, today, fallbackTitle)
+                // attachments are in the same order as the documents that produced them
+                val files = attachments.zip(documents).map { (a, doc) -> NewAttachment(a, doc.bytes) }
                 session.stack.records.saveImport(bundle, files)
                 session.select(d.memberId)
                 document = null

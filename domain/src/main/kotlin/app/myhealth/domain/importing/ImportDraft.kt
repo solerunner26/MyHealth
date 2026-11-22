@@ -68,7 +68,10 @@ data class ImportDraft(
     val labRows: List<LabRowDraft>,
     val vitals: List<VitalDraft>,
     val medicines: List<MedicineDraft>,
+    /** Further pages/files added to the same record (e.g. several photos of a hospital file). */
+    val extraSources: List<SourceFile> = emptyList(),
 ) {
+    val sources get() = listOfNotNull(source) + extraSources
     val includedCount get() = labRows.count { it.include } + vitals.count { it.include } + medicines.count { it.include }
 }
 
@@ -141,13 +144,30 @@ object ImportDrafts {
     }
 
     /** Converts a validated draft to the rows that will be stored. Throws if [validate] would report an issue. */
-    fun toBundle(d: ImportDraft, ids: IdGenerator, now: Instant, zone: ZoneId, today: LocalDate, fallbackTitle: String = "Report"): Pair<ImportBundle, Attachment?> {
+    /**
+     * Adds another page/file to the same record. Values already present are kept (the user may have edited them);
+     * only new analytes, vitals and medicines are added. Missing date/lab/name are filled from the new page.
+     */
+    fun merge(d: ImportDraft, parsed: ParsedDocument, source: SourceFile): ImportDraft {
+        val more = fromParsed(parsed, FamilyMember(d.memberId, "", app.myhealth.domain.model.Relationship.Other), source, null)
+        val tag = "p${d.sources.size}-"
+        val haveA = d.labRows.mapNotNull { it.analyteId }.toSet(); val haveV = d.vitals.map { it.type }.toSet(); val haveM = d.medicines.map { it.name.lowercase() }.toSet()
+        return d.copy(
+            extraSources = d.extraSources + source,
+            reportDate = d.reportDate ?: more.reportDate, labName = d.labName.ifBlank { more.labName }, patientName = d.patientName ?: more.patientName,
+            labRows = d.labRows + more.labRows.filter { it.analyteId == null || it.analyteId !in haveA }.map { it.copy(key = tag + it.key) },
+            vitals = d.vitals + more.vitals.filter { it.type !in haveV }.map { it.copy(key = tag + it.key) },
+            medicines = d.medicines + more.medicines.filter { it.name.lowercase() !in haveM }.map { it.copy(key = tag + it.key) },
+        )
+    }
+
+    fun toBundle(d: ImportDraft, ids: IdGenerator, now: Instant, zone: ZoneId, today: LocalDate, fallbackTitle: String = "Report"): Pair<ImportBundle, List<Attachment>> {
         require(validate(d, today).isEmpty()) { "draft has validation issues" }
         val date = d.reportDate!!
         val reportId = ids.next()
-        val attachment = d.source?.let { Attachment(ids.next(), reportId, it.kind, it.displayName, it.sha256, it.sizeBytes, it.pageCount) }
+        val attachments = d.sources.map { Attachment(ids.next(), reportId, it.kind, it.displayName, it.sha256, it.sizeBytes, it.pageCount) }
         val report = Report(reportId, d.memberId, d.type, d.title.trim().ifBlank { fallbackTitle }, date, d.labName.trim().ifBlank { null }, createdAt = now,
-            attachments = listOfNotNull(attachment))
+            attachments = attachments)
         val results = d.labRows.filter { it.include }.map { r ->
             val a = AnalyteCatalogue.byId(r.analyteId!!)!!
             val conv = a.conversionFor(r.unit)!!
@@ -172,7 +192,7 @@ object ImportDrafts {
                 endDate = days?.let { date.plusDays(it - 1L) }, reminderTimes = m.frequency.defaultTimes(), remindersEnabled = false,
                 prescribedBy = "", reportId = reportId)
         }
-        return ImportBundle(report, results, vitals, medicines) to attachment
+        return ImportBundle(report, results, vitals, medicines) to attachments
     }
 
     private fun fmt(v: Double): String = app.myhealth.domain.format.ValueFormat.compact(v, 3)

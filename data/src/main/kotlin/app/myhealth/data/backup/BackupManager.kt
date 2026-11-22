@@ -36,6 +36,7 @@ class BackupManager(private val context: Context, private val stack: DataStack, 
     suspend fun export(out: OutputStream, password: CharArray, nowMs: Long, appVersion: String): BackupInfo {
         val dump = stack.database.read { db -> tables.associateWith { t -> rows(db, t) } }
         val attachmentIds = dump.getValue("attachments").map { (it as JSONObject).getString("id") }
+        val photoNames = stack.vault.names().filter { it.startsWith("photo-") }
         val info = BackupInfo(Schema.VERSION, nowMs, dump.getValue("members").size, dump.getValue("reports").size, attachmentIds.size)
         try {
             ZipOutputStream(BackupCrypto.encrypting(out, password)).use { zip ->
@@ -46,6 +47,7 @@ class BackupManager(private val context: Context, private val stack: DataStack, 
                 zip.putNextEntry(ZipEntry("data.json"))
                 zip.write(JSONObject().apply { dump.forEach { (t, r) -> put(t, JSONArray(r)) } }.toString().toByteArray())
                 zip.closeEntry()
+                photoNames.forEach { n -> runCatching { stack.vault.get(n) }.getOrNull()?.let { zip.putNextEntry(ZipEntry("files/$n")); zip.write(it); zip.closeEntry() } }
                 attachmentIds.forEach { id ->
                     val bytes = runCatching { stack.vault.get(id) }.getOrNull() ?: return@forEach
                     zip.putNextEntry(ZipEntry("files/$id")); zip.write(bytes); zip.closeEntry()
@@ -81,7 +83,7 @@ class BackupManager(private val context: Context, private val stack: DataStack, 
             }
             val m = manifest ?: throw BackupException(BackupFailure.Corrupt)
             val d = data ?: throw BackupException(BackupFailure.Corrupt)
-            if (m.optInt("attachments", files.size) != files.size) throw BackupException(BackupFailure.Corrupt)
+            if (m.optInt("attachments", files.size) != files.count { !it.startsWith("photo-") }) throw BackupException(BackupFailure.Corrupt)
             val version = m.getInt("schema")
             if (version > Schema.VERSION) throw BackupException(BackupFailure.NewerVersion)
             val rows = upgrade(d, version)
@@ -92,7 +94,7 @@ class BackupManager(private val context: Context, private val stack: DataStack, 
             // swap attachments: drop current vault files, move staged ones in (same key, same AAD name)
             stack.vault.names().forEach { runCatching { stack.vault.delete(it) } }
             files.forEach { id -> File(staging, id).renameTo(File(vaultDir, id)) }
-            return BackupInfo(version, m.optLong("created"), m.optInt("members"), m.optInt("reports"), files.size)
+            return BackupInfo(version, m.optLong("created"), m.optInt("members"), m.optInt("reports"), files.count { !it.startsWith("photo-") })
         } catch (e: BackupException) { throw e
         } catch (e: java.util.zip.ZipException) { throw BackupException(BackupFailure.Corrupt, e)
         } catch (e: org.json.JSONException) { throw BackupException(BackupFailure.Corrupt, e)

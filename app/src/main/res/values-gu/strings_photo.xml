@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="member_photo_add">ફોટો ઉમેરો</string>
+    <string name="member_photo_change">ફોટો બદલો</string>
+    <string name="member_photo_remove">ફોટો દૂર કરો</string>
+    <string name="member_photo_take">ફોટો લો</string>
+    <string name="member_photo_cd">%1$s નો પ્રોફાઇલ ફોટો</string>
+    <string name="member_photo_note">ફોટો આ ફોનમાં એન્ક્રિપ્ટ કરીને રાખવામાં આવે છે; સ્થળ અને કેમેરાની માહિતી દૂર કરાય છે.</string>
+    <string name="member_photo_failed">આ તસવીર વાપરી શકાઈ નહીં. બીજો ફોટો અજમાવો.</string>
+</resources>

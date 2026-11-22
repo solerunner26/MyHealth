@@ -15,11 +15,14 @@ class IngestException(val error: IngestError, cause: Throwable? = null) : Except
 class PickedDocument(val bytes: ByteArray, val displayName: String, val kind: AttachmentKind)
 
 object DocumentSniffer {
+    private val HEIF_BRANDS = setOf("heic", "heix", "hevc", "hevx", "mif1", "msf1", "heim", "heis")
     /** Type by magic bytes, never by the (untrusted) file name or MIME type. */
     fun kind(bytes: ByteArray): AttachmentKind? = when {
         bytes.size >= 5 && bytes[0] == '%'.code.toByte() && bytes[1] == 'P'.code.toByte() && bytes[2] == 'D'.code.toByte() && bytes[3] == 'F'.code.toByte() -> AttachmentKind.Pdf
         bytes.size >= 3 && bytes[0] == 0xFF.toByte() && bytes[1] == 0xD8.toByte() && bytes[2] == 0xFF.toByte() -> AttachmentKind.Jpeg
         bytes.size >= 8 && bytes[0] == 0x89.toByte() && bytes[1] == 'P'.code.toByte() && bytes[2] == 'N'.code.toByte() && bytes[3] == 'G'.code.toByte() -> AttachmentKind.Png
+        bytes.size >= 12 && String(bytes, 0, 4, Charsets.US_ASCII) == "RIFF" && String(bytes, 8, 4, Charsets.US_ASCII) == "WEBP" -> AttachmentKind.Webp
+        bytes.size >= 12 && String(bytes, 4, 4, Charsets.US_ASCII) == "ftyp" && String(bytes, 8, 4, Charsets.US_ASCII) in HEIF_BRANDS -> AttachmentKind.Heic
         else -> null
     }
 }

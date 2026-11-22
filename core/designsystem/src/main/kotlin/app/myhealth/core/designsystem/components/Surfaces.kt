@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
@@ -195,7 +196,7 @@ fun MyHealthDisclaimer(text: String, modifier: Modifier = Modifier) =
     MyHealthInfoBanner(text = text, modifier = modifier, icon = MyHealthIcons.Help)
 
 @Composable
-fun MyHealthAvatar(initials: String, selected: Boolean, modifier: Modifier = Modifier, size: androidx.compose.ui.unit.Dp = 36.dp) {
+fun MyHealthAvatar(initials: String, selected: Boolean, modifier: Modifier = Modifier, size: androidx.compose.ui.unit.Dp = 36.dp, photo: androidx.compose.ui.graphics.ImageBitmap? = null) {
     val c = MyHealthTheme.colors
     Box(
         modifier.size(size).clip(CircleShape)
@@ -203,6 +204,7 @@ fun MyHealthAvatar(initials: String, selected: Boolean, modifier: Modifier = Mod
             .border(MyHealthTheme.stroke.regular, if (selected) c.accent else c.outlineStrong, CircleShape),
         contentAlignment = Alignment.Center,
     ) {
-        Text(initials, style = MyHealthTheme.typography.label, color = if (selected) c.onAccent else c.textPrimary)
+        if (photo != null) androidx.compose.foundation.Image(photo, null, Modifier.fillMaxSize(), contentScale = androidx.compose.ui.layout.ContentScale.Crop)
+        else Text(initials, style = MyHealthTheme.typography.label, color = if (selected) c.onAccent else c.textPrimary)
     }
 }

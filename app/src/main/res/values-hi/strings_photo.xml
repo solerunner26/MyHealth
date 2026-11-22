@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="member_photo_add">फ़ोटो जोड़ें</string>
+    <string name="member_photo_change">फ़ोटो बदलें</string>
+    <string name="member_photo_remove">फ़ोटो हटाएँ</string>
+    <string name="member_photo_take">फ़ोटो लें</string>
+    <string name="member_photo_cd">%1$s की प्रोफ़ाइल फ़ोटो</string>
+    <string name="member_photo_note">फ़ोटो इस फ़ोन पर एन्क्रिप्ट करके रखी जाती है; जगह और कैमरे की जानकारी हटा दी जाती है।</string>
+    <string name="member_photo_failed">यह तस्वीर इस्तेमाल नहीं हो सकी। दूसरी फ़ोटो आज़माएँ।</string>
+</resources>

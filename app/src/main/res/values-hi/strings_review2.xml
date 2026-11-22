@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="choose_member_title">यह रिपोर्ट किसकी है?</string>
+    <string name="choose_member_body">रिपोर्ट पर नाम \"%1$s\" है। चुनें कि यह किसकी है।</string>
+    <string name="choose_member_add">\"%1$s\" को परिवार के नए सदस्य के रूप में जोड़ें</string>
+    <string name="choose_member_closest">सबसे मिलता-जुलता</string>
+    <string name="review_auto_member">रिपोर्ट पर नाम \"%1$s\" है, इसलिए यह %2$s के रिकॉर्ड में सेव होगी।</string>
+    <string name="review_for">%1$s के लिए</string>
+    <string name="review_change_person">बदलें</string>
+    <string name="review_summary_date">रिपोर्ट की तारीख़ %1$s</string>
+    <string name="review_tap_to_edit">कोई भी मान ठीक करने के लिए उस पर टैप करें। जो नहीं रखना उसका निशान हटा दें।</string>
+    <string name="review_show_details">पूरी जानकारी दिखाएँ</string>
+    <string name="review_hide_details">पूरी जानकारी छिपाएँ</string>
+    <string name="review_document_only">कोई मान नहीं मिला। दस्तावेज़ ख़ुद रिकॉर्ड में रखा जाएगा।</string>
+    <string name="review_edit_row">%1$s बदलें</string>
+    <plurals name="review_found">
+        <item quantity="one">%d मान मिला</item>
+        <item quantity="other">%d मान मिले</item>
+    </plurals>
+    <plurals name="review_needs_check">
+        <item quantity="one">%d मान को एक बार जाँचें</item>
+        <item quantity="other">%d मानों को एक बार जाँचें</item>
+    </plurals>
+</resources>

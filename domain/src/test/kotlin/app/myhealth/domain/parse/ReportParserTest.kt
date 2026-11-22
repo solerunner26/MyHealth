@@ -71,6 +71,12 @@ class ReportParserTest {
         assertTrue(doc.isEmpty); assertEquals(ReportType.Other, doc.type)
     }
 
+    @Test fun patientNameTitlesAreStripped() {
+        assertEquals("Meera Shah", parser.patientName(listOf("Patient Name : Mrs. Meera Shah   Age: 41")))
+        assertEquals("Ravi Shah", parser.patientName(listOf("Patient Name: Mr RAVI SHAH Age 45").map { it }).let { it?.split(' ')?.joinToString(" ") { w -> w.lowercase().replaceFirstChar { c -> c.titlecase() } } })
+        assertEquals("Asha Patel", parser.patientName(listOf("Name : Smt. Asha Patel  Sex: F")))
+    }
+
     @Test fun isDeterministic() {
         val t = listOf("Haemoglobin 12 g/dL 12-15\nTSH 2 µIU/mL 0.27-4.2")
         assertEquals(parser.parse(t), parser.parse(t))

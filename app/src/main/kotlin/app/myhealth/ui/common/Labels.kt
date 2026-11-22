@@ -41,7 +41,7 @@ fun label(b: BloodGroup) = if (b == BloodGroup.Unknown) stringResource(R.string.
 @Composable @ReadOnlyComposable
 fun label(t: ReportType) = stringResource(when (t) {
     ReportType.LabReport -> R.string.rtype_lab; ReportType.Prescription -> R.string.rtype_prescription; ReportType.PharmacyBill -> R.string.rtype_bill
-    ReportType.Imaging -> R.string.rtype_imaging; ReportType.Discharge -> R.string.rtype_discharge; ReportType.Other -> R.string.rtype_other
+    ReportType.Imaging -> R.string.rtype_imaging; ReportType.Discharge -> R.string.rtype_discharge; ReportType.Hospital -> R.string.rtype_hospital; ReportType.Other -> R.string.rtype_other
 })
 
 @Composable @ReadOnlyComposable

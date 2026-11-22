@@ -22,4 +22,12 @@ class ImportPipeline(private val extractor: TextExtractor, private val records: 
         val source = SourceFile(doc.displayName, doc.kind, sha, doc.bytes.size.toLong(), text.pageCount, text.ocrPages)
         return Prepared(ImportDrafts.fromParsed(parsed, member, source, duplicate, defaultTitle), doc)
     }
+
+    /** Another page/file for the same record: parsed and merged into [draft]. */
+    suspend fun addPage(draft: ImportDraft, doc: PickedDocument, member: FamilyMember, today: LocalDate, progress: ExtractionProgress): ImportDraft {
+        val sha = Crypto.sha256Hex(doc.bytes)
+        val text = extractor.extract(doc, progress)
+        val parsed = ReportParser(today).parse(text.pages, member.sex, member.ageYears(today))
+        return ImportDrafts.merge(draft, parsed, SourceFile(doc.displayName, doc.kind, sha, doc.bytes.size.toLong(), text.pageCount, text.ocrPages))
+    }
 }

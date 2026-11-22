@@ -57,7 +57,7 @@ fun MemberSwitcher(
         modifier = Modifier.heightIn(min = 48.dp).padding(end = MyHealthTheme.spacing.sm).semantics { contentDescription = cd }.testTag("memberSwitcher"),
     ) {
         Row(Modifier.padding(start = 4.dp, end = MyHealthTheme.spacing.md, top = 4.dp, bottom = 4.dp), verticalAlignment = Alignment.CenterVertically) {
-            MyHealthAvatar(active.initials, selected = true, size = 32.dp)
+            MyHealthAvatar(active.initials, selected = true, size = 32.dp, photo = app.myhealth.ui.member.rememberMemberPhoto(active))
             Spacer(Modifier.width(MyHealthTheme.spacing.sm))
             Text(active.name, style = MyHealthTheme.typography.label, color = MyHealthTheme.colors.textPrimary, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.widthIn(max = 120.dp))
             Icon(MyHealthIcons.Expand, null, tint = MyHealthTheme.colors.textSecondary)
@@ -83,7 +83,7 @@ fun MemberPickerDialog(members: List<FamilyMember>, active: FamilyMember, onSele
                                 .semantics { this.selected = selected; if (selected) contentDescription = selectedCd }.testTag("member_${m.id}"),
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
-                            MyHealthAvatar(m.initials, selected)
+                            MyHealthAvatar(m.initials, selected, photo = app.myhealth.ui.member.rememberMemberPhoto(m))
                             Spacer(Modifier.width(MyHealthTheme.spacing.md))
                             Column(Modifier.weight(1f)) {
                                 Text(m.name, style = MyHealthTheme.typography.subtitle, color = MyHealthTheme.colors.textPrimary)

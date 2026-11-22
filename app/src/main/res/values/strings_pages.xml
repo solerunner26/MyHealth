@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="rtype_hospital">Hospital file</string>
+    <string name="import_pick_files">Choose files</string>
+    <string name="import_intro_body2">Choose one or more PDFs or photos, for example every page of a hospital file. They are read on this phone; nothing is uploaded. You check the values before saving.</string>
+    <string name="review_add_page_file">Add page from files</string>
+    <string name="review_add_page_photo">Add page by photo</string>
+    <string name="review_page_failed">One of the added pages could not be read. Everything else is kept.</string>
+    <plurals name="review_files">
+        <item quantity="one">%d file in this record</item>
+        <item quantity="other">%d files in this record</item>
+    </plurals>
+</resources>

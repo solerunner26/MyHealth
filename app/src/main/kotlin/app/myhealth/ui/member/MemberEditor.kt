@@ -1,6 +1,11 @@
 package app.myhealth.ui.member
 
 import androidx.compose.foundation.background
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.draw.clip
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -25,6 +30,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
 import app.myhealth.R
 import app.myhealth.core.Safe
@@ -96,12 +102,20 @@ data class MemberEditorState(
     val savedId: String? = null,
     val deleted: Boolean = false,
     val failed: Boolean = false,
+    /** Newly chosen photo (processed JPEG), pending save. */
+    val memberId: String? = null,
+    val newPhoto: ByteArray? = null,
+    val removePhoto: Boolean = false,
+    val photoFailed: Boolean = false,
 )
 
 sealed interface MemberEvent {
     data class Edit(val transform: (MemberForm) -> MemberForm) : MemberEvent
     data object Save : MemberEvent
     data object Delete : MemberEvent
+    /** Raw image bytes from the picker/camera; processed (square, 512 px, metadata stripped) off the main thread. */
+    class PhotoPicked(val bytes: ByteArray) : MemberEvent
+    data object RemovePhoto : MemberEvent
 }
 
 class MemberEditorViewModel(
@@ -122,6 +136,7 @@ class MemberEditorViewModel(
                 loading = false,
                 form = existing?.let(MemberForm::of) ?: MemberForm(relationship = defaultRelationship),
                 isNew = existing == null,
+                memberId = existing?.id,
                 canDelete = existing != null && existing?.relationship != Relationship.Self,
             )
         }
@@ -132,6 +147,11 @@ class MemberEditorViewModel(
             is MemberEvent.Edit -> _state.update { s -> s.copy(form = e.transform(s.form), errors = if (s.errors.isEmpty()) s.errors else e.transform(s.form).validate(LocalDate.now(clock))) }
             MemberEvent.Save -> save()
             MemberEvent.Delete -> delete()
+            is MemberEvent.PhotoPicked -> viewModelScope.launch(Safe.handler) {
+                val jpeg = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Default) { app.myhealth.core.Images.profilePhoto(e.bytes) }
+                _state.update { it.copy(newPhoto = jpeg, removePhoto = false, photoFailed = jpeg == null) }
+            }
+            MemberEvent.RemovePhoto -> _state.update { it.copy(newPhoto = null, removePhoto = true) }
         }
     }
 
@@ -145,6 +165,9 @@ class MemberEditorViewModel(
             runCatching {
                 val m = s.form.toMember(existing?.id ?: ids.next(), existing?.createdAtEpochMs ?: clock.millis())
                 session.stack.members.upsert(m)
+                s.newPhoto?.let { session.stack.photos.put(m.id, it) }
+                if (s.removePhoto) session.stack.photos.delete(m.id)
+                if (s.newPhoto != null || s.removePhoto) session.photoRevision.value++
                 m.id
             }.onSuccess { id -> _state.update { it.copy(saving = false, savedId = id) } }
                 .onFailure { _state.update { it.copy(saving = false, failed = true) } }
@@ -192,6 +215,7 @@ private fun MemberFormContent(state: MemberEditorState, onEvent: (MemberEvent) -
     ) {
         Column(Modifier.widthIn(max = sp.contentMaxWidth).fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(sp.md)) {
             if (intro != null) MyHealthInfoBanner(intro)
+            PhotoPickerRow(state, onEvent)
             MyHealthSectionHeader(stringResource(R.string.section_basics))
             MyHealthTextField(f.name, { v -> edit { it.copy(name = v) } }, stringResource(R.string.field_name), Modifier.testTag("field_name"),
                 errorText = err(state.errors["name"])?.let { stringResource(it) })
@@ -226,4 +250,35 @@ private fun MemberFormContent(state: MemberEditorState, onEvent: (MemberEvent) -
             stringResource(R.string.action_delete), { confirmDelete = false; onEvent(MemberEvent.Delete) },
             stringResource(R.string.action_cancel), { confirmDelete = false }, icon = MyHealthIcons.Delete)
     }
+}
+
+@Composable
+private fun PhotoPickerRow(state: MemberEditorState, onEvent: (MemberEvent) -> Unit) {
+    val ctx = androidx.compose.ui.platform.LocalContext.current
+    val session = app.myhealth.ui.LocalSession.current
+    val members by session.members.collectAsStateWithLifecycle()
+    val existing = rememberMemberPhoto(state.memberId?.let { id -> members?.firstOrNull { it.id == id } })
+    val preview = state.newPhoto?.let { b -> androidx.compose.runtime.remember(b) { android.graphics.BitmapFactory.decodeByteArray(b, 0, b.size)?.asImageBitmap() } }
+        ?: if (state.removePhoto) null else existing
+    // Photo picker: no storage permission needed; the app only receives the one image the user picks.
+    val pick = androidx.activity.compose.rememberLauncherForActivityResult(androidx.activity.result.contract.ActivityResultContracts.PickVisualMedia()) { uri ->
+        uri?.let { u -> runCatching { ctx.contentResolver.openInputStream(u)?.use { app.myhealth.core.Images.readLimited(it, 12 * 1024 * 1024) } }.getOrNull()?.let { onEvent(MemberEvent.PhotoPicked(it)) } }
+    }
+    val c = MyHealthTheme.colors
+    androidx.compose.foundation.layout.Row(verticalAlignment = Alignment.CenterVertically) {
+        androidx.compose.foundation.layout.Box(Modifier.size(88.dp).clip(androidx.compose.foundation.shape.CircleShape)
+            .background(androidx.compose.ui.graphics.Brush.linearGradient(listOf(c.accent, c.accentBright))), contentAlignment = Alignment.Center) {
+            if (preview != null) androidx.compose.foundation.Image(preview, stringResource(R.string.member_photo_cd, state.form.name), Modifier.fillMaxSize(), contentScale = androidx.compose.ui.layout.ContentScale.Crop)
+            else androidx.compose.material3.Icon(MyHealthIcons.Profile, null, tint = c.onAccent, modifier = Modifier.size(40.dp))
+        }
+        Spacer(Modifier.width(MyHealthTheme.spacing.md))
+        Column {
+            MyHealthTextButton(stringResource(if (preview == null) R.string.member_photo_add else R.string.member_photo_change), {
+                runCatching { pick.launch(androidx.activity.result.PickVisualMediaRequest(androidx.activity.result.contract.ActivityResultContracts.PickVisualMedia.ImageOnly)) }
+            }, icon = MyHealthIcons.Camera, modifier = Modifier.testTag("pickPhoto"))
+            if (preview != null) MyHealthTextButton(stringResource(R.string.member_photo_remove), { onEvent(MemberEvent.RemovePhoto) }, icon = MyHealthIcons.Delete)
+        }
+    }
+    if (state.photoFailed) MyHealthInfoBanner(stringResource(R.string.member_photo_failed), icon = MyHealthIcons.StatusError)
+    else androidx.compose.material3.Text(stringResource(R.string.member_photo_note), style = MyHealthTheme.typography.caption, color = c.textSecondary)
 }

@@ -114,6 +114,9 @@ class ImportFlowTest {
         assertEquals(0, draft.source!!.ocrPages)
 
         // user corrects the HbA1c value that was "read wrongly"
+        // compact review: one line per value; tapping the line opens its editor
+        rule.onNodeWithTag("reviewList").performScrollToNode(hasTestTag("labRow_hba1c"))
+        rule.onNodeWithTag("labRow_hba1c").performClick()
         rule.onNodeWithTag("reviewList").performScrollToNode(hasTestTag("value_hba1c"))
         rule.onNodeWithTag("value_hba1c").performTextReplacement("6.2")
         rule.onNodeWithTag("saveImport").performClick()
@@ -136,6 +139,52 @@ class ImportFlowTest {
         vm.onDocument(PickedDocument(bytes, "cbc.pdf", AttachmentKind.Pdf))
         waitFor(15_000) { vm.state.value.phase == ImportPhase.Review }
         assertEquals(report.id, vm.state.value.draft!!.duplicateOf!!.report.id)
+    }
+
+    @Test fun reportForUnknownPersonOffersToAddThemAndKnownPersonIsAutoMatched() {
+        val s = session()
+        runBlocking {
+            s.stack.members.upsert(FamilyMember("m1", "Ravi Shah", Relationship.Self))
+            s.stack.members.upsert(FamilyMember("m2", "Meera Shah", Relationship.Spouse))
+            ctx.container.preferences.setActiveMember("m1")
+        }
+        val vm = ImportViewModel(s, DocumentReader(ctx.contentResolver), ImportPipeline(AndroidTextExtractor(ctx, failingOcr), s.stack.records), ctx.container.clock)
+        waitFor(5_000) { vm.state.value.member != null && vm.state.value.members.size == 2 }
+        // 1) printed name belongs to nobody → ask; "add as new member" creates the profile and files the report there
+        vm.onDocument(PickedDocument(pdf(listOf("City Pathology Laboratory", "Patient Name : Mr. SURESH MEHTA   Age: 61", "Date: 05/01/2024", "TSH 5.9 uIU/mL 0.27 - 4.2")), "a.pdf", AttachmentKind.Pdf))
+        waitFor(15_000) { vm.state.value.phase is ImportPhase.ChooseMember }
+        vm.onEvent(ImportEvent.AddMemberFromReport((vm.state.value.phase as ImportPhase.ChooseMember).printedName))
+        waitFor(5_000) { vm.state.value.phase == ImportPhase.Review }
+        val suresh = runBlocking { s.stack.members.all() }.single { it.name == "Suresh Mehta" }
+        assertEquals(suresh.id, vm.state.value.draft!!.memberId)
+        // 2) printed name matches another member → filed under them automatically, with a visible notice
+        vm.onEvent(ImportEvent.Reset)
+        vm.onEvent(ImportEvent.ChooseMember("m1"))
+        vm.onDocument(PickedDocument(pdf(listOf("City Pathology Laboratory", "Patient Name : Mrs. Meera Shah   Age: 41", "Date: 06/01/2024", "TSH 2.1 uIU/mL 0.27 - 4.2")), "b.pdf", AttachmentKind.Pdf))
+        waitFor(15_000) { vm.state.value.phase == ImportPhase.Review }
+        assertEquals("m2", vm.state.value.draft!!.memberId)
+        assertEquals("Meera Shah", vm.state.value.autoMatchedName)
+    }
+
+    @Test fun severalPagesBecomeOneRecordWithEveryFileEncrypted() {
+        val s = session()
+        runBlocking { s.stack.members.upsert(FamilyMember("m1", "Ravi", Relationship.Self)); ctx.container.preferences.setActiveMember("m1") }
+        val vm = ImportViewModel(s, DocumentReader(ctx.contentResolver), ImportPipeline(AndroidTextExtractor(ctx, failingOcr), s.stack.records), ctx.container.clock)
+        waitFor(5_000) { vm.state.value.member != null }
+        val p1 = pdf(listOf("Sunrise Hospital Discharge Summary", "Date: 03/02/2024", "Haemoglobin 11.2 g/dL 13.0 - 17.0"))
+        val p2 = pdf(listOf("Sunrise Hospital laboratory page two", "Creatinine 1.4 mg/dL 0.7 - 1.3", "Haemoglobin 99 g/dL 13 - 17"))
+        val f2 = java.io.File(ctx.cacheDir, "page2.pdf").apply { writeBytes(p2) }
+        vm.onDocument(PickedDocument(p1, "page1.pdf", AttachmentKind.Pdf))
+        waitFor(15_000) { vm.state.value.phase == ImportPhase.Review }
+        vm.onEvent(ImportEvent.AddPage(android.net.Uri.fromFile(f2), "page2.pdf"))
+        waitFor(15_000) { vm.state.value.draft!!.sources.size == 2 && vm.state.value.phase == ImportPhase.Review }
+        assertEquals(listOf("hb", "creat"), vm.state.value.draft!!.labRows.map { it.analyteId })
+        vm.onEvent(ImportEvent.Save("Hospital file"))
+        waitFor(10_000) { vm.state.value.phase is ImportPhase.Saved }
+        val report = runBlocking { s.stack.records.observeReports("m1").first() }.single()
+        assertEquals(2, report.attachments.size)
+        assertTrue(runBlocking { s.stack.records.attachmentBytes(report.attachments[1].id) }.contentEquals(p2))
+        assertEquals(11.2, runBlocking { s.stack.records.results("m1") }.first { it.analyteId == "hb" }.value, 1e-9)
     }
 
     @Test fun savedReportIsVisibleInRecordsList() {

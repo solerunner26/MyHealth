@@ -42,6 +42,7 @@ class MemberRepositoryImpl(private val db: MyHealthDatabase, private val vault: 
         val files = db.read { ReportDao.attachmentIdsForMember(it, id) }
         db.write(RECORD_TABLES + setOf(MemberDao.T, TreatmentDao.T, ActivityDao.T, MedicineDao.D)) { MemberDao.delete(it, id) }
         files.forEach { runCatching { vault.delete(it) } }
+        runCatching { app.myhealth.data.PhotoStore(vault).delete(id) }
     }
 }
 

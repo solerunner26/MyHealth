@@ -184,7 +184,7 @@ class AttachmentViewerViewModel(private val session: Session, private val attach
                                 State(false, (0 until minOf(n, MAX_PAGES)).map { r.renderImageWithDPI(it, 110f) }, n)
                             }
                         }
-                        AttachmentKind.Jpeg, AttachmentKind.Png -> {
+                        AttachmentKind.Jpeg, AttachmentKind.Png, AttachmentKind.Webp, AttachmentKind.Heic -> {
                             val opts = BitmapFactory.Options().apply { inSampleSize = 2 }
                             State(false, listOfNotNull(BitmapFactory.decodeByteArray(bytes, 0, bytes.size, opts)), 1)
                         }

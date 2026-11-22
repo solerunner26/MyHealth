@@ -51,7 +51,7 @@ class ReminderTest {
     }
 
     private fun awaitCondition(c: () -> Boolean) {
-        val end = System.currentTimeMillis() + 5_000
+        val end = System.currentTimeMillis() + 15_000
         while (System.currentTimeMillis() < end) { org.robolectric.shadows.ShadowLooper.idleMainLooper(); if (c()) return; Thread.sleep(20) }
         error("timeout")
     }

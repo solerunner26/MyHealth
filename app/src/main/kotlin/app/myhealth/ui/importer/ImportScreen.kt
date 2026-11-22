@@ -99,14 +99,20 @@ fun ImportRoute(onBack: () -> Unit, onSaved: (reportId: String) -> Unit, startMa
     var cameraMissing by remember { mutableStateOf(false) }
     val fallbackName = stringResource(R.string.rtype_other)
 
-    val picker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri: Uri? ->
-        if (uri != null) vm.onEvent(ImportEvent.PickUri(uri, fallbackName))
+    var cameraForPage by rememberSaveable { mutableStateOf(false) }
+    // Several files at once become one record (e.g. every page of a hospital file).
+    val picker = rememberLauncherForActivityResult(ActivityResultContracts.OpenMultipleDocuments()) { uris: List<Uri> ->
+        if (uris.isNotEmpty()) vm.onEvent(ImportEvent.PickUris(uris, fallbackName))
+    }
+    val pagePicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenMultipleDocuments()) { uris: List<Uri> ->
+        uris.forEach { vm.onEvent(ImportEvent.AddPage(it, fallbackName)) }
     }
     val camera = rememberLauncherForActivityResult(ActivityResultContracts.TakePicture()) { ok ->
         val path = cameraFile
         if (ok && path != null) {
             val f = File(path)
-            vm.onEvent(ImportEvent.PickUri(FileProvider.getUriForFile(context, context.packageName + ".files", f), f.name))
+            val u = FileProvider.getUriForFile(context, context.packageName + ".files", f)
+            vm.onEvent(if (cameraForPage) ImportEvent.AddPage(u, f.name) else ImportEvent.PickUri(u, f.name))
         } else if (path != null) runCatching { SecureDelete.overwriteAndDelete(File(path)) }
     }
     LaunchedEffect(state.phase) {
@@ -115,19 +121,24 @@ fun ImportRoute(onBack: () -> Unit, onSaved: (reportId: String) -> Unit, startMa
             cameraFile?.let { runCatching { SecureDelete.overwriteAndDelete(File(it)) } }
             onSaved(p.reportId)
         }
-        if (p is ImportPhase.Review || p is ImportPhase.Failed) cameraFile?.let { runCatching { SecureDelete.overwriteAndDelete(File(it)) }; cameraFile = null }
+        // camera captures are deleted only once they are imported (encrypted) or abandoned
+        if ((p is ImportPhase.Review && !cameraForPage) || p is ImportPhase.Failed) cameraFile?.let { runCatching { SecureDelete.overwriteAndDelete(File(it)) }; cameraFile = null }
     }
     LaunchedEffect(startManual) { if (startManual && state.phase == ImportPhase.Choose) vm.onEvent(ImportEvent.Manual) }
 
+    val mimes = arrayOf("application/pdf", "image/*")
+    val takePhoto: (Boolean) -> Unit = { forPage ->
+        cameraForPage = forPage
+        val dir = File(context.cacheDir, "camera").apply { mkdirs() }
+        val f = File(dir, "capture-${System.currentTimeMillis()}.jpg")
+        cameraFile = f.absolutePath
+        try { camera.launch(FileProvider.getUriForFile(context, context.packageName + ".files", f)) } catch (_: ActivityNotFoundException) { cameraMissing = true }
+    }
     ImportScreen(
         state = state, onEvent = vm::onEvent, onBack = onBack, cameraMissing = cameraMissing,
-        onPickFile = { runCatching { picker.launch(arrayOf("application/pdf", "image/jpeg", "image/png")) } },
-        onTakePhoto = {
-            val dir = File(context.cacheDir, "camera").apply { mkdirs() }
-            val f = File(dir, "capture-${System.currentTimeMillis()}.jpg")
-            cameraFile = f.absolutePath
-            try { camera.launch(FileProvider.getUriForFile(context, context.packageName + ".files", f)) } catch (_: ActivityNotFoundException) { cameraMissing = true }
-        },
+        onAddPageFile = { runCatching { pagePicker.launch(mimes) } }, onAddPagePhoto = { takePhoto(true) },
+        onPickFile = { runCatching { picker.launch(mimes) } },
+        onTakePhoto = { takePhoto(false) },
     )
 }
 
@@ -139,6 +150,8 @@ fun ImportScreen(
     onPickFile: () -> Unit,
     onTakePhoto: () -> Unit,
     cameraMissing: Boolean = false,
+    onAddPageFile: () -> Unit = {},
+    onAddPagePhoto: () -> Unit = {},
 ) {
     val c = MyHealthTheme.colors
     Column(Modifier.fillMaxSize().testTag("import")) {
@@ -153,7 +166,8 @@ fun ImportScreen(
                 )
             }
             is ImportPhase.Failed -> FailedState(p.error, { onEvent(ImportEvent.Reset) }, { onEvent(ImportEvent.Manual) })
-            ImportPhase.Review, ImportPhase.Saving, is ImportPhase.Saved -> state.draft?.let { ReviewContent(state, it, onEvent) }
+            is ImportPhase.ChooseMember -> ChooseMemberContent(p, onEvent)
+            ImportPhase.Review, ImportPhase.Saving, is ImportPhase.Saved -> state.draft?.let { ReviewContent(state, it, onEvent, onAddPageFile, onAddPagePhoto) }
         }
     }
 }
@@ -163,8 +177,8 @@ private fun ChooseSource(onPickFile: () -> Unit, onTakePhoto: () -> Unit, onManu
     val sp = MyHealthTheme.spacing
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).navigationBarsPadding().padding(sp.gutter), horizontalAlignment = Alignment.CenterHorizontally) {
         Column(Modifier.widthIn(max = 480.dp), verticalArrangement = Arrangement.spacedBy(sp.md)) {
-            MyHealthEmptyState(MyHealthIcons.Import, stringResource(R.string.import_intro_title), stringResource(R.string.import_intro_body), Modifier.height(300.dp))
-            MyHealthPrimaryButton(stringResource(R.string.import_pick_file), onPickFile, Modifier.fillMaxWidth().testTag("pickFile"), icon = MyHealthIcons.Document)
+            MyHealthEmptyState(MyHealthIcons.Import, stringResource(R.string.import_intro_title), stringResource(R.string.import_intro_body2), Modifier.height(320.dp))
+            MyHealthPrimaryButton(stringResource(R.string.import_pick_files), onPickFile, Modifier.fillMaxWidth().testTag("pickFile"), icon = MyHealthIcons.Document)
             MyHealthSecondaryButton(stringResource(R.string.import_take_photo), onTakePhoto, Modifier.fillMaxWidth(), icon = MyHealthIcons.Camera)
             if (cameraMissing) MyHealthInfoBanner(stringResource(R.string.import_error_camera), icon = MyHealthIcons.StatusWarning)
             MyHealthTextButton(stringResource(R.string.import_manual), onManual, Modifier.fillMaxWidth().testTag("manualEntry"), icon = MyHealthIcons.Edit)
@@ -189,15 +203,18 @@ private fun FailedState(error: IngestError, onAnother: () -> Unit, onManual: () 
 }
 
 @Composable
-private fun ReviewContent(state: ImportUiState, d: ImportDraft, onEvent: (ImportEvent) -> Unit) {
+private fun ReviewContent(state: ImportUiState, d: ImportDraft, onEvent: (ImportEvent) -> Unit, onAddPageFile: () -> Unit, onAddPagePhoto: () -> Unit) {
     val sp = MyHealthTheme.spacing
     var picking by rememberSaveable { mutableStateOf<String?>(null) } // "new" or a row key
+    var showDetails by rememberSaveable { mutableStateOf(false) }
+    var editing by rememberSaveable { mutableStateOf<String?>(null) }
+    var changePerson by rememberSaveable { mutableStateOf(false) }
     val fallbackTitle = label(d.type)
     val today = LocalDate.now()
     Column(Modifier.fillMaxSize().imePadding()) {
         LazyColumn(Modifier.weight(1f).fillMaxWidth().testTag("reviewList"), contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = sp.gutter, vertical = sp.sm),
             verticalArrangement = Arrangement.spacedBy(sp.md)) {
-            item { MyHealthInfoBanner(stringResource(R.string.review_intro)) }
+            state.autoMatchedName?.let { n -> item { MyHealthInfoBanner(stringResource(R.string.review_auto_member, n, state.member?.name.orEmpty()), icon = MyHealthIcons.Profile) } }
             d.duplicateOf?.let { dup ->
                 item { MyHealthCard(emphasis = app.myhealth.core.designsystem.components.Emphasis.Medium) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
@@ -207,43 +224,83 @@ private fun ReviewContent(state: ImportUiState, d: ImportDraft, onEvent: (Import
                     Text(stringResource(R.string.review_duplicate_body, dup.report.title, formatDate(dup.report.reportDate)), style = MyHealthTheme.typography.bodySmall, color = MyHealthTheme.colors.textSecondary)
                 } }
             }
-            if (state.ocrUsed) item { MyHealthInfoBanner(stringResource(R.string.import_ocr_note), icon = MyHealthIcons.StatusWarning) }
-            d.patientName?.let { item { MyHealthInfoBanner(stringResource(R.string.review_name_on_report, it), icon = MyHealthIcons.Profile) } }
             if (state.saveFailed) item { MyHealthInfoBanner(stringResource(R.string.import_save_failed), icon = MyHealthIcons.StatusError) }
+            if (state.pageFailed != null) item { MyHealthInfoBanner(stringResource(R.string.review_page_failed), icon = MyHealthIcons.StatusWarning) }
             if (state.showIssues && state.issues.isNotEmpty()) item { MyHealthInfoBanner(stringResource(R.string.review_fix_errors), icon = MyHealthIcons.StatusError) }
 
+            // ---- Summary: what was found, for whom, when (the only thing most people need to look at)
             item {
-                MyHealthCard {
-                    Column(verticalArrangement = Arrangement.spacedBy(sp.md)) {
-                        Text(stringResource(R.string.review_details), style = MyHealthTheme.typography.title, color = MyHealthTheme.colors.textPrimary)
-                        if (state.members.size > 1) {
-                            Text(stringResource(R.string.review_saving_to), style = MyHealthTheme.typography.label, color = MyHealthTheme.colors.textSecondary)
-                            MyHealthChipRow(state.members.map { it.id }, d.memberId, { id -> state.members.first { it.id == id }.name }, { onEvent(ImportEvent.SetMember(it)) })
+                MyHealthCard(Modifier.testTag("reviewSummary"), emphasis = app.myhealth.core.designsystem.components.Emphasis.Medium) {
+                    Column(verticalArrangement = Arrangement.spacedBy(sp.sm)) {
+                        val n = d.labRows.size + d.vitals.size + d.medicines.size
+                        Text(if (n == 0) stringResource(R.string.review_document_only) else pluralStringResource(R.plurals.review_found, n, n),
+                            style = MyHealthTheme.typography.title, color = MyHealthTheme.colors.textPrimary)
+                        Text(listOfNotNull(label(d.type), d.labName.ifBlank { null }).joinToString(" · "), style = MyHealthTheme.typography.bodySmall, color = MyHealthTheme.colors.textSecondary)
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(stringResource(R.string.review_for, state.member?.name.orEmpty()), style = MyHealthTheme.typography.subtitle, color = MyHealthTheme.colors.textPrimary, modifier = Modifier.weight(1f))
+                            if (state.members.size > 1) MyHealthTextButton(stringResource(R.string.review_change_person), { changePerson = true }, icon = MyHealthIcons.Family)
                         }
                         val dateErr = state.issuesFor(null).firstOrNull { it.error == app.myhealth.domain.importing.DraftError.MissingDate || it.error == app.myhealth.domain.importing.DraftError.FutureDate }
                         MyHealthDateField(stringResource(R.string.review_report_date), d.reportDate, { formatDate(it) }, stringResource(R.string.date_pick),
                             { onEvent(ImportEvent.SetDate(it)) }, stringResource(R.string.action_ok), stringResource(R.string.action_cancel), maxDate = today,
                             errorText = dateErr?.let { label(it.error) })
-                        MyHealthTextField(d.title, { onEvent(ImportEvent.SetTitle(it)) }, stringResource(R.string.review_report_title), supportingText = if (d.title.isBlank()) fallbackTitle else null)
-                        MyHealthTextField(d.labName, { onEvent(ImportEvent.SetLab(it)) }, stringResource(R.string.review_lab))
-                        MyHealthChoiceField(stringResource(R.string.review_type), ReportType.entries, d.type, { label(it) }, { onEvent(ImportEvent.SetType(it)) }, confirmLabel = stringResource(R.string.action_close))
+                        if (state.ocrUsed) Text(stringResource(R.string.import_ocr_note), style = MyHealthTheme.typography.caption, color = MyHealthTheme.colors.textSecondary)
+                        if (d.sources.isNotEmpty()) Text(pluralStringResource(R.plurals.review_files, d.sources.size, d.sources.size), style = MyHealthTheme.typography.caption, color = MyHealthTheme.colors.textSecondary)
+                        Row(horizontalArrangement = Arrangement.spacedBy(sp.sm)) {
+                            MyHealthTextButton(stringResource(R.string.review_add_page_file), onAddPageFile, Modifier.weight(1f).testTag("addPageFile"), icon = MyHealthIcons.Document)
+                            MyHealthTextButton(stringResource(R.string.review_add_page_photo), onAddPagePhoto, Modifier.weight(1f), icon = MyHealthIcons.Camera)
+                        }
                     }
                 }
             }
-            item { MyHealthSectionHeader(stringResource(R.string.review_lab_values)) }
-            if (d.labRows.isEmpty()) item {
-                MyHealthCard { Text(stringResource(R.string.review_no_values_title), style = MyHealthTheme.typography.subtitle, color = MyHealthTheme.colors.textPrimary)
-                    Text(stringResource(R.string.review_no_values_body), style = MyHealthTheme.typography.bodySmall, color = MyHealthTheme.colors.textSecondary) }
+            val needsCheck = d.labRows.count { it.include && (it.confidence != Confidence.High || it.warnings.isNotEmpty()) }
+            if (needsCheck > 0) item { MyHealthInfoBanner(pluralStringResource(R.plurals.review_needs_check, needsCheck, needsCheck), icon = MyHealthIcons.StatusWarning) }
+            if (d.labRows.isNotEmpty() || d.vitals.isNotEmpty() || d.medicines.isNotEmpty()) item {
+                Text(stringResource(R.string.review_tap_to_edit), style = MyHealthTheme.typography.caption, color = MyHealthTheme.colors.textSecondary)
             }
-            items(d.labRows, key = { it.key }) { row -> LabRowCard(row, state, onEvent, onChangeTest = { picking = row.key }) }
-            item { MyHealthSecondaryButton(stringResource(R.string.review_add_value), { picking = "new" }, Modifier.fillMaxWidth().testTag("addValue"), icon = MyHealthIcons.Add) }
+
+            // ---- Values: one calm line each; the full editor opens on demand
+            if (d.labRows.isNotEmpty()) item { MyHealthSectionHeader(stringResource(R.string.review_lab_values)) }
+            items(d.labRows, key = { it.key }) { row ->
+                val open = showDetails || editing == row.key || state.issuesFor(row.key).isNotEmpty()
+                if (open) LabRowCard(row, state, onEvent, onChangeTest = { picking = row.key })
+                else CompactRow(row.include, row.analyteId?.let { analyteName(it) } ?: row.printedName,
+                    listOf(row.valueText, row.unit).filter { it.isNotBlank() }.joinToString(" "), row.confidence != Confidence.High || row.warnings.isNotEmpty(),
+                    { v -> onEvent(ImportEvent.EditLab(row.key) { it.copy(include = v) }) }, { editing = row.key }, Modifier.testTag("labRow_${row.analyteId}"))
+            }
             if (d.vitals.isNotEmpty()) {
                 item { MyHealthSectionHeader(stringResource(R.string.review_vitals)) }
-                items(d.vitals, key = { it.key }) { v -> VitalRowCard(v, state, onEvent) }
+                items(d.vitals, key = { it.key }) { v ->
+                    if (showDetails || editing == v.key || state.issuesFor(v.key).isNotEmpty()) VitalRowCard(v, state, onEvent)
+                    else CompactRow(v.include, label(v.type), app.myhealth.ui.common.vitalValue(v.type, app.myhealth.domain.parse.Numbers.parse(v.valueText) ?: 0.0,
+                        app.myhealth.domain.parse.Numbers.parse(v.value2Text)), false, { x -> onEvent(ImportEvent.EditVital(v.key) { it.copy(include = x) }) }, { editing = v.key })
+                }
             }
             if (d.medicines.isNotEmpty()) {
                 item { MyHealthSectionHeader(stringResource(R.string.review_medicines)) }
-                items(d.medicines, key = { it.key }) { m -> MedicineRowCard(m, state, onEvent) }
+                items(d.medicines, key = { it.key }) { m ->
+                    if (showDetails || editing == m.key || state.issuesFor(m.key).isNotEmpty()) MedicineRowCard(m, state, onEvent)
+                    else CompactRow(m.include, m.name, listOf(m.strength, label(m.frequency)).filter { it.isNotBlank() }.joinToString(" · "), false,
+                        { x -> onEvent(ImportEvent.EditMedicine(m.key) { it.copy(include = x) }) }, { editing = m.key })
+                }
+            }
+            item {
+                MyHealthTextButton(stringResource(if (showDetails) R.string.review_hide_details else R.string.review_show_details), { showDetails = !showDetails },
+                    Modifier.fillMaxWidth().testTag("toggleDetails"), icon = MyHealthIcons.Expand)
+            }
+            if (showDetails) {
+                item {
+                    MyHealthCard {
+                        Column(verticalArrangement = Arrangement.spacedBy(sp.md)) {
+                            Text(stringResource(R.string.review_details), style = MyHealthTheme.typography.title, color = MyHealthTheme.colors.textPrimary)
+                            d.patientName?.let { Text(stringResource(R.string.review_name_on_report, it), style = MyHealthTheme.typography.caption, color = MyHealthTheme.colors.textSecondary) }
+                            MyHealthTextField(d.title, { onEvent(ImportEvent.SetTitle(it)) }, stringResource(R.string.review_report_title), supportingText = if (d.title.isBlank()) fallbackTitle else null)
+                            MyHealthTextField(d.labName, { onEvent(ImportEvent.SetLab(it)) }, stringResource(R.string.review_lab))
+                            MyHealthChoiceField(stringResource(R.string.review_type), ReportType.entries, d.type, { label(it) }, { onEvent(ImportEvent.SetType(it)) }, confirmLabel = stringResource(R.string.action_close))
+                        }
+                    }
+                }
+                item { MyHealthSecondaryButton(stringResource(R.string.review_add_value), { picking = "new" }, Modifier.fillMaxWidth().testTag("addValue"), icon = MyHealthIcons.Add) }
             }
             item { Spacer(Modifier.height(sp.lg)) }
         }
@@ -254,6 +311,9 @@ private fun ReviewContent(state: ImportUiState, d: ImportDraft, onEvent: (Import
                 { onEvent(ImportEvent.Save(fallbackTitle)) }, Modifier.fillMaxWidth().testTag("saveImport"), icon = MyHealthIcons.Check, enabled = state.phase != ImportPhase.Saving,
             )
         }
+    }
+    if (changePerson) state.member?.let { cur ->
+        app.myhealth.ui.shell.MemberPickerDialog(state.members, cur, { onEvent(ImportEvent.ChooseMember(it)) }, {}, {}) { changePerson = false }
     }
     picking?.let { target ->
         AnalytePickerDialog(onPick = { id ->
@@ -350,6 +410,53 @@ private fun MedicineRowCard(m: MedicineDraft, state: ImportUiState, onEvent: (Im
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number))
             }
             MyHealthChoiceField(stringResource(R.string.review_frequency), Frequency.entries, m.frequency, { label(it) }, { f -> edit { it.copy(frequency = f) } }, confirmLabel = stringResource(R.string.action_close))
+        }
+    }
+}
+
+/** One tidy line per extracted value: keep-tick, name, value, "check" glyph; tap opens the full editor. */
+@Composable
+private fun CompactRow(include: Boolean, name: String, value: String, needsCheck: Boolean, onInclude: (Boolean) -> Unit, onEdit: () -> Unit, modifier: Modifier = Modifier) {
+    val c = MyHealthTheme.colors
+    val editLabel = stringResource(R.string.review_edit_row, name)
+    MyHealthCard(modifier, onClick = onEdit) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            MyHealthCheckbox(include, onInclude, stringResource(R.string.review_include, name))
+            Column(Modifier.weight(1f)) {
+                Text(name, style = MyHealthTheme.typography.subtitle, color = if (include) c.textPrimary else c.textTertiary, maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
+                if (needsCheck) Text(label(app.myhealth.domain.parse.Confidence.Medium), style = MyHealthTheme.typography.caption, color = c.accent)
+            }
+            Text(value, style = MyHealthTheme.typography.metricSmall, color = if (include) c.textPrimary else c.textTertiary, maxLines = 1)
+            Spacer(Modifier.width(MyHealthTheme.spacing.sm))
+            Icon(if (needsCheck) MyHealthIcons.StatusWarning else MyHealthIcons.Edit, editLabel, tint = if (needsCheck) c.accent else c.textTertiary, modifier = Modifier.size(20.dp))
+        }
+    }
+}
+
+@Composable
+private fun ChooseMemberContent(p: ImportPhase.ChooseMember, onEvent: (ImportEvent) -> Unit) {
+    val sp = MyHealthTheme.spacing
+    val clean = app.myhealth.domain.importing.NameMatcher.cleanName(p.printedName)
+    LazyColumn(Modifier.fillMaxSize().testTag("chooseMember"), contentPadding = androidx.compose.foundation.layout.PaddingValues(sp.gutter), verticalArrangement = Arrangement.spacedBy(sp.md)) {
+        item {
+            Text(stringResource(R.string.choose_member_title), style = MyHealthTheme.typography.headline, color = MyHealthTheme.colors.textPrimary)
+            Text(stringResource(R.string.choose_member_body, p.printedName), style = MyHealthTheme.typography.body, color = MyHealthTheme.colors.textSecondary)
+        }
+        items(p.ranked, key = { it.member.id }) { r ->
+            MyHealthCard(onClick = { onEvent(ImportEvent.ChooseMember(r.member.id)) }, modifier = Modifier.testTag("choose_${r.member.id}")) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    app.myhealth.core.designsystem.components.MyHealthAvatar(r.member.initials, false)
+                    Spacer(Modifier.width(sp.md))
+                    Column(Modifier.weight(1f)) {
+                        Text(r.member.name, style = MyHealthTheme.typography.subtitle, color = MyHealthTheme.colors.textPrimary)
+                        Text(label(r.member.relationship), style = MyHealthTheme.typography.caption, color = MyHealthTheme.colors.textSecondary)
+                    }
+                    if (r == p.ranked.first() && r.score > 0.25) app.myhealth.core.designsystem.components.MyHealthStatusBadge(stringResource(R.string.choose_member_closest), app.myhealth.core.designsystem.components.StatusKind.Info)
+                }
+            }
+        }
+        if (clean.isNotBlank()) item {
+            MyHealthPrimaryButton(stringResource(R.string.choose_member_add, clean), { onEvent(ImportEvent.AddMemberFromReport(clean)) }, Modifier.fillMaxWidth().testTag("addFromReport"), icon = MyHealthIcons.Add)
         }
     }
 }

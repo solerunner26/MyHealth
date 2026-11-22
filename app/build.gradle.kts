@@ -85,6 +85,7 @@ dependencies {
     implementation(libs.androidx.navigation.compose)
     implementation(libs.androidx.biometric)
     implementation(libs.androidx.health.connect)
+    implementation(libs.androidx.exifinterface)
     implementation(libs.androidx.fragment)
     implementation(libs.pdfbox.android)
     implementation(libs.mlkit.text.recognition)

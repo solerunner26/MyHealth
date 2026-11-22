@@ -47,7 +47,7 @@ class ReportParser(private val today: LocalDate? = null) {
 
     private fun startsWithValue(s: String) = Regex("""^\s*(<|>|<=|>=|≤|≥)?\s*\d""").containsMatchIn(s)
 
-    private val nameRe = Regex("""(?:patient(?:'s)?\s*name|name\s*of\s*patient|pt\.?\s*name|^name)\s*[:\-]\s*(?:mr|mrs|ms|miss|master|baby|dr|smt|shri)?\.?\s*([A-Za-z][A-Za-z .']{1,60}?)(?=\s{2,}|\s+(?:age|sex|gender|uhid|id|dob|ref|date|mrn)\b|$)""", RegexOption.IGNORE_CASE)
+    private val nameRe = Regex("""(?:patient(?:'s)?\s*name|name\s*of\s*patient|pt\.?\s*name|^name)\s*[:\-]\s*(?:mrs|mr|ms|miss|master|baby|dr|smt|shri|kumari)?\.?\s*([A-Za-z][A-Za-z .']{1,60}?)(?=\s{2,}|\s+(?:age|sex|gender|uhid|id|dob|ref|date|mrn)\b|$)""", RegexOption.IGNORE_CASE)
 
     fun patientName(lines: List<String>): String? = lines.firstNotNullOfOrNull { l -> nameRe.find(l)?.groupValues?.get(1)?.trim()?.takeIf { it.length >= 2 } }
 

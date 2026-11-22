@@ -29,7 +29,17 @@ class DataStack internal constructor(val database: MyHealthDatabase, val vault: 
     val medicines = MedicineRepositoryImpl(database)
     val treatments = TreatmentRepositoryImpl(database)
     val activity = ActivityRepositoryImpl(database)
+    val photos = PhotoStore(vault)
     fun close() = database.close()
+}
+
+/** Profile photos: encrypted in the vault under "photo-<memberId>" (no schema change; included in backups). */
+class PhotoStore(private val vault: EncryptedVault) {
+    private fun name(memberId: String): String { require(memberId.matches(Regex("[A-Za-z0-9-]{1,64}"))); return "photo-$memberId" }
+    fun put(memberId: String, jpeg: ByteArray) { require(jpeg.size <= MAX_BYTES); vault.put(name(memberId), jpeg) }
+    fun get(memberId: String): ByteArray? = runCatching { if (vault.exists(name(memberId))) vault.get(name(memberId)) else null }.getOrNull()
+    fun delete(memberId: String) { runCatching { if (vault.exists(name(memberId))) vault.delete(name(memberId)) } }
+    companion object { const val MAX_BYTES = 2 * 1024 * 1024 }
 }
 
 /** Where things live. All under no-backup app-private storage. */

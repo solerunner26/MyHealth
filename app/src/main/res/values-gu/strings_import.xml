@@ -2,8 +2,6 @@
 <resources>
     <string name="import_title">દસ્તાવેજ ઉમેરો</string>
     <string name="import_intro_title">રિપોર્ટ, ચિઠ્ઠી કે બિલ ઉમેરો</string>
-    <string name="import_intro_body">PDF કે ફોટો પસંદ કરો. તેને આ ફોનમાં જ વાંચવામાં આવે છે; કંઈ અપલોડ થતું નથી. કંઈ પણ સેવ થાય તે પહેલાં તમે દરેક મૂલ્ય ચકાસશો.</string>
-    <string name="import_pick_file">ફાઇલ પસંદ કરો</string>
     <string name="import_take_photo">ફોટો લો</string>
     <string name="import_manual">દસ્તાવેજ વગર મૂલ્યો લખો</string>
     <string name="import_for_member">%1$s માટે</string>

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="member_photo_add">Add a photo</string>
+    <string name="member_photo_change">Change photo</string>
+    <string name="member_photo_remove">Remove photo</string>
+    <string name="member_photo_take">Take a photo</string>
+    <string name="member_photo_cd">Profile photo of %1$s</string>
+    <string name="member_photo_note">The photo is stored encrypted on this phone, with location and camera details removed.</string>
+    <string name="member_photo_failed">This image could not be used. Try another photo.</string>
+</resources>

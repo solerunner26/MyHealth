@@ -2,8 +2,6 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
     <string name="import_title">Add a document</string>
     <string name="import_intro_title">Add a report, prescription or bill</string>
-    <string name="import_intro_body">Choose a PDF or a photo. It is read on this device; nothing is uploaded. You will check every value before anything is saved.</string>
-    <string name="import_pick_file">Choose a file</string>
     <string name="import_take_photo">Take a photo</string>
     <string name="import_manual">Enter values without a document</string>
     <string name="import_for_member">For %1$s</string>

@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="choose_member_title">આ રિપોર્ટ કોનો છે?</string>
+    <string name="choose_member_body">રિપોર્ટ પર નામ \"%1$s\" છે. પસંદ કરો કે તે કોનો છે.</string>
+    <string name="choose_member_add">\"%1$s\" ને પરિવારના નવા સભ્ય તરીકે ઉમેરો</string>
+    <string name="choose_member_closest">સૌથી નજીકનું</string>
+    <string name="review_auto_member">રિપોર્ટ પર નામ \"%1$s\" છે, તેથી તે %2$s ના રેકોર્ડમાં સેવ થશે.</string>
+    <string name="review_for">%1$s માટે</string>
+    <string name="review_change_person">બદલો</string>
+    <string name="review_summary_date">રિપોર્ટની તારીખ %1$s</string>
+    <string name="review_tap_to_edit">કોઈ પણ મૂલ્ય સુધારવા તેના પર ટૅપ કરો. જે ન રાખવું હોય તેનું નિશાન કાઢી નાખો.</string>
+    <string name="review_show_details">પૂરી માહિતી બતાવો</string>
+    <string name="review_hide_details">પૂરી માહિતી છુપાવો</string>
+    <string name="review_document_only">કોઈ મૂલ્ય મળ્યું નહીં. દસ્તાવેજ પોતે રેકોર્ડમાં રાખવામાં આવશે.</string>
+    <string name="review_edit_row">%1$s બદલો</string>
+    <plurals name="review_found">
+        <item quantity="one">%d મૂલ્ય મળ્યું</item>
+        <item quantity="other">%d મૂલ્યો મળ્યાં</item>
+    </plurals>
+    <plurals name="review_needs_check">
+        <item quantity="one">%d મૂલ્ય એક વાર ચકાસો</item>
+        <item quantity="other">%d મૂલ્યો એક વાર ચકાસો</item>
+    </plurals>
+</resources>

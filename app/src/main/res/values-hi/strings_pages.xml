@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="rtype_hospital">अस्पताल की फ़ाइल</string>
+    <string name="import_pick_files">फ़ाइलें चुनें</string>
+    <string name="import_intro_body2">एक या ज़्यादा PDF या फ़ोटो चुनें, जैसे अस्पताल की फ़ाइल के सभी पन्ने। इन्हें इसी फ़ोन पर पढ़ा जाता है; कुछ भी अपलोड नहीं होता। सेव से पहले आप मान जाँचते हैं।</string>
+    <string name="review_add_page_file">फ़ाइल से पन्ना जोड़ें</string>
+    <string name="review_add_page_photo">फ़ोटो से पन्ना जोड़ें</string>
+    <string name="review_page_failed">जोड़े गए पन्नों में से एक पढ़ा नहीं जा सका। बाकी सब रखा गया है।</string>
+    <plurals name="review_files">
+        <item quantity="one">इस रिकॉर्ड में %d फ़ाइल</item>
+        <item quantity="other">इस रिकॉर्ड में %d फ़ाइलें</item>
+    </plurals>
+</resources>

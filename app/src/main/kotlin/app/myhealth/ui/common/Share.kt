@@ -37,5 +37,7 @@ object Share {
         app.myhealth.domain.model.AttachmentKind.Pdf -> "application/pdf"
         app.myhealth.domain.model.AttachmentKind.Jpeg -> "image/jpeg"
         app.myhealth.domain.model.AttachmentKind.Png -> "image/png"
+        app.myhealth.domain.model.AttachmentKind.Webp -> "image/webp"
+        app.myhealth.domain.model.AttachmentKind.Heic -> "image/heic"
     }
 }

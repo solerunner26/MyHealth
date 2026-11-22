@@ -41,6 +41,9 @@ class Session(val container: AppContainer, val stack: DataStack) {
 
     fun select(memberId: String) = container.preferences.setActiveMember(memberId)
 
+    /** Bumped whenever a profile photo changes, so every avatar reloads. */
+    val photoRevision = kotlinx.coroutines.flow.MutableStateFlow(0)
+
     /** Everything about the active member, re-emitted on any change; drives Home, Trends and Insights. */
     @OptIn(ExperimentalCoroutinesApi::class)
     val snapshot: Flow<MemberSnapshot> = activeMember.filterNotNull().distinctUntilChanged().flatMapLatest { m ->

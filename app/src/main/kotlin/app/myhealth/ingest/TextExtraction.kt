@@ -53,7 +53,7 @@ class AndroidTextExtractor(private val context: Context, private val ocr: OcrEng
 
     override suspend fun extract(doc: PickedDocument, progress: ExtractionProgress): ExtractedText = when (doc.kind) {
         AttachmentKind.Pdf -> extractPdf(doc.bytes, progress)
-        AttachmentKind.Jpeg, AttachmentKind.Png -> {
+        AttachmentKind.Jpeg, AttachmentKind.Png, AttachmentKind.Webp, AttachmentKind.Heic -> {
             val bmp = decodeScaled(doc.bytes) ?: throw IngestException(IngestError.Unreadable)
             try {
                 progress.onPage(0, 1)

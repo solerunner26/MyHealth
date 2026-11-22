@@ -2,8 +2,6 @@
 <resources>
     <string name="import_title">दस्तावेज़ जोड़ें</string>
     <string name="import_intro_title">रिपोर्ट, पर्ची या बिल जोड़ें</string>
-    <string name="import_intro_body">PDF या फ़ोटो चुनें। इसे इसी फ़ोन पर पढ़ा जाता है; कुछ भी अपलोड नहीं होता। कुछ भी सेव होने से पहले आप हर मान जाँचेंगे।</string>
-    <string name="import_pick_file">फ़ाइल चुनें</string>
     <string name="import_take_photo">फ़ोटो लें</string>
     <string name="import_manual">बिना दस्तावेज़ के मान लिखें</string>
     <string name="import_for_member">%1$s के लिए</string>

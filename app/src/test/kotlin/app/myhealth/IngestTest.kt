@@ -27,7 +27,27 @@ class IngestTest {
         assertEquals(AttachmentKind.Jpeg, DocumentSniffer.kind(byteArrayOf(0xFF.toByte(), 0xD8.toByte(), 0xFF.toByte(), 0xE0.toByte())))
         assertEquals(AttachmentKind.Png, DocumentSniffer.kind(byteArrayOf(0x89.toByte(), 'P'.code.toByte(), 'N'.code.toByte(), 'G'.code.toByte(), 13, 10, 26, 10)))
         assertNull(DocumentSniffer.kind("<html>".toByteArray()))
+        assertEquals(AttachmentKind.Webp, DocumentSniffer.kind("RIFF\u0000\u0000\u0000\u0000WEBPVP8 ".toByteArray(Charsets.ISO_8859_1)))
+        assertEquals(AttachmentKind.Heic, DocumentSniffer.kind("\u0000\u0000\u0000\u0018ftypheic\u0000\u0000".toByteArray(Charsets.ISO_8859_1)))
         assertNull(DocumentSniffer.kind(ByteArray(0)))
+    }
+
+    @Test @org.robolectric.annotation.GraphicsMode(org.robolectric.annotation.GraphicsMode.Mode.NATIVE)
+    fun profilePhotoIsSquareSmallAndHasNoMetadata() {
+        val bmp = android.graphics.Bitmap.createBitmap(1200, 800, android.graphics.Bitmap.Config.ARGB_8888).apply { eraseColor(android.graphics.Color.rgb(40, 160, 140)) }
+        val src = java.io.ByteArrayOutputStream().also { bmp.compress(android.graphics.Bitmap.CompressFormat.JPEG, 90, it) }.toByteArray()
+        // add EXIF with GPS + rotation to the source
+        val f = java.io.File.createTempFile("photo", ".jpg").apply { writeBytes(src) }
+        androidx.exifinterface.media.ExifInterface(f.absolutePath).apply {
+            setAttribute(androidx.exifinterface.media.ExifInterface.TAG_GPS_LATITUDE, "23/1,1/1,0/1"); setAttribute(androidx.exifinterface.media.ExifInterface.TAG_ORIENTATION, "6"); saveAttributes()
+        }
+        val out = app.myhealth.core.Images.profilePhoto(f.readBytes())!!
+        val o = android.graphics.BitmapFactory.Options().apply { inJustDecodeBounds = true }
+        android.graphics.BitmapFactory.decodeByteArray(out, 0, out.size, o)
+        assertEquals(512, o.outWidth); assertEquals(512, o.outHeight)
+        val exif = androidx.exifinterface.media.ExifInterface(java.io.ByteArrayInputStream(out))
+        assertNull(exif.getAttribute(androidx.exifinterface.media.ExifInterface.TAG_GPS_LATITUDE))
+        assertNull(app.myhealth.core.Images.profilePhoto("not an image".toByteArray()))
     }
 
     @Test fun ocrPathProducesDraftWithOcrCount() = runBlocking {
