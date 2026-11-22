@@ -14,3 +14,11 @@ tokens (colour, type, spacing, radii, motion, elevation, stroke); components (bu
 banners, disclaimer, avatar, empty/error/offline/loading skeleton, progress, text field, chips, switch row, choice field,
 dialog, top bar, bottom bar, nav rail, band chart, legend, score ring); hardened manifest (no backup, no internet,
 data-extraction rules, locale config); app-private crash log; EN/HI/GU strings.
+
+## Phase 2: domain models and parsers (done)
+- `./gradlew assembleDebug testDebugUnitTest :domain:test lintDebug` → BUILD SUCCESSFUL, 43 tests, 0 failures; lint 0 errors
+- Domain: models (FamilyMember, Report, Attachment, LabResult, Vital, DailyActivity, Medicine, DoseLog, Treatment);
+  analyte catalogue (≈60 analytes, aliases, canonical units, conversions, sex-aware ranges, critical limits,
+  direction, monitoring intervals); unit normaliser; parsers (text normaliser, Indian number grouping, dates, lab lines,
+  vitals, prescriptions, document type, patient and lab name); value formatter.
+- Tests: units/catalogue 4, dates 4, lab lines 16, vitals/medicines 3, full reports 6, formatter 2.

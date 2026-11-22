@@ -44,3 +44,24 @@ Bottom bar when the window is < 600dp wide, navigation rail otherwise (same brea
 ## D-007 Hardcoded copy
 Lint `HardcodedText` covers XML only. `HardcodedCopyTest` scans Compose sources for string literals passed to
 Text/label/title parameters and fails the build if it finds any.
+
+## D-008 Printed range beats catalogue range
+Lab ranges depend on the method, so a range printed on the report always wins. The catalogue's adult range
+(sex-aware where it matters) is used only when no range is printed, and the review screen labels it
+`RangeFromCatalogue` so the user knows. Paediatric ranges are not in the catalogue; for children the printed range is
+the only reliable source.
+
+## D-009 Parser behaviour
+- Deterministic, rule-based, no ML. Alias matching uses the longest alias first, then the earliest position. Words
+  before the first number count as the name.
+- A list of "ignored terms" (e.g. *Free PSA*, *urine glucose*, *mean platelet volume*) stops a different test from
+  being filed under a similar-sounding catalogue analyte.
+- A missing or unknown unit is inferred by plausibility against the catalogue range (e.g. WBC 7800 → /µL → 7.8
+  10³/µL), always flagged as `UnitInferred` with Medium confidence.
+- Numeric dates are read day-first (Indian convention) unless the first part is > 12. Collection date > report date >
+  generic date; DOB/expiry dates are ignored; future dates are rejected.
+- Unrecognised test lines are not offered as rows (too noisy). The user can add a row manually on the review screen.
+
+## D-010 Latin digits for values
+Medical values are always shown with Latin digits and a '.' decimal point in all three languages, as printed on Indian
+lab reports. UI text is fully translated.
