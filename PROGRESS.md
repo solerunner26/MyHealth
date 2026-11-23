@@ -153,3 +153,12 @@ property). It was fixed forward in `63e5952`. Since then every commit runs only 
 - Not verified here: Health Connect on a real phone with a fitness device, sunrise switching over a real evening,
   hospital-list parsing on real insurer PDFs (formats vary; rows can be edited or deleted).
 
+
+## 0.5.0 (done)
+- Items of the fifth round: D-043 (liquid glass, effects switches, quick settings, background update prompt, policy
+  auto-fill, Health Connect crash, adversarial audit with nine fixes). New tests: PolicyParserTest, HealthConnect
+  screen with every data type, QuickSettingsTest, floater hand-over on member delete, auto-fill merge, live update
+  detection against the real GitHub releases (opt-in `-PliveUpdate`).
+- Not verified here: OCR quality on real phone photos of policy schedules (fields may be missed; all are editable),
+  glass rendering speed on low-end phones (switches provided), the update prompt on a real phone (logic verified
+  against the live release list).
