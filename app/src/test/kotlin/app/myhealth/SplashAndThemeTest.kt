@@ -4,6 +4,7 @@ import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.printToLog
@@ -64,5 +65,36 @@ class SplashAndThemeTest {
         assertEquals(MyHealthThemeId.Evergreen, MyHealthThemeId.parse("Botanical"))
         assertEquals(MyHealthThemeId.Crystal, MyHealthThemeId.parse("Precision"))
         assertEquals(MyHealthThemeId.Default, MyHealthThemeId.parse("Nonsense"))
+    }
+}
+
+@RunWith(AndroidJUnit4::class)
+@Config(application = TestApp::class)
+class QuickSettingsTest {
+    @get:Rule val rule = createAndroidComposeRule<MainActivity>()
+    private val ctx get() = ApplicationProvider.getApplicationContext<TestApp>()
+    private fun waitTag(t: String) {
+        val end = System.currentTimeMillis() + 10_000
+        while (System.currentTimeMillis() < end) { org.robolectric.shadows.ShadowLooper.idleMainLooper(); rule.waitForIdle(); if (rule.onAllNodes(hasTestTag(t)).fetchSemanticsNodes().isNotEmpty()) return; Thread.sleep(20) }
+        error("timeout $t")
+    }
+
+    @Test fun logoOpensQuickSettingsForThemeDarkModeAndLanguage() {
+        runBlocking { ctx.container.openNow()!!.members.upsert(FamilyMember("m1", "Asha", Relationship.Self)) }
+        waitTag("logoQuickSettings")
+        rule.onNodeWithTag("logoQuickSettings").performSemanticsAction(androidx.compose.ui.semantics.SemanticsActions.OnClick)
+        waitTag("qsDark")
+        rule.onNodeWithTag("qsTheme_Citrus").performScrollTo().performClick()
+        waitFor { ctx.container.preferences.state.value.colorTheme == MyHealthThemeId.Citrus }
+        rule.onNodeWithTag("qsDark").performScrollTo().performClick()
+        waitFor { ctx.container.preferences.state.value.theme == app.myhealth.core.designsystem.theme.ThemeMode.Dark }
+        rule.onNodeWithTag("qsLang_hi").performScrollTo().performClick()
+        waitFor { ctx.container.preferences.state.value.language == "hi" }
+    }
+
+    private fun waitFor(c: () -> Boolean) {
+        val end = System.currentTimeMillis() + 10_000
+        while (System.currentTimeMillis() < end) { org.robolectric.shadows.ShadowLooper.idleMainLooper(); rule.waitForIdle(); if (c()) return; Thread.sleep(20) }
+        error("condition")
     }
 }

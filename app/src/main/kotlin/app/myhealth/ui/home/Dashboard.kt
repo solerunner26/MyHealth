@@ -116,7 +116,7 @@ fun SwipeAvatar(member: FamilyMember, photo: ImageBitmap?, canSwitch: Boolean, o
 private const val AVATAR = "avatar" // animation inspector id, not UI copy
 
 @Composable
-fun DashboardHeader(member: FamilyMember, photo: ImageBitmap?, members: List<FamilyMember>, onSwitch: (String) -> Unit, onOpenPicker: () -> Unit) {
+fun DashboardHeader(member: FamilyMember, photo: ImageBitmap?, members: List<FamilyMember>, onSwitch: (String) -> Unit, onQuickSettings: () -> Unit = {}, onOpenPicker: () -> Unit) {
     val c = MyHealthTheme.colors
     val greeting = when (LocalTime.now().hour) { in 5..11 -> R.string.dash_greeting_morning; in 12..16 -> R.string.dash_greeting_afternoon; else -> R.string.dash_greeting_evening }
     val next = nextMember(members, member)
@@ -132,6 +132,11 @@ fun DashboardHeader(member: FamilyMember, photo: ImageBitmap?, members: List<Fam
             Text(member.name, style = MyHealthTheme.typography.headline, color = c.textPrimary, maxLines = 1, overflow = TextOverflow.Ellipsis)
             if (next != null && !hintSeen) Text(stringResource(R.string.dash_swipe_hint), style = MyHealthTheme.typography.caption, color = c.accent, maxLines = 2)
         }
-        app.myhealth.ui.common.MyHealthLogo(36.dp, alive = true)
+        // item 5: the animated logo opens quick settings (theme, dark mode, language)
+        val cd = stringResource(R.string.qs_title)
+        Box(Modifier.size(48.dp).clip(androidx.compose.foundation.shape.RoundedCornerShape(14.dp))
+            .clickable(role = androidx.compose.ui.semantics.Role.Button, onClickLabel = cd, onClick = onQuickSettings).testTag("logoQuickSettings"), contentAlignment = Alignment.Center) {
+            app.myhealth.ui.common.MyHealthLogo(36.dp, alive = true)
+        }
     }
 }

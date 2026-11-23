@@ -259,6 +259,9 @@ private fun MainTabs(nav: NavHostController) {
     AdaptiveNavScaffold(tab, { tab = it }) {
         Column(Modifier.fillMaxSize().testTag("shell")) {
             var picker by rememberSaveable { mutableStateOf(false) }
+            // quick settings live above the tab content so they survive Home's loading → content swap
+            var quickSettings by rememberSaveable { mutableStateOf(false) }
+            if (quickSettings) app.myhealth.ui.settings.QuickSettingsSheet { quickSettings = false }
             if (tab != TopLevel.Home) MyHealthTopBar(title = topLevelItems()[tab.ordinal].label) {
                 MemberSwitcher(members.orEmpty(), active, session::select, onAdd = { nav.navigate(Routes.MEMBER_NEW) }, onEdit = { nav.navigate(Routes.memberEdit(it)) })
             }
@@ -278,7 +281,7 @@ private fun MainTabs(nav: NavHostController) {
                     HomeContent(state, onAddDocument = onImport, onVisitPrep = { nav.navigate(Routes.VISIT_PREP) }, onLogVitalType = { nav.navigate(Routes.vitalNew(it.name)) }, onLogVital = { nav.navigate(Routes.vitalNew()) }, onAddMedicine = { nav.navigate(Routes.MEDICINE_NEW) },
                         onOpenTrend = { nav.navigate(Routes.trend(it)) }, onOpenInsights = { nav.navigate(Routes.INSIGHTS) },
                         onOpenVital = { nav.navigate(Routes.vital(it.name)) }, onAllTests = { tab = TopLevel.Records },
-                        header = { active?.let { a -> app.myhealth.ui.home.DashboardHeader(a, photo, members.orEmpty(), session::select) { picker = true } } })
+                        header = { active?.let { a -> app.myhealth.ui.home.DashboardHeader(a, photo, members.orEmpty(), session::select, onQuickSettings = { quickSettings = true }) { picker = true } } })
                 }
                 TopLevel.Records -> {
                     val vm = rememberVm { RecordsViewModel(session) }

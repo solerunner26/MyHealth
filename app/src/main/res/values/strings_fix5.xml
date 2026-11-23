@@ -7,6 +7,8 @@
     <string name="upd_up_to_date">You have the latest version.</string>
     <string name="upd_check_now">Check for updates</string>
     <string name="about_version_build">Version %1$s (build %2$d)</string>
+    <string name="qs_title">Quick settings</string>
+    <string name="qs_dark">Dark mode</string>
     <string name="hc_data_bp">blood pressure</string>
     <string name="hc_data_spo2">oxygen (SpO₂)</string>
     <string name="hc_data_glucose">blood glucose</string>

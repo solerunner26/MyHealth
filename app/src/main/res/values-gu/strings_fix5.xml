@@ -7,6 +7,8 @@
     <string name="upd_up_to_date">તમારી પાસે નવીનતમ આવૃત્તિ છે.</string>
     <string name="upd_check_now">અપડેટ તપાસો</string>
     <string name="about_version_build">આવૃત્તિ %1$s (બિલ્ડ %2$d)</string>
+    <string name="qs_title">ઝડપી સેટિંગ્સ</string>
+    <string name="qs_dark">ડાર્ક મોડ</string>
     <string name="hc_data_bp">બ્લડ પ્રેશર</string>
     <string name="hc_data_spo2">ઓક્સિજન (SpO₂)</string>
     <string name="hc_data_glucose">બ્લડ ગ્લુકોઝ</string>
