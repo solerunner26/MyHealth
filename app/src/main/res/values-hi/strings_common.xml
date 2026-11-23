@@ -4,7 +4,7 @@
     <string name="nav_records">रिकॉर्ड</string>
     <string name="nav_trends">ट्रेंड</string>
     <string name="nav_care">देखभाल</string>
-    <string name="nav_more">और</string>
+    <string name="nav_more">सेटिंग्स</string>
     <string name="action_back">वापस</string>
     <string name="action_save">सेव करें</string>
     <string name="action_cancel">रद्द करें</string>

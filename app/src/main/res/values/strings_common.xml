@@ -5,7 +5,7 @@
     <string name="nav_records">Records</string>
     <string name="nav_trends">Trends</string>
     <string name="nav_care">Care</string>
-    <string name="nav_more">More</string>
+    <string name="nav_more">Settings</string>
     <string name="action_back">Back</string>
     <string name="action_save">Save</string>
     <string name="action_cancel">Cancel</string>

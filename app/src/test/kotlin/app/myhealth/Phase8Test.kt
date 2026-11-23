@@ -135,7 +135,7 @@ class SettingsAndInsightsFlowTest {
 
         // Insights: expand "why" → evidence row with the exact value; score breakdown present
         rule.onNodeWithText(ctx.getString(R.string.nav_more)).performClick()
-        waitTag("more"); rule.onNodeWithText(ctx.getString(R.string.more_insights)).performClick()
+        waitTag("more"); rule.onNodeWithTag("more").performScrollToNode(hasText(ctx.getString(R.string.more_insights))); rule.onNodeWithText(ctx.getString(R.string.more_insights)).performClick()
         waitTag("insights")
         // the list loads asynchronously; wait for the rule's row, then bring it on screen before tapping
         waitFor { runCatching { rule.onNodeWithTag("insightsList").performScrollToNode(hasTestTag("why_range:ldl")) }.isSuccess }

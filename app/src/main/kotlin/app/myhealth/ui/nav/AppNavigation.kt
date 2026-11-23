@@ -88,6 +88,7 @@ object Routes {
     const val SUMMARY = "summary"
     const val VACCINES = "vaccines"
     const val VITALS = "vitals"
+    const val MEDICLAIM = "mediclaim"
     const val CARDS = "cards"
     const val FAMILY = "family"
     const val VISIT_PREP = "visit"
@@ -291,7 +292,8 @@ private fun MainTabs(nav: NavHostController) {
                     editMember = { nav.navigate(Routes.memberEdit(it)) }, addMember = { nav.navigate(Routes.MEMBER_NEW) }, summary = { nav.navigate(Routes.SUMMARY) },
                     vaccines = { nav.navigate(Routes.VACCINES) }, cards = { nav.navigate(Routes.CARDS) }, family = { nav.navigate(Routes.FAMILY) }, visitPrep = { nav.navigate(Routes.VISIT_PREP) },
                     settings = { nav.navigate(Routes.SETTINGS) }, backup = { nav.navigate(Routes.BACKUP) }, healthConnect = { nav.navigate(Routes.HEALTH_CONNECT) },
-                ))
+                    mediclaim = null, // MEDICLAIM_ROUTE
+                ), active)
             }
             }
         }

@@ -83,6 +83,8 @@ class AppFlowTest {
         // records tab: search filters the report list
         rule.onNodeWithText(str(R.string.nav_records)).performClick()
         waitTag("recordsList")
+        // chronological by test date, newest first, under month headings
+        rule.onNodeWithTag("recordsList").performScrollToNode(hasText("Annual check"))
         rule.onNodeWithText("Annual check").assertExists()
         // reports with values not in range carry a red count label (Lipid follow-up: LDL high; Annual check: LDL + HbA1c)
         rule.onNodeWithTag("outOfRange_r2", useUnmergedTree = true).assertExists()

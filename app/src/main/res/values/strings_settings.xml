@@ -7,7 +7,7 @@
     <string name="more_family">Family members</string>
     <string name="more_summary">Doctor visit summary</string>
     <string name="more_summary_sub">PDF or CSV to share with your doctor</string>
-    <string name="more_settings">Settings</string>
+    <string name="more_settings">App settings</string>
     <string name="more_settings_sub">Theme, language, lock, privacy</string>
     <string name="more_backup">Backup and restore</string>
     <string name="more_backup_sub">Encrypted copy you control</string>

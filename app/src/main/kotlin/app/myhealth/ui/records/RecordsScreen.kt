@@ -138,8 +138,17 @@ fun RecordsContent(state: RecordsState, onOpenReport: (String) -> Unit, onOpenTr
 private fun ReportList(reports: List<Report>, outOfRange: Map<String, Int>, onOpen: (String) -> Unit, onClear: () -> Unit) {
     if (reports.isEmpty()) { NoMatch(onClear); return }
     val sp = MyHealthTheme.spacing
+    // Chronology (item 4): reports sit on the date the test was done, not the day the file was added, newest first,
+    // under month headings.
+    val byMonth = reports.sortedWith(compareByDescending<Report> { it.reportDate }.thenByDescending { it.createdAt }).groupBy { java.time.YearMonth.from(it.reportDate) }
+    val locale = androidx.compose.ui.platform.LocalConfiguration.current.locales[0]
     LazyColumn(Modifier.fillMaxSize().testTag("recordsList"), contentPadding = PaddingValues(sp.gutter), verticalArrangement = Arrangement.spacedBy(sp.sm)) {
-        items(reports, key = { it.id }) { r ->
+        byMonth.forEach { (month, list) ->
+        item(key = "m$month") {
+            androidx.compose.material3.Text(month.format(java.time.format.DateTimeFormatter.ofPattern("MMMM yyyy", locale)), style = MyHealthTheme.typography.overline,
+                color = MyHealthTheme.colors.textSecondary, modifier = Modifier.padding(top = sp.sm).testTag("month_$month"))
+        }
+        items(list, key = { it.id }) { r ->
             MyHealthCard(onClick = { onOpen(r.id) }, modifier = Modifier.testTag("report_${r.id}")) {
                 val base = stringResource(R.string.join_dot, label(r.type), formatDate(r.reportDate))
                 val bad = outOfRange[r.id] ?: 0
@@ -149,6 +158,7 @@ private fun ReportList(reports: List<Report>, outOfRange: Map<String, Int>, onOp
                         app.myhealth.core.designsystem.components.StatusKind.High, Modifier.testTag("outOfRange_${r.id}"))
                 }
             }
+        }
         }
     }
 }

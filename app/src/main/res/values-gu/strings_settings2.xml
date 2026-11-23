@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="cat_profile">પ્રોફાઇલ</string>
+    <string name="cat_family">પરિવાર</string>
+    <string name="cat_health">આરોગ્ય સાધનો</string>
+    <string name="cat_insurance">વીમો અને કાર્ડ</string>
+    <string name="cat_data">ડેટા અને સિંક</string>
+    <string name="more_mediclaim">મેડિક્લેમ (આરોગ્ય વીમો)</string>
+    <string name="more_mediclaim_sub">પોલિસી, કવર, ક્લેમ, નેટવર્ક હોસ્પિટલ</string>
+    <string name="cat_app">ઍપ</string>
+</resources>

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="cat_profile">Profile</string>
+    <string name="cat_family">Family</string>
+    <string name="cat_health">Health tools</string>
+    <string name="cat_insurance">Insurance and cards</string>
+    <string name="cat_data">Data and sync</string>
+    <string name="more_mediclaim">Mediclaim (health insurance)</string>
+    <string name="more_mediclaim_sub">Policies, cover, claims, network hospitals</string>
+    <string name="cat_app">App</string>
+</resources>
