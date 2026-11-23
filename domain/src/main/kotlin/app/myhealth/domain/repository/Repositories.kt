@@ -124,3 +124,17 @@ interface MediaRepository {
     suspend fun delete(id: String)
     suspend fun deleteForOwner(ownerId: String)
 }
+
+interface MediclaimRepository {
+    fun observe(memberId: String): Flow<List<app.myhealth.domain.model.MediclaimPolicy>>
+    fun observePolicy(id: String): Flow<app.myhealth.domain.model.MediclaimPolicy?>
+    suspend fun all(): List<app.myhealth.domain.model.MediclaimPolicy>
+    suspend fun upsert(p: app.myhealth.domain.model.MediclaimPolicy)
+    suspend fun delete(id: String)
+    fun observeClaims(policyId: String): Flow<List<app.myhealth.domain.model.MediclaimClaim>>
+    suspend fun upsertClaim(c: app.myhealth.domain.model.MediclaimClaim)
+    suspend fun deleteClaim(id: String)
+    fun observeHospitals(policyId: String): Flow<List<app.myhealth.domain.model.NetworkHospital>>
+    suspend fun addHospitals(list: List<app.myhealth.domain.model.NetworkHospital>)
+    suspend fun deleteHospital(id: String)
+}

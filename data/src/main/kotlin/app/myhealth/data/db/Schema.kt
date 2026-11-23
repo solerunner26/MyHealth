@@ -7,7 +7,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
  * snapshot file under `data/schemas/` (checked by SchemaSnapshotTest).
  */
 object Schema {
-    const val VERSION = 3
+    const val VERSION = 4
 
     /** DDL of version 1 (kept verbatim forever so migration tests can build a v1 database). */
     val V1: List<String> = listOf(
@@ -109,6 +109,25 @@ object Migrations {
                 id TEXT PRIMARY KEY NOT NULL, member_id TEXT NOT NULL REFERENCES members(id) ON DELETE CASCADE,
                 owner_id TEXT NOT NULL, kind TEXT NOT NULL, created_at INTEGER NOT NULL)""",
             "CREATE INDEX idx_media_owner ON media(owner_id)",
+        )),
+        // v4: mediclaim (health insurance) policies, claims and network hospitals.
+        Migration(3, 4, listOf(
+            """CREATE TABLE mediclaim_policies (
+                id TEXT PRIMARY KEY NOT NULL, member_id TEXT NOT NULL REFERENCES members(id) ON DELETE CASCADE,
+                insurer TEXT NOT NULL, plan_name TEXT NOT NULL, policy_number TEXT NOT NULL, type TEXT NOT NULL,
+                sum_insured REAL NOT NULL, bonus REAL NOT NULL, premium REAL, start_date TEXT, end_date TEXT,
+                covered TEXT NOT NULL, tpa_name TEXT NOT NULL, tpa_phone TEXT NOT NULL, helpline TEXT NOT NULL,
+                agent_name TEXT NOT NULL, agent_phone TEXT NOT NULL, features TEXT NOT NULL, notes TEXT NOT NULL, created_at INTEGER NOT NULL)""",
+            "CREATE INDEX idx_policies_member ON mediclaim_policies(member_id)",
+            """CREATE TABLE mediclaim_claims (
+                id TEXT PRIMARY KEY NOT NULL, policy_id TEXT NOT NULL REFERENCES mediclaim_policies(id) ON DELETE CASCADE,
+                member_id TEXT NOT NULL, hospital TEXT NOT NULL, admitted_on TEXT, discharged_on TEXT, kind TEXT NOT NULL,
+                claimed REAL NOT NULL, approved REAL, status TEXT NOT NULL, claim_number TEXT NOT NULL, notes TEXT NOT NULL, created_at INTEGER NOT NULL)""",
+            "CREATE INDEX idx_claims_policy ON mediclaim_claims(policy_id)",
+            """CREATE TABLE network_hospitals (
+                id TEXT PRIMARY KEY NOT NULL, policy_id TEXT NOT NULL REFERENCES mediclaim_policies(id) ON DELETE CASCADE,
+                name TEXT NOT NULL, address TEXT NOT NULL, city TEXT NOT NULL, pincode TEXT NOT NULL, phone TEXT NOT NULL)""",
+            "CREATE INDEX idx_hospitals_policy ON network_hospitals(policy_id)",
         )),
     )
 

@@ -35,6 +35,7 @@ class DataStack internal constructor(val database: MyHealthDatabase, val vault: 
     val familyHistory = app.myhealth.data.repository.FamilyHistoryRepositoryImpl(database)
     val visitQuestions = app.myhealth.data.repository.VisitQuestionRepositoryImpl(database)
     val media = app.myhealth.data.repository.MediaRepositoryImpl(database, vault)
+    val mediclaims = app.myhealth.data.repository.MediclaimRepositoryImpl(database)
     fun close() = database.close()
 }
 

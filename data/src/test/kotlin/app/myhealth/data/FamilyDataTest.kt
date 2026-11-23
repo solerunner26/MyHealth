@@ -66,6 +66,32 @@ class FamilyDataTest {
 }
 
 @RunWith(RobolectricTestRunner::class)
+class MediclaimDataTest {
+    private val context: Context = ApplicationProvider.getApplicationContext()
+    private fun newStack(name: String) = StorageOpener(context, StoragePaths(File(context.noBackupFilesDir, "$name-${System.nanoTime()}")), SoftwareKeyWrapper()) { FrameworkSQLiteOpenHelperFactory() }.open()
+
+    @Test fun policyWithFeaturesClaimsAndHospitalsSurvivesBackupAndIsSeenByCoveredMembers() = runBlocking {
+        val a = newStack("mc-a")
+        a.members.upsert(TestData.member("m1", "Ravi")); a.members.upsert(TestData.member("m2", "Meera", app.myhealth.domain.model.Relationship.Spouse))
+        val p = app.myhealth.domain.model.MediclaimPolicy("p1", "m1", "Star Health", "Family Optima", "P/123", app.myhealth.domain.model.PolicyType.FamilyFloater, 500_000.0, 50_000.0,
+            12_000.0, LocalDate.of(2026, 4, 1), LocalDate.of(2027, 3, 31), listOf("m1", "m2"), tpaName = "Medi Assist",
+            features = app.myhealth.domain.model.PolicyFeatures(roomRent = "Single private AC room", coPayPercent = 10, pedWaitingMonths = 36, restoration = true))
+        a.mediclaims.upsert(p)
+        a.mediclaims.upsertClaim(app.myhealth.domain.model.MediclaimClaim("c1", "p1", "m2", "City Hospital", LocalDate.of(2026, 7, 1), claimedAmount = 60_000.0, approvedAmount = 55_000.0, status = app.myhealth.domain.model.ClaimStatus.Settled))
+        a.mediclaims.addHospitals(listOf(app.myhealth.domain.model.NetworkHospital("h1", "p1", "Sterling Hospital", "Memnagar", "Ahmedabad", "380052", "07940011111")))
+        assertEquals(listOf("p1"), a.mediclaims.observe("m2").first().map { it.id }) // covered member sees the floater
+        val out = ByteArrayOutputStream(); a.backups(context).export(out, "pw-pw-pw-pw".toCharArray(), 0, "t")
+        val b = newStack("mc-b"); b.backups(context).restore(ByteArrayInputStream(out.toByteArray()), "pw-pw-pw-pw".toCharArray())
+        val restored = b.mediclaims.observePolicy("p1").first()!!
+        assertEquals(10, restored.features.coPayPercent); assertTrue(restored.features.restoration); assertEquals(listOf("m1", "m2"), restored.coveredMemberIds)
+        assertEquals(55_000.0, b.mediclaims.observeClaims("p1").first().single().approvedAmount!!, 0.0)
+        assertEquals("380052", b.mediclaims.observeHospitals("p1").first().single().pincode)
+        b.members.delete("m1") // holder deleted → policy, claims and hospitals go with it
+        assertTrue(b.mediclaims.all().isEmpty()); assertTrue(b.mediclaims.observeClaims("p1").first().isEmpty())
+    }
+}
+
+@RunWith(RobolectricTestRunner::class)
 class MemberShareTest {
     private val context: Context = ApplicationProvider.getApplicationContext()
     private fun newStack(name: String) = StorageOpener(context, StoragePaths(File(context.noBackupFilesDir, "$name-${System.nanoTime()}")), SoftwareKeyWrapper()) { FrameworkSQLiteOpenHelperFactory() }.open()

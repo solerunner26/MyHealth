@@ -131,7 +131,8 @@ class ActivityRepositoryImpl(private val db: MyHealthDatabase) : ActivityReposit
     override suspend fun clear(memberId: String) = db.write(setOf(ActivityDao.T, MetaDao.T)) { ActivityDao.clear(it, memberId); MetaDao.set(it, "hc.token.$memberId", null) }
 }
 
-private val V3_TABLES = setOf(app.myhealth.data.db.VaccinationDao.T, app.myhealth.data.db.HealthCardDao.T, app.myhealth.data.db.VisitQuestionDao.T, app.myhealth.data.db.MediaDao.T)
+private val V3_TABLES = setOf(app.myhealth.data.db.VaccinationDao.T, app.myhealth.data.db.HealthCardDao.T, app.myhealth.data.db.VisitQuestionDao.T, app.myhealth.data.db.MediaDao.T,
+    app.myhealth.data.db.MediclaimDao.P, app.myhealth.data.db.MediclaimDao.C, app.myhealth.data.db.MediclaimDao.H)
 
 class VaccinationRepositoryImpl(private val db: MyHealthDatabase) : app.myhealth.domain.repository.VaccinationRepository {
     private val t = setOf(app.myhealth.data.db.VaccinationDao.T)
@@ -184,4 +185,20 @@ class MediaRepositoryImpl(private val db: MyHealthDatabase, private val vault: E
         const val MAX_BYTES = 4 * 1024 * 1024
         fun vaultName(id: String): String { require(id.matches(Regex("[A-Za-z0-9-]{1,64}"))); return "media-$id" }
     }
+}
+
+class MediclaimRepositoryImpl(private val db: MyHealthDatabase) : app.myhealth.domain.repository.MediclaimRepository {
+    private val d = app.myhealth.data.db.MediclaimDao
+    private val all = setOf(d.P, d.C, d.H)
+    override fun observe(memberId: String) = db.observe(setOf(d.P)) { d.forMember(it, memberId) }
+    override fun observePolicy(id: String) = db.observe(setOf(d.P)) { d.get(it, id) }
+    override suspend fun all() = db.read { d.all(it) }
+    override suspend fun upsert(p: app.myhealth.domain.model.MediclaimPolicy) = db.write(setOf(d.P)) { d.upsert(it, p) }
+    override suspend fun delete(id: String) { db.write(all) { d.delete(it, id) } }
+    override fun observeClaims(policyId: String) = db.observe(setOf(d.C)) { d.claims(it, policyId) }
+    override suspend fun upsertClaim(c: app.myhealth.domain.model.MediclaimClaim) = db.write(setOf(d.C)) { d.upsertClaim(it, c) }
+    override suspend fun deleteClaim(id: String) { db.write(setOf(d.C)) { d.deleteClaim(it, id) } }
+    override fun observeHospitals(policyId: String) = db.observe(setOf(d.H)) { d.hospitals(it, policyId) }
+    override suspend fun addHospitals(list: List<app.myhealth.domain.model.NetworkHospital>) = db.write(setOf(d.H)) { w -> list.forEach { d.insertHospital(w, it) } }
+    override suspend fun deleteHospital(id: String) { db.write(setOf(d.H)) { d.deleteHospital(it, id) } }
 }

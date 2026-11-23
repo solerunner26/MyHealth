@@ -31,7 +31,7 @@ data class BackupInfo(val schemaVersion: Int, val createdAtMs: Long, val members
 class BackupManager(private val context: Context, private val stack: DataStack, private val vaultDir: File) {
 
     /** Tables in FK-safe insert order. */
-    private val tables = listOf("members", "reports", "attachments", "lab_results", "vitals", "medicines", "dose_logs", "treatments", "daily_activity", "vaccinations", "health_cards", "family_history", "visit_questions", "media", "meta")
+    private val tables = listOf("members", "reports", "attachments", "lab_results", "vitals", "medicines", "dose_logs", "treatments", "daily_activity", "vaccinations", "health_cards", "family_history", "visit_questions", "media", "mediclaim_policies", "mediclaim_claims", "network_hospitals", "meta")
 
     suspend fun export(out: OutputStream, password: CharArray, nowMs: Long, appVersion: String): BackupInfo =
         write(out, password, nowMs, appVersion, memberId = null)
@@ -167,12 +167,13 @@ class BackupManager(private val context: Context, private val stack: DataStack, 
 
     /** Tables that hold one member's record (FK-safe order). */
     private val memberTables = listOf("members", "reports", "attachments", "lab_results", "vitals", "medicines", "dose_logs", "treatments", "daily_activity",
-        "vaccinations", "health_cards", "visit_questions", "media")
+        "vaccinations", "health_cards", "visit_questions", "media", "mediclaim_policies", "mediclaim_claims", "network_hospitals")
 
     private fun memberFilter(t: String) = when (t) {
         "members" -> "id = ?"
         "attachments" -> "report_id IN (SELECT id FROM reports WHERE member_id = ?)"
         "dose_logs" -> "medicine_id IN (SELECT id FROM medicines WHERE member_id = ?)"
+        "mediclaim_claims", "network_hospitals" -> "policy_id IN (SELECT id FROM mediclaim_policies WHERE member_id = ?)"
         else -> "member_id = ?"
     }
 
@@ -182,13 +183,15 @@ class BackupManager(private val context: Context, private val stack: DataStack, 
         require(members.size == 1) { "member file must hold exactly one member" }
         val id = members.single().getAsString("id")
         require(id != null && id.matches(Regex("[A-Za-z0-9-]{1,64}"))) { "bad member id" }
-        memberTables.filter { it !in setOf("members", "attachments", "dose_logs") }.forEach { t ->
+        memberTables.filter { it !in setOf("members", "attachments", "dose_logs", "mediclaim_claims", "network_hospitals") }.forEach { t ->
             rows[t].orEmpty().forEach { require(it.getAsString("member_id") == id) { "row of another member" } }
         }
         val reports = rows["reports"].orEmpty().map { it.getAsString("id") }.toSet()
         val meds = rows["medicines"].orEmpty().map { it.getAsString("id") }.toSet()
         rows["attachments"].orEmpty().forEach { require(it.getAsString("report_id") in reports) { "attachment outside the record" } }
         rows["dose_logs"].orEmpty().forEach { require(it.getAsString("medicine_id") in meds) { "dose log outside the record" } }
+        val policies = rows["mediclaim_policies"].orEmpty().map { it.getAsString("id") }.toSet()
+        (rows["mediclaim_claims"].orEmpty() + rows["network_hospitals"].orEmpty()).forEach { require(it.getAsString("policy_id") in policies) { "claim/hospital outside the record" } }
         val allowedFiles = rows["attachments"].orEmpty().map { it.getAsString("id") }.toSet() + "photo-$id" +
             rows["media"].orEmpty().map { "media-" + it.getAsString("id") }
         require(files.all { it in allowedFiles }) { "file outside the record" }

@@ -265,3 +265,63 @@ object MediaDao {
     fun delete(db: SupportSQLiteDatabase, id: String) = db.delete(T, "id = ?", arrayOf(id))
     fun deleteForOwner(db: SupportSQLiteDatabase, ownerId: String) = db.delete(T, "owner_id = ?", arrayOf(ownerId))
 }
+
+object MediclaimDao {
+    const val P = "mediclaim_policies"; const val C = "mediclaim_claims"; const val H = "network_hospitals"
+
+    private fun featuresJson(f: app.myhealth.domain.model.PolicyFeatures) = org.json.JSONObject().apply {
+        put("roomRent", f.roomRent); put("coPay", f.coPayPercent); put("deductible", f.deductible); put("initialWait", f.initialWaitingDays)
+        put("pedWait", f.pedWaitingMonths); put("specificWait", f.specificWaitingMonths); put("pre", f.preHospitalisationDays); put("post", f.postHospitalisationDays)
+        put("ncb", f.noClaimBonusPercent); put("ambulance", f.ambulanceLimit); put("dayCare", f.dayCare); put("restoration", f.restoration); put("ayush", f.ayush)
+        put("maternity", f.maternity); put("opd", f.opd); put("checkup", f.healthCheckup); put("domiciliary", f.domiciliary); put("organDonor", f.organDonor); put("other", f.other)
+    }.toString()
+
+    private fun features(s: String) = runCatching {
+        val o = org.json.JSONObject(s)
+        fun i(k: String) = if (o.isNull(k) || !o.has(k)) null else o.optInt(k)
+        fun d(k: String) = if (o.isNull(k) || !o.has(k)) null else o.optDouble(k)
+        app.myhealth.domain.model.PolicyFeatures(o.optString("roomRent"), i("coPay"), d("deductible"), i("initialWait"), i("pedWait"), i("specificWait"), i("pre"), i("post"),
+            i("ncb"), d("ambulance"), o.optBoolean("dayCare"), o.optBoolean("restoration"), o.optBoolean("ayush"), o.optBoolean("maternity"), o.optBoolean("opd"),
+            o.optBoolean("checkup"), o.optBoolean("domiciliary"), o.optBoolean("organDonor"), o.optString("other"))
+    }.getOrDefault(app.myhealth.domain.model.PolicyFeatures())
+
+    private fun Cursor.policy() = app.myhealth.domain.model.MediclaimPolicy(
+        str("id"), str("member_id"), str("insurer"), str("plan_name"), str("policy_number"), enumOr(str("type"), app.myhealth.domain.model.PolicyType.Individual),
+        dblOrNull("sum_insured") ?: 0.0, dblOrNull("bonus") ?: 0.0, dblOrNull("premium"), strOrNull("start_date")?.date(), strOrNull("end_date")?.date(),
+        str("covered").split(',').filter { it.isNotBlank() }, str("tpa_name"), str("tpa_phone"), str("helpline"), str("agent_name"), str("agent_phone"),
+        features(str("features")), str("notes"), lng("created_at"),
+    )
+
+    /** Policies held by this member or covering them. */
+    fun forMember(db: SupportSQLiteDatabase, memberId: String) =
+        db.q("SELECT * FROM mediclaim_policies WHERE member_id = ? OR (',' || covered || ',') LIKE ? ORDER BY end_date DESC", memberId, "%,$memberId,%").mapAll { policy() }
+    fun all(db: SupportSQLiteDatabase) = db.q("SELECT * FROM mediclaim_policies").mapAll { policy() }
+    fun get(db: SupportSQLiteDatabase, id: String) = db.q("SELECT * FROM mediclaim_policies WHERE id = ?", id).mapAll { policy() }.firstOrNull()
+    fun upsert(db: SupportSQLiteDatabase, p: app.myhealth.domain.model.MediclaimPolicy) = db.upsert(P, ContentValues().apply {
+        put("id", p.id); put("member_id", p.memberId); put("insurer", p.insurer); put("plan_name", p.planName); put("policy_number", p.policyNumber); put("type", p.type.name)
+        put("sum_insured", p.sumInsured); put("bonus", p.bonus); put("premium", p.premium); put("start_date", p.startDate?.iso()); put("end_date", p.endDate?.iso())
+        put("covered", p.coveredMemberIds.joinToString(",")); put("tpa_name", p.tpaName); put("tpa_phone", p.tpaPhone); put("helpline", p.helpline)
+        put("agent_name", p.agentName); put("agent_phone", p.agentPhone); put("features", featuresJson(p.features)); put("notes", p.notes); put("created_at", p.createdAtEpochMs)
+    }, "id = ?", arrayOf(p.id))
+    fun delete(db: SupportSQLiteDatabase, id: String) = db.delete(P, "id = ?", arrayOf(id))
+
+    fun claims(db: SupportSQLiteDatabase, policyId: String) = db.q("SELECT * FROM mediclaim_claims WHERE policy_id = ? ORDER BY admitted_on DESC", policyId).mapAll {
+        app.myhealth.domain.model.MediclaimClaim(str("id"), str("policy_id"), str("member_id"), str("hospital"), strOrNull("admitted_on")?.date(), strOrNull("discharged_on")?.date(),
+            enumOr(str("kind"), app.myhealth.domain.model.ClaimKind.Cashless), dblOrNull("claimed") ?: 0.0, dblOrNull("approved"),
+            enumOr(str("status"), app.myhealth.domain.model.ClaimStatus.Intimated), str("claim_number"), str("notes"), lng("created_at"))
+    }
+    fun upsertClaim(db: SupportSQLiteDatabase, c: app.myhealth.domain.model.MediclaimClaim) = db.upsert(C, ContentValues().apply {
+        put("id", c.id); put("policy_id", c.policyId); put("member_id", c.memberId); put("hospital", c.hospital); put("admitted_on", c.admittedOn?.iso()); put("discharged_on", c.dischargedOn?.iso())
+        put("kind", c.kind.name); put("claimed", c.claimedAmount); put("approved", c.approvedAmount); put("status", c.status.name); put("claim_number", c.claimNumber); put("notes", c.notes)
+        put("created_at", c.createdAtEpochMs)
+    }, "id = ?", arrayOf(c.id))
+    fun deleteClaim(db: SupportSQLiteDatabase, id: String) = db.delete(C, "id = ?", arrayOf(id))
+
+    fun hospitals(db: SupportSQLiteDatabase, policyId: String) = db.q("SELECT * FROM network_hospitals WHERE policy_id = ? ORDER BY name", policyId).mapAll {
+        app.myhealth.domain.model.NetworkHospital(str("id"), str("policy_id"), str("name"), str("address"), str("city"), str("pincode"), str("phone"))
+    }
+    fun insertHospital(db: SupportSQLiteDatabase, h: app.myhealth.domain.model.NetworkHospital) = db.upsert(H, ContentValues().apply {
+        put("id", h.id); put("policy_id", h.policyId); put("name", h.name); put("address", h.address); put("city", h.city); put("pincode", h.pincode); put("phone", h.phone)
+    }, "id = ?", arrayOf(h.id))
+    fun deleteHospital(db: SupportSQLiteDatabase, id: String) = db.delete(H, "id = ?", arrayOf(id))
+}
