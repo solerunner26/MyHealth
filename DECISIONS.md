@@ -367,3 +367,25 @@ certificate as the installed app. PackageInstaller installs it; on Android 12+ n
 "install unknown apps" permission. **Requires a stable release key** (repository secrets); test builds signed with a
 one-off key are refused by the certificate check, so they still need a manual reinstall.
 
+## D-042 0.4.0: white default theme, day/night, tile spec, Health Connect vitals, Settings tab, mediclaim
+- **Pearl** (white, sky-blue accent) is the default theme. Theme mode **Auto** (default) is light from sunrise to
+  sunset and dark otherwise; sunrise/sunset come from a NOAA approximation with the position estimated from the time
+  zone (no location permission). Picking Light/Dark/System by hand turns Auto off (Settings → App settings).
+- Tiles follow the owner's VitalTile spec (`change.txt`): chasing 1.5 dp border (6 s normal, 3.5 s out of range),
+  OK / HIGH ↑ / LOW ↓ pill, 32 sp tabular value, status icon, normalised range track clamped to 0.05–0.95 with a Ref
+  caption, two columns (four on tablets), triage pill and Doctor View (out-of-range first, still borders; also used
+  for reduced motion). Normal uses the theme accent, out of range the status red. Status comes from the printed
+  biological reference interval, else the catalogue/clinical range.
+- Home: score, quick actions and every lab test as a tile. Vitals moved to Trends → View vitals; "What to focus on"
+  stays behind the score card.
+- Health Connect readings (BP, SpO2, glucose, temperature, respiratory rate, daily pulse and weight) become vitals with
+  stable ids; WorkManager syncs every 6 h (background read permission requested where available).
+- The "More" tab is now **Settings**, grouped: Profile, Family, Health tools, Insurance and cards, Data and sync, App.
+- Records list sits on the test date (not the upload date), newest first, under month headings.
+- Mediclaim (schema v4): policy, cover terms (room rent, co-pay, deductible, waiting periods incl. PED, pre/post
+  hospitalisation, NCB, restoration, day care, AYUSH, maternity, OPD, check-up, domiciliary, organ donor), members
+  covered, TPA/helpline/agent with call, claims (cashless/reimbursement, status, approved) and available cover for the
+  policy year, documents, network hospitals read from policy PDFs/photos (search, call, map), renewal notifications
+  30/7/1/0 days before the end date. Claim tips cite the IRDAI 2024 master circular (1 h cashless decision, 3 h final
+  discharge approval).
+

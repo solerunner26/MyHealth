@@ -14,6 +14,7 @@ conversation starter, **never a diagnosis**.
   shown by icon, label and fill weight, never by colour alone.
 - **Smart import.** The patient name on a report picks the family member; several files (e.g. a photographed hospital
   file) become one record; every value is reviewed before saving.
+- **Mediclaim.** Policies, cover terms, claims and remaining cover, network hospitals from the policy PDF, renewal alerts.
 - **Family tools.** Vaccinations with reminders, government/insurance health cards, a family history map, visit
   preparation, automatic encrypted backups to a folder, and sharing one member with another phone (file + QR code).
 - **Trend alerts.** Values that keep rising or falling across visits are flagged early, with the readings as evidence.

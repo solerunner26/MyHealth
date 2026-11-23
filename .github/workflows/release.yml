@@ -2,11 +2,11 @@ name: release
 
 # Publishes installable APKs as a GitHub pre-release.
 # Runs when this file changes on the development branch, or manually from the Actions tab.
-# Last requested build: 0.3.0 (design skill themes, family features, sharing, self-update).
+# Last requested build: 0.4.0 (Pearl theme + day/night, VitalTile spec tiles, Health Connect vitals, Settings tab, mediclaim). Signed with the permanent key.
 on:
   workflow_dispatch:
   push:
-    branches: [claude/elegant-sagan-tkw90w]
+    branches: [main, claude/elegant-sagan-tkw90w]
     paths: [.github/workflows/release.yml]
 
 permissions:

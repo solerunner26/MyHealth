@@ -11,8 +11,8 @@ android {
         minSdk = 26
         targetSdk = 37
         // CI stamps every release with a growing code (100 + run number) so the self-updater can tell builds apart.
-        versionCode = (project.findProperty("myhealth.versionCode") as String?)?.toIntOrNull() ?: 3
-        versionName = "0.3.0"
+        versionCode = (project.findProperty("myhealth.versionCode") as String?)?.toIntOrNull() ?: 4
+        versionName = "0.4.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
     androidResources {

@@ -147,3 +147,9 @@ property). It was fixed forward in `63e5952`. Since then every commit runs only 
 - Not verified here: real update install on a phone (needs a release signed with the permanent key), automatic backup
   to a real USB/SD provider, QR scanning of a photo taken by a real camera, vaccine notifications on a device.
 
+## 0.4.0 (done)
+- Items of the fourth round: D-042. New tests: SunClockTest, VitalTilesTest, MediclaimTest (balance, reminders,
+  hospital list parsing), MediclaimDataTest, MediclaimFlowTest, HealthSync device readings, Settings/Records flows.
+- Not verified here: Health Connect on a real phone with a fitness device, sunrise switching over a real evening,
+  hospital-list parsing on real insurer PDFs (formats vary; rows can be edited or deleted).
+
