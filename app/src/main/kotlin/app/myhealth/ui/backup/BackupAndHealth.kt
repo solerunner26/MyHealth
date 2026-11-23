@@ -167,7 +167,7 @@ data class HcState(val status: HcStatus = HcStatus.Unsupported, val granted: Set
 class HealthConnectViewModel(private val session: Session, private val source: HealthSource) : ViewModel() {
     private val _state = MutableStateFlow(HcState())
     val state: StateFlow<HcState> = _state.asStateFlow()
-    private val sync = HealthSync(source, session.stack.activity, session.container.clock)
+    private val sync = HealthSync(source, session.stack.activity, session.container.clock, session.stack.vitals)
 
     private suspend fun owner() = session.stack.members.all().firstOrNull { it.relationship == Relationship.Self }
 
@@ -181,7 +181,7 @@ class HealthConnectViewModel(private val session: Session, private val source: H
 
     fun onPermissionsResult(granted: Set<String>) {
         _state.value = _state.value.copy(denied = granted.isEmpty())
-        if (granted.isNotEmpty()) { session.container.preferences.setHealthConnect(true); syncNow() } else refresh()
+        if (granted.isNotEmpty()) { session.container.preferences.setHealthConnect(true); app.myhealth.health.HealthSyncWorker.schedule(session.container.context); syncNow() } else refresh()
     }
 
     fun syncNow() = viewModelScope.launch(Safe.handler) {
@@ -196,6 +196,7 @@ class HealthConnectViewModel(private val session: Session, private val source: H
         val o = owner() ?: return@launch
         runCatching { sync.disconnect(o.id) }
         session.container.preferences.setHealthConnect(false)
+        app.myhealth.health.HealthSyncWorker.cancel(session.container.context)
         _state.value = _state.value.copy(lastDays = null)
         refresh()
     }
@@ -233,7 +234,7 @@ fun HealthConnectScreen(onBack: () -> Unit, sourceOverride: HealthSource? = null
                 if (s.failed) MyHealthInfoBanner(stringResource(R.string.hc_failed), icon = MyHealthIcons.StatusError)
                 if (s.busy) MyHealthProgress(stringResource(R.string.state_loading), null)
                 if (s.granted.isEmpty()) {
-                    MyHealthPrimaryButton(stringResource(R.string.hc_connect), { runCatching { request.launch(HealthConnectSource.PERMISSIONS.values.toSet()) } }, Modifier.fillMaxWidth().testTag("hcConnect"), icon = MyHealthIcons.Sync)
+                    MyHealthPrimaryButton(stringResource(R.string.hc_connect), { runCatching { request.launch(HealthConnectSource.PERMISSIONS.values.toSet() + HealthConnectSource.BACKGROUND_READ) } }, Modifier.fillMaxWidth().testTag("hcConnect"), icon = MyHealthIcons.Sync)
                 } else {
                     MyHealthCard {
                         Text(stringResource(R.string.hc_connected, s.granted.map { names.getValue(it) }.joinToString(", ")), style = MyHealthTheme.typography.body, color = MyHealthTheme.colors.textPrimary)

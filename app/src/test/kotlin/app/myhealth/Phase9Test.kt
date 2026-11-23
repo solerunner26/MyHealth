@@ -21,6 +21,7 @@ import app.myhealth.domain.repository.NewAttachment
 import app.myhealth.health.DayAggregate
 import app.myhealth.health.HcChanges
 import app.myhealth.health.HcData
+import app.myhealth.health.HcReading
 import app.myhealth.health.HcStatus
 import app.myhealth.health.HealthSource
 import app.myhealth.health.HealthSync
@@ -64,11 +65,39 @@ class FakeSource(var status: HcStatus = HcStatus.Available) : HealthSource {
     override suspend fun changesToken() = "t${tokenN++}"
     override suspend fun changes(token: String) = changes ?: HcChanges(emptySet(), false, "t${tokenN++}")
     override suspend fun revokeAll() { revoked = true }
+    var readings = listOf<HcReading>()
+    override suspend fun readings(from: Instant, to: Instant) = readings.filter { !it.time.isBefore(from) && it.time.isBefore(to) }
+}
+
+class FakeVitalRepo : app.myhealth.domain.repository.VitalRepository {
+    val rows = linkedMapOf<String, app.myhealth.domain.model.Vital>()
+    override fun observe(memberId: String) = kotlinx.coroutines.flow.flowOf(rows.values.filter { it.memberId == memberId })
+    override suspend fun all(memberId: String) = rows.values.filter { it.memberId == memberId }
+    override suspend fun upsert(vital: app.myhealth.domain.model.Vital) { rows[vital.id] = vital }
+    override suspend fun delete(id: String) { rows.remove(id) }
 }
 
 class HealthSyncTest {
     private val clock = MutableClock(Instant.parse("2025-06-15T12:00:00Z"))
     private val today = LocalDate.of(2025, 6, 15)
+
+    @Test fun deviceReadingsBecomeVitalsWithoutDuplicates() = runBlocking {
+        val repo = FakeActivityRepo(); val vitals = FakeVitalRepo()
+        val src = FakeSource().apply {
+            granted = setOf(HcData.Weight, HcData.BloodPressure, HcData.OxygenSaturation)
+            readings = listOf(
+                HcReading("bp1", app.myhealth.domain.model.VitalType.BloodPressure, 128.0, 84.0, "mmHg", Instant.parse("2025-06-14T08:00:00Z")),
+                HcReading("o1", app.myhealth.domain.model.VitalType.SpO2, 97.0, null, "%", Instant.parse("2025-06-15T07:00:00Z")),
+            )
+        }
+        val sync = HealthSync(src, repo, clock, vitals)
+        sync.sync("m"); sync.sync("m")
+        assertEquals(84.0, vitals.rows.getValue("hc-bp1").value2!!, 0.0)
+        assertEquals(app.myhealth.domain.model.VitalSource.HealthConnect, vitals.rows.getValue("hc-o1").source)
+        // daily weight from the aggregates, one per day, idempotent across syncs
+        assertEquals(30, vitals.rows.keys.count { it.startsWith("hc-weight-") })
+        assertEquals(32, vitals.rows.size)
+    }
 
     @Test fun firstSyncIsFull30DaysThenIncremental() = runBlocking {
         val repo = FakeActivityRepo(); val src = FakeSource(); val sync = HealthSync(src, repo, clock)

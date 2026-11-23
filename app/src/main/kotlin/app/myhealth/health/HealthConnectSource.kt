@@ -11,6 +11,12 @@ import androidx.health.connect.client.records.RestingHeartRateRecord
 import androidx.health.connect.client.records.SleepSessionRecord
 import androidx.health.connect.client.records.StepsRecord
 import androidx.health.connect.client.records.WeightRecord
+import androidx.health.connect.client.records.BloodPressureRecord
+import androidx.health.connect.client.records.OxygenSaturationRecord
+import androidx.health.connect.client.records.BloodGlucoseRecord
+import androidx.health.connect.client.records.BodyTemperatureRecord
+import androidx.health.connect.client.records.RespiratoryRateRecord
+import app.myhealth.domain.model.VitalType
 import androidx.health.connect.client.request.AggregateGroupByPeriodRequest
 import androidx.health.connect.client.request.ChangesTokenRequest
 import androidx.health.connect.client.time.TimeRangeFilter
@@ -74,19 +80,44 @@ class HealthConnectSource(private val context: Context, private val zone: ZoneId
 
     override suspend fun revokeAll() = client.permissionController.revokeAllPermissions()
 
+    override suspend fun readings(from: Instant, to: Instant): List<HcReading> {
+        val g = granted(); val range = TimeRangeFilter.between(from, to)
+        suspend fun <T : Record> read(type: KClass<T>): List<T> = runCatching {
+            client.readRecords(androidx.health.connect.client.request.ReadRecordsRequest(type, range, pageSize = 500)).records
+        }.getOrDefault(emptyList())
+        val out = mutableListOf<HcReading>()
+        if (HcData.BloodPressure in g) read(BloodPressureRecord::class).forEach {
+            out += HcReading(it.metadata.id, VitalType.BloodPressure, it.systolic.inMillimetersOfMercury, it.diastolic.inMillimetersOfMercury, "mmHg", it.time)
+        }
+        if (HcData.OxygenSaturation in g) read(OxygenSaturationRecord::class).forEach { out += HcReading(it.metadata.id, VitalType.SpO2, it.percentage.value, null, "%", it.time) }
+        if (HcData.BloodGlucose in g) read(BloodGlucoseRecord::class).forEach { out += HcReading(it.metadata.id, VitalType.BloodGlucose, it.level.inMilligramsPerDeciliter, null, "mg/dL", it.time) }
+        if (HcData.BodyTemperature in g) read(BodyTemperatureRecord::class).forEach { out += HcReading(it.metadata.id, VitalType.Temperature, it.temperature.inCelsius, null, "°C", it.time) }
+        if (HcData.RespiratoryRate in g) read(RespiratoryRateRecord::class).forEach { out += HcReading(it.metadata.id, VitalType.RespiratoryRate, it.rate, null, "/min", it.time) }
+        return out
+    }
+
     private fun timeOf(r: Record): Instant? = when (r) {
         is StepsRecord -> r.startTime; is HeartRateRecord -> r.startTime; is SleepSessionRecord -> r.startTime
-        is RestingHeartRateRecord -> r.time; is WeightRecord -> r.time; else -> null
+        is RestingHeartRateRecord -> r.time; is WeightRecord -> r.time; is BloodPressureRecord -> r.time; is OxygenSaturationRecord -> r.time
+        is BloodGlucoseRecord -> r.time; is BodyTemperatureRecord -> r.time; is RespiratoryRateRecord -> r.time; else -> null
     }
 
     companion object {
-        val RECORD_TYPES: Set<KClass<out Record>> = setOf(StepsRecord::class, HeartRateRecord::class, RestingHeartRateRecord::class, SleepSessionRecord::class, WeightRecord::class)
+        val RECORD_TYPES: Set<KClass<out Record>> = setOf(StepsRecord::class, HeartRateRecord::class, RestingHeartRateRecord::class, SleepSessionRecord::class, WeightRecord::class,
+            BloodPressureRecord::class, OxygenSaturationRecord::class, BloodGlucoseRecord::class, BodyTemperatureRecord::class, RespiratoryRateRecord::class)
         val PERMISSIONS: Map<HcData, String> = mapOf(
             HcData.Steps to HealthPermission.getReadPermission(StepsRecord::class),
             HcData.HeartRate to HealthPermission.getReadPermission(HeartRateRecord::class),
             HcData.RestingHeartRate to HealthPermission.getReadPermission(RestingHeartRateRecord::class),
             HcData.Sleep to HealthPermission.getReadPermission(SleepSessionRecord::class),
             HcData.Weight to HealthPermission.getReadPermission(WeightRecord::class),
+            HcData.BloodPressure to HealthPermission.getReadPermission(BloodPressureRecord::class),
+            HcData.OxygenSaturation to HealthPermission.getReadPermission(OxygenSaturationRecord::class),
+            HcData.BloodGlucose to HealthPermission.getReadPermission(BloodGlucoseRecord::class),
+            HcData.BodyTemperature to HealthPermission.getReadPermission(BodyTemperatureRecord::class),
+            HcData.RespiratoryRate to HealthPermission.getReadPermission(RespiratoryRateRecord::class),
         )
+        /** Lets the periodic sync read while the app is closed (Android 15+ / recent Health Connect). */
+        const val BACKGROUND_READ = "android.permission.health.READ_HEALTH_DATA_IN_BACKGROUND"
     }
 }

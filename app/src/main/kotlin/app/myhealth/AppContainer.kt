@@ -64,11 +64,12 @@ class AppContainer(
             _storage.value = StorageState.Ready(stack)
             // Keep alarms in sync with the stored schedule on every unlock (idempotent).
             appScope.launch(Dispatchers.IO) { runCatching { reminders.ensureChannel(); reminders.rescheduleAll(stack) } }
-            // Opted-in Health Connect: incremental sync on every unlock (no background worker; see D-026).
+            // Opted-in Health Connect: incremental sync on every unlock, plus a periodic background sync (item 1).
+            if (preferences.state.value.healthConnectEnabled) app.myhealth.health.HealthSyncWorker.schedule(context)
             if (preferences.state.value.healthConnectEnabled) appScope.launch(Dispatchers.IO) {
                 runCatching {
                     val self = stack.members.all().firstOrNull { it.relationship == app.myhealth.domain.model.Relationship.Self } ?: return@runCatching
-                    app.myhealth.health.HealthSync(app.myhealth.health.HealthConnectSource(context, clock.zone), stack.activity, clock).sync(self.id)
+                    app.myhealth.health.HealthSync(app.myhealth.health.HealthConnectSource(context, clock.zone), stack.activity, clock, stack.vitals).sync(self.id)
                 }
             }
             stack
