@@ -40,11 +40,13 @@ import app.myhealth.core.designsystem.tokens.MyHealthThemeId
 
 object Branding {
     @StringRes fun name(t: MyHealthThemeId) = when (t) {
+        MyHealthThemeId.Pearl -> R.string.theme_pearl
         MyHealthThemeId.Aurora -> R.string.theme_aurora; MyHealthThemeId.Crystal -> R.string.theme_crystal; MyHealthThemeId.Pulse -> R.string.theme_pulse
         MyHealthThemeId.Evergreen -> R.string.theme_evergreen; MyHealthThemeId.Apricot -> R.string.theme_apricot
         MyHealthThemeId.Citrus -> R.string.theme_citrus; MyHealthThemeId.Iris -> R.string.theme_iris
     }
     @StringRes fun description(t: MyHealthThemeId) = when (t) {
+        MyHealthThemeId.Pearl -> R.string.theme_pearl_desc
         MyHealthThemeId.Aurora -> R.string.theme_aurora_desc; MyHealthThemeId.Crystal -> R.string.theme_crystal_desc; MyHealthThemeId.Pulse -> R.string.theme_pulse_desc
         MyHealthThemeId.Evergreen -> R.string.theme_evergreen_desc; MyHealthThemeId.Apricot -> R.string.theme_apricot_desc
         MyHealthThemeId.Citrus -> R.string.theme_citrus_desc; MyHealthThemeId.Iris -> R.string.theme_iris_desc

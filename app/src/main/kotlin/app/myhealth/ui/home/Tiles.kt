@@ -1,6 +1,18 @@
 package app.myhealth.ui.home
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.material.icons.outlined.Bloodtype
+import androidx.compose.material.icons.outlined.WaterDrop
+import androidx.compose.material.icons.outlined.FavoriteBorder
+import androidx.compose.material.icons.outlined.Opacity
+import androidx.compose.material.icons.outlined.Spa
+import androidx.compose.material.icons.outlined.Biotech
+import androidx.compose.material.icons.outlined.WbSunny
+import androidx.compose.material.icons.outlined.Air
+import androidx.compose.material.icons.outlined.Thermostat
+import androidx.compose.material.icons.outlined.MonitorWeight
+import androidx.compose.material.icons.outlined.MonitorHeart
+import androidx.compose.material.icons.outlined.Science
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
@@ -213,3 +225,65 @@ fun VitalTile(type: VitalType, latest: Vital, previous: Vital?, heightCm: Double
     }
 }
 
+
+
+// ===================================================================== neon tiles (owner's VitalTile spec)
+
+fun tileIcon(i: app.myhealth.domain.analytics.TileIcon): androidx.compose.ui.graphics.vector.ImageVector = when (i) {
+    app.myhealth.domain.analytics.TileIcon.Blood -> androidx.compose.material.icons.Icons.Outlined.Bloodtype
+    app.myhealth.domain.analytics.TileIcon.Sugar -> androidx.compose.material.icons.Icons.Outlined.WaterDrop
+    app.myhealth.domain.analytics.TileIcon.Heart -> androidx.compose.material.icons.Icons.Outlined.FavoriteBorder
+    app.myhealth.domain.analytics.TileIcon.Kidney -> androidx.compose.material.icons.Icons.Outlined.Opacity
+    app.myhealth.domain.analytics.TileIcon.Liver -> androidx.compose.material.icons.Icons.Outlined.Spa
+    app.myhealth.domain.analytics.TileIcon.Thyroid -> androidx.compose.material.icons.Icons.Outlined.Biotech
+    app.myhealth.domain.analytics.TileIcon.Vitamin -> androidx.compose.material.icons.Icons.Outlined.WbSunny
+    app.myhealth.domain.analytics.TileIcon.Lungs -> androidx.compose.material.icons.Icons.Outlined.Air
+    app.myhealth.domain.analytics.TileIcon.Temperature -> androidx.compose.material.icons.Icons.Outlined.Thermostat
+    app.myhealth.domain.analytics.TileIcon.Weight -> androidx.compose.material.icons.Icons.Outlined.MonitorWeight
+    app.myhealth.domain.analytics.TileIcon.Pulse -> androidx.compose.material.icons.Icons.Outlined.MonitorHeart
+    app.myhealth.domain.analytics.TileIcon.Oxygen -> androidx.compose.material.icons.Icons.Outlined.Air
+    app.myhealth.domain.analytics.TileIcon.Lab -> androidx.compose.material.icons.Icons.Outlined.Science
+}
+
+@Composable
+fun tileName(t: app.myhealth.domain.analytics.VitalTileData): String = t.analyteId?.let { analyteName(it) } ?: t.vitalType?.let { label(it) } ?: t.key
+
+@Composable
+fun NeonTile(t: app.myhealth.domain.analytics.VitalTileData, doctorView: Boolean, onClick: () -> Unit, modifier: Modifier = Modifier) {
+    val name = tileName(t)
+    val value = if (t.value2 != null) ValueFormat.number(t.value, 0) + "/" + ValueFormat.number(t.value2!!, 0) else ValueFormat.number(t.value, t.decimals)
+    val label = stringResource(when (t.status) { app.myhealth.domain.analytics.VitalStatus.NORMAL -> R.string.tile_ok; app.myhealth.domain.analytics.VitalStatus.HIGH -> R.string.tile_high; else -> R.string.tile_low })
+    val range = ValueFormat.range(t.refLow, t.refHigh, t.decimals)
+    val ref = range.takeIf { it.isNotBlank() }?.let { stringResource(R.string.tile_ref, listOf(it, t.unit).filter { s -> s.isNotBlank() }.joinToString(" ")) }
+    val cd = stringResource(R.string.tile_cd, name, value, t.unit, label)
+    app.myhealth.core.designsystem.components.NeonVitalTile(
+        name, value, t.unit,
+        when (t.status) { app.myhealth.domain.analytics.VitalStatus.NORMAL -> app.myhealth.core.designsystem.components.NeonStatus.Normal; app.myhealth.domain.analytics.VitalStatus.HIGH -> app.myhealth.core.designsystem.components.NeonStatus.High; else -> app.myhealth.core.designsystem.components.NeonStatus.Low },
+        label, t.position, ref, tileIcon(t.icon), onClick,
+        modifier.semantics(mergeDescendants = true) { contentDescription = cd }, pauseMotion = doctorView,
+    )
+}
+
+/** Two columns on phones, four on tablets; Doctor View puts HIGH/LOW first and stills the borders. */
+fun androidx.compose.foundation.lazy.LazyListScope.neonGrid(
+    tiles: List<app.myhealth.domain.analytics.VitalTileData>, columns: Int, doctorView: Boolean, onOpen: (app.myhealth.domain.analytics.VitalTileData) -> Unit,
+) {
+    val ordered = if (doctorView) app.myhealth.domain.analytics.VitalTiles.doctorOrder(tiles) else tiles
+    items(ordered.chunked(columns).size) { r ->
+        val row = ordered.chunked(columns)[r]
+        Row(Modifier.fillMaxWidth().height(IntrinsicSize.Max).padding(bottom = 12.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            row.forEach { t ->
+                val tag = t.analyteId?.let { "tile_$it" } ?: "vital_${t.vitalType?.name}"
+                NeonTile(t, doctorView, { onOpen(t) }, Modifier.weight(1f).fillMaxHeight().testTag(tag))
+            }
+            repeat(columns - row.size) { Spacer(Modifier.weight(1f)) }
+        }
+    }
+}
+
+@Composable
+fun NeonGridHeader(title: String, tiles: List<app.myhealth.domain.analytics.VitalTileData>, doctorView: Boolean, onDoctorView: (Boolean) -> Unit) {
+    val (attention, normal) = app.myhealth.domain.analytics.VitalTiles.triage(tiles)
+    app.myhealth.core.designsystem.components.TileGridHeader(title, stringResource(R.string.tile_triage, attention, normal), stringResource(R.string.tile_doctor_view),
+        doctorView, onDoctorView, Modifier.testTag("gridHeader"), attention = attention > 0)
+}

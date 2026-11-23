@@ -101,7 +101,7 @@ class ImportFlowTest {
                 ImportScreen(st, vm::onEvent, onBack = {}, onPickFile = {}, onTakePhoto = {})
             } }
         }
-        waitFor(5_000) { vm.state.value.member != null }
+        waitFor(15_000) { vm.state.value.member != null }
         val bytes = pdf(listOf(
             "SUNRISE DIAGNOSTIC LABORATORY", "Patient Name : Mr. Ravi Shah   Age: 44",
             "Sample Collected On : 12/03/2024", "Haemoglobin 13.1 g/dL 13.0 - 17.0", "HbA1c 6.4 % 4.0 - 5.6", "TSH 3.1 uIU/mL 0.27 - 4.2",

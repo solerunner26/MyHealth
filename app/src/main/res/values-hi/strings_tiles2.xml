@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="tile_ok">ठीक</string>
+    <string name="tile_high">अधिक ↑</string>
+    <string name="tile_low">कम ↓</string>
+    <string name="tile_ref">संदर्भ: %1$s</string>
+    <string name="tile_triage">%1$d ध्यान दें • %2$d सामान्य</string>
+    <string name="tile_doctor_view">डॉक्टर व्यू</string>
+    <string name="tile_cd">%1$s: %2$s %3$s, %4$s</string>
+    <string name="vitals_view">वाइटल्स देखें</string>
+    <string name="vitals_screen_title">वाइटल्स</string>
+    <string name="home_score_tap">किस पर ध्यान दें, देखने के लिए टैप करें</string>
+    <string name="vitals_hc_note">आपके फ़िटनेस उपकरणों की रीडिंग हेल्थ कनेक्ट से आती हैं और यहाँ अपने आप जुड़ जाती हैं।</string>
+</resources>

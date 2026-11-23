@@ -50,7 +50,16 @@ class MainActivity : FragmentActivity() {
             LaunchedEffect(locked) { window.decorView.filterTouchesWhenObscured = locked }
             val saved = androidx.compose.runtime.saveable.rememberSaveableStateHolder()
             var entered by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(c.splashDone || !(application as MyHealthApplication).showSplash) }
-            MyHealthTheme(prefs.theme, prefs.colorTheme) {
+            // Auto theme: re-evaluated at the next sunrise/sunset (and at least every 30 min)
+            val night by androidx.compose.runtime.produceState(app.myhealth.domain.util.SunClock.isNight(java.time.ZonedDateTime.now(c.clock))) {
+                while (true) {
+                    val now = java.time.ZonedDateTime.now(c.clock)
+                    value = app.myhealth.domain.util.SunClock.isNight(now)
+                    val wait = java.time.Duration.between(now, app.myhealth.domain.util.SunClock.nextChange(now)).toMillis().coerceIn(30_000, 30 * 60_000L)
+                    kotlinx.coroutines.delay(wait)
+                }
+            }
+            MyHealthTheme(prefs.theme, prefs.colorTheme, night) {
                 app.myhealth.core.designsystem.components.MyHealthAmbientBackground {
                 // While locked the app's screens are not composed at all: nothing is drawn, nothing reaches
                 // accessibility services, and no dialog or popup window (which would float above an overlay) can

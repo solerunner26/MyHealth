@@ -18,6 +18,8 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
@@ -96,7 +98,7 @@ class HomeViewModel(session: Session) : ViewModel() {
                 val list = s.vitals.filter { it.type == t }.sortedByDescending { it.measuredAt }
                 list.firstOrNull()?.let { Triple(t, it, list.getOrNull(1)) }
             }.sortedBy { (_, v, _) -> app.myhealth.domain.analytics.VitalRules.band(v).let { b -> if (b == app.myhealth.domain.analytics.VitalBand.Unknown) null else b.kind() }.urgency() },
-            allTests = trends.sortedWith(compareBy<AnalyteTrend> { it.latest.status.kind().urgency() }.thenByDescending { it.analyte.keyMarker }.thenByDescending { it.latest.date }),
+            allTests = trends.sortedWith(compareByDescending<AnalyteTrend> { it.analyte.keyMarker }.thenByDescending { it.latest.date }),
             latest = trends.sortedWith(compareByDescending<AnalyteTrend> { it.latest.status.isAbnormal }.thenByDescending { it.analyte.keyMarker }.thenByDescending { it.latest.date }).take(6),
         )
     }.flowOn(kotlinx.coroutines.Dispatchers.Default).stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), HomeState())
@@ -127,8 +129,10 @@ fun HomeContent(
         }
         return
     }
-    val zone = java.time.ZoneId.systemDefault()
-    var index = 0
+    val prefs = app.myhealth.ui.LocalSession.current.container.preferences
+    var doctorView by androidx.compose.runtime.saveable.rememberSaveable { androidx.compose.runtime.mutableStateOf(prefs.doctorView()) }
+    val onDoctorView: (Boolean) -> Unit = { doctorView = it; prefs.setDoctorView(it) }
+    val columns = if (androidx.compose.ui.platform.LocalConfiguration.current.screenWidthDp >= 600) 4 else 2
     Column(Modifier.fillMaxSize()) {
     header()
     LazyColumn(Modifier.fillMaxSize().testTag("home"), contentPadding = PaddingValues(start = sp.gutter, end = sp.gutter, bottom = sp.xl), verticalArrangement = Arrangement.spacedBy(sp.md)) {
@@ -141,48 +145,13 @@ fun HomeContent(
                 app.myhealth.core.designsystem.components.MyHealthQuickAction(MyHealthIcons.Document, stringResource(R.string.home_action_visit), onVisitPrep, Modifier.weight(1f).testTag("homeVisitPrep"))
             }
         }
-        run {
-            // every core vital gets a tile: readings first (not in range on top), then invitations to log the rest
-            val have = state.vitals.map { it.first }.toSet()
-            val missing = CORE_VITALS.filter { it !in have && !(it == app.myhealth.domain.model.VitalType.Weight && app.myhealth.domain.model.VitalType.Bmi in have) }
-            val cells: List<Any> = state.vitals + missing
-            item { MyHealthSectionHeader(stringResource(R.string.dash_vitals)) { MyHealthTextButton(stringResource(R.string.home_quick_vital), onLogVital, icon = MyHealthIcons.Add) } }
-            items(cells.chunked(TILE_COLUMNS)) { row ->
-                TileRow { m ->
-                    row.forEach { cell ->
-                        @Suppress("UNCHECKED_CAST")
-                        if (cell is Triple<*, *, *>) {
-                            val (t, latest, prev) = cell as Triple<app.myhealth.domain.model.VitalType, app.myhealth.domain.model.Vital, app.myhealth.domain.model.Vital?>
-                            VitalTile(t, latest, prev, state.member?.heightCm, zone, { onOpenVital(t) }, index++, m)
-                        } else { val t = cell as app.myhealth.domain.model.VitalType; EmptyVitalTile(t, { onLogVitalType(t) }, index++, m) }
-                    }
-                    repeat(TILE_COLUMNS - row.size) { Spacer(m) }
-                }
-            }
-        }
+        // every lab test from the reports, as tiles (owner's VitalTile spec); vitals live under Trends
         if (state.allTests.isNotEmpty()) {
-            item { MyHealthSectionHeader(stringResource(R.string.dash_tests)) { if (state.allTests.size > 9) MyHealthTextButton(stringResource(R.string.home_focus_all), onAllTests) } }
-            items(state.allTests.take(9).chunked(TILE_COLUMNS)) { row ->
-                TileRow { m ->
-                    row.forEach { t -> TestTile(t, { onOpenTrend(t.analyte.id) }, index++, m) }
-                    repeat(TILE_COLUMNS - row.size) { Spacer(m) }
-                }
-            }
+            val tiles = state.allTests.map { app.myhealth.domain.analytics.VitalTiles.fromTrend(it) }
+            item { NeonGridHeader(stringResource(R.string.dash_tests), tiles, doctorView, onDoctorView) }
+            neonGrid(tiles, columns, doctorView) { t -> t.analyteId?.let(onOpenTrend) }
         }
-        item {
-            MyHealthSectionHeader(stringResource(R.string.home_focus_title)) {
-                if (state.focus.isNotEmpty()) MyHealthTextButton(stringResource(R.string.home_focus_all), onOpenInsights)
-            }
-        }
-        val top = state.focus.take(3)
-        if (top.isEmpty()) item {
-            MyHealthCard {
-                Text(stringResource(R.string.home_focus_none_title), style = MyHealthTheme.typography.subtitle, color = MyHealthTheme.colors.textPrimary)
-                Text(stringResource(R.string.home_focus_none_body), style = MyHealthTheme.typography.bodySmall, color = MyHealthTheme.colors.textSecondary)
-            }
-        }
-        items(top, key = { it.key }) { f -> FocusCard(f, onClick = onOpenInsights, modifier = Modifier.appear(3)) }
-        item { MyHealthDisclaimer(stringResource(R.string.disclaimer_short)) }
+
     }
     }
 }
@@ -191,9 +160,7 @@ fun HomeContent(
 private fun ScoreCard(score: HealthScore?, onHow: () -> Unit) {
     val s = score ?: return
     val value = s.score
-    val coverage = (s.coverage * 100).toInt()
     val caption = if (value == null) stringResource(R.string.home_score_none) else stringResource(R.string.home_score_caption)
-    val coverageText = stringResource(R.string.home_score_coverage, coverage)
     MyHealthCard(Modifier.testTag("scoreCard").appear(0), onClick = onHow, emphasis = app.myhealth.core.designsystem.components.Emphasis.Strong) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Box(Modifier.size(112.dp), contentAlignment = Alignment.Center) {
@@ -208,11 +175,10 @@ private fun ScoreCard(score: HealthScore?, onHow: () -> Unit) {
             Column(Modifier.weight(1f)) {
                 Text(stringResource(R.string.home_score_title), style = MyHealthTheme.typography.title, color = MyHealthTheme.colors.textPrimary)
                 if (value == null) Text(caption, style = MyHealthTheme.typography.label, color = MyHealthTheme.colors.textPrimary)
-                Text(coverageText, style = MyHealthTheme.typography.bodySmall, color = MyHealthTheme.colors.textSecondary)
                 Row(Modifier.padding(top = MyHealthTheme.spacing.sm), verticalAlignment = Alignment.CenterVertically) {
                     androidx.compose.material3.Icon(MyHealthIcons.Info, null, tint = MyHealthTheme.colors.accent, modifier = Modifier.size(16.dp))
                     Spacer(Modifier.width(6.dp))
-                    Text(stringResource(R.string.home_score_how), style = MyHealthTheme.typography.label, color = MyHealthTheme.colors.accent)
+                    Text(stringResource(R.string.home_score_tap), style = MyHealthTheme.typography.label, color = MyHealthTheme.colors.accent)
                 }
             }
         }

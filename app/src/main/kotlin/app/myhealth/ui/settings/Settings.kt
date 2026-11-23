@@ -74,7 +74,10 @@ fun SettingsScreen(onBack: () -> Unit, onErased: () -> Unit) {
             }
             Text(stringResource(R.string.settings_color_theme_note), style = MyHealthTheme.typography.caption, color = MyHealthTheme.colors.textSecondary)
             Text(stringResource(R.string.settings_theme), style = MyHealthTheme.typography.label, color = MyHealthTheme.colors.textSecondary)
-            MyHealthChipRow(ThemeMode.entries, prefs.theme, { stringResource(when (it) { ThemeMode.System -> R.string.theme_system; ThemeMode.Light -> R.string.theme_light; ThemeMode.Dark -> R.string.theme_dark }) },
+            // Automatic: light while the sun is up, dark after sunset. Picking a mode by hand turns it off.
+            MyHealthSwitchRow(stringResource(R.string.theme_auto), prefs.theme == ThemeMode.Auto,
+                { on -> c.preferences.setTheme(if (on) ThemeMode.Auto else ThemeMode.Light) }, subtitle = stringResource(R.string.theme_auto_sub), modifier = Modifier.testTag("autoThemeSwitch"))
+            MyHealthChipRow(listOf(ThemeMode.Light, ThemeMode.Dark, ThemeMode.System), prefs.theme.takeIf { it != ThemeMode.Auto }, { stringResource(when (it) { ThemeMode.Light -> R.string.theme_light; ThemeMode.Dark -> R.string.theme_dark; else -> R.string.theme_system }) },
                 { c.preferences.setTheme(it) }, Modifier.testTag("themeChips"))
             Text(stringResource(R.string.settings_language), style = MyHealthTheme.typography.label, color = MyHealthTheme.colors.textSecondary)
             MyHealthChipRow(listOf("") + LocaleSupport.supported, prefs.language, { tag ->

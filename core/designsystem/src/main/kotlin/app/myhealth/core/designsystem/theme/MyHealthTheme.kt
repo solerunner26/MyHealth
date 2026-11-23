@@ -21,7 +21,8 @@ import app.myhealth.core.designsystem.tokens.MyHealthStroke
 import app.myhealth.core.designsystem.tokens.MyHealthTypography
 import app.myhealth.core.designsystem.tokens.toColors
 
-enum class ThemeMode { System, Light, Dark }
+/** Auto = light by day, dark from sunset to sunrise (the app passes `night`). */
+enum class ThemeMode { Auto, System, Light, Dark }
 
 val LocalMyHealthColors = staticCompositionLocalOf { MyHealthColorRoles.roles(MyHealthThemeId.Default, false).toColors(false, MyHealthThemeId.Default) }
 
@@ -47,8 +48,9 @@ object MyHealthTheme {
 }
 
 @Composable
-fun MyHealthTheme(mode: ThemeMode = ThemeMode.System, theme: MyHealthThemeId = MyHealthThemeId.Default, content: @Composable () -> Unit) {
+fun MyHealthTheme(mode: ThemeMode = ThemeMode.System, theme: MyHealthThemeId = MyHealthThemeId.Default, night: Boolean = false, content: @Composable () -> Unit) {
     val dark = when (mode) {
+        ThemeMode.Auto -> night
         ThemeMode.System -> isSystemInDarkTheme()
         ThemeMode.Light -> false
         ThemeMode.Dark -> true

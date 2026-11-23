@@ -155,7 +155,7 @@ class SecureEraseFlowTest {
         waitTag("settings"); rule.onNodeWithTag("eraseAll").performScrollTo().performClick()
         rule.onNodeWithText(ctx.getString(R.string.storage_erase_confirm)).performClick()
         waitTag("welcome")
-        assertEquals(app.myhealth.core.designsystem.theme.ThemeMode.System, ctx.container.preferences.state.value.theme) // prefs reset
+        assertEquals(app.myhealth.core.designsystem.theme.ThemeMode.Auto, ctx.container.preferences.state.value.theme) // prefs reset
         assertFalse(File(ctx.noBackupFilesDir, "secure/keys/keys.bin").readBytes().contentEquals(oldKeys)) // new keys
         assertTrue(File(ctx.noBackupFilesDir, "secure/vault").listFiles().isNullOrEmpty())
     }

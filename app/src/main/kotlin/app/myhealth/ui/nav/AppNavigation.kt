@@ -87,6 +87,7 @@ object Routes {
     const val SETTINGS = "settings"
     const val SUMMARY = "summary"
     const val VACCINES = "vaccines"
+    const val VITALS = "vitals"
     const val CARDS = "cards"
     const val FAMILY = "family"
     const val VISIT_PREP = "visit"
@@ -217,6 +218,11 @@ fun AppNavGraph(nav: NavHostController) {
         composable(Routes.BACKUP) { app.myhealth.ui.backup.BackupScreen(onBack = { nav.popBackStack() }) }
         composable(Routes.HEALTH_CONNECT) { app.myhealth.ui.backup.HealthConnectScreen(onBack = { nav.popBackStack() }) }
         composable(Routes.SUMMARY) { app.myhealth.ui.summary.SummaryScreen(onBack = { nav.popBackStack() }, onVisitPrep = { nav.navigate(Routes.VISIT_PREP) }) }
+        composable(Routes.VITALS) {
+            val vm = rememberVm { app.myhealth.ui.vitals.VitalsViewModel(session) }
+            val state by vm.state.collectAsStateWithLifecycle()
+            app.myhealth.ui.vitals.VitalsScreen(state, onBack = { nav.popBackStack() }, onAdd = { nav.navigate(Routes.vitalNew()) }, onOpen = { nav.navigate(Routes.vital(it.name)) })
+        }
         composable(Routes.VACCINES) { app.myhealth.ui.family.VaccinationsScreen(onBack = { nav.popBackStack() }) }
         composable(Routes.CARDS) { app.myhealth.ui.family.HealthCardsScreen(onBack = { nav.popBackStack() }) }
         composable(Routes.FAMILY) { app.myhealth.ui.family.FamilyHistoryScreen(onBack = { nav.popBackStack() }) }
@@ -271,7 +277,7 @@ private fun MainTabs(nav: NavHostController) {
                     val vvm = rememberVm { app.myhealth.ui.vitals.VitalsViewModel(session) }
                     val vitals by vvm.state.collectAsStateWithLifecycle()
                     TrendsContent(state, { nav.navigate(Routes.trend(it)) }, onImport) {
-                        app.myhealth.ui.vitals.VitalsSection(vitals, onAdd = { nav.navigate(Routes.vitalNew()) }, onOpen = { nav.navigate(Routes.vital(it.name)) }, zone = session.container.clock.zone)
+                        app.myhealth.ui.vitals.VitalsSection(vitals, onAdd = { nav.navigate(Routes.vitalNew()) }, onOpenAll = { nav.navigate(Routes.VITALS) })
                     }
                 }
                 TopLevel.Care -> {

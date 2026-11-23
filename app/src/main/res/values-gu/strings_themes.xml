@@ -4,6 +4,10 @@
     <string name="settings_color_theme_note">દરેક થીમમાં એક જ રંગ અને શાંત ન્યુટ્રલ રંગો છે. ગ્લાસ થીમમાં ચાલતા પ્રકાશ પર ધૂંધળા કાચની પેનલ છે; સોલિડ થીમ ગરમ કાગળ જેવી સપાટી પર છે.</string>
     <string name="theme_family_glass">ગ્લાસ</string>
     <string name="theme_family_solid">સોલિડ</string>
+    <string name="theme_pearl">પર્લ</string>
+    <string name="theme_pearl_desc">શાંત આકાશી વાદળી રંગ સાથે સ્વચ્છ સફેદ</string>
+    <string name="theme_auto">દિવસે આછું, સૂર્યાસ્ત પછી ઘેરું</string>
+    <string name="theme_auto_sub">સૂર્યોદય અને સૂર્યાસ્ત વખતે આપમેળે બદલાય છે. નીચે આછું કે ઘેરું પસંદ કરવાથી આ બંધ થાય છે.</string>
     <string name="theme_aurora">ઓરોરા</string>
     <string name="theme_aurora_desc">રાતના આકાશ પર ધૂંધળા કાચમાંથી આવતો ફિરોઝી પ્રકાશ</string>
     <string name="theme_crystal">ક્રિસ્ટલ</string>

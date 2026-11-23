@@ -45,10 +45,13 @@ class CareFlowTest {
         rule.onNodeWithTag("vitalValue").performTextInput("142")
         rule.onNodeWithTag("vitalValue2").performTextInput("92")
         rule.onNodeWithTag("saveVital").performScrollTo().performClick()
+        // Trends → View vitals → the tile grid
+        waitTag("viewVitals"); rule.onNodeWithTag("viewVitals").performScrollTo().performClick()
         waitTag("vital_BloodPressure")
         val bp = runBlocking { stack.vitals.all("m1") }.single()
         assertEquals(VitalType.BloodPressure, bp.type); assertEquals(92.0, bp.value2!!, 0.0)
-        rule.onNodeWithText(ctx.getString(R.string.band_high)).assertExists()
+        rule.onNodeWithText(ctx.getString(R.string.tile_high), useUnmergedTree = true).assertExists()
+        rule.activityRule.scenario.onActivity { it.onBackPressedDispatcher.onBackPressed() }
 
         // Care tab → Add a medicine with reminders
         rule.onNodeWithText(ctx.getString(R.string.nav_care)).performClick()

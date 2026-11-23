@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="tile_ok">OK</string>
+    <string name="tile_high">HIGH ↑</string>
+    <string name="tile_low">LOW ↓</string>
+    <string name="tile_ref">Ref: %1$s</string>
+    <string name="tile_triage">%1$d Attention • %2$d Normal</string>
+    <string name="tile_doctor_view">Doctor View</string>
+    <string name="tile_cd">%1$s: %2$s %3$s, %4$s</string>
+    <string name="vitals_view">View vitals</string>
+    <string name="vitals_screen_title">Vitals</string>
+    <string name="home_score_tap">Tap to see what to focus on</string>
+    <string name="vitals_hc_note">Readings from your fitness devices arrive through Health Connect and are added here automatically.</string>
+</resources>

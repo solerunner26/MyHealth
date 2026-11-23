@@ -16,7 +16,7 @@ class Preferences(context: Context) {
     private val prefs: SharedPreferences = context.getSharedPreferences("ui_prefs", Context.MODE_PRIVATE)
 
     data class Snapshot(
-        val theme: ThemeMode = ThemeMode.System,
+        val theme: ThemeMode = ThemeMode.Auto,
         val colorTheme: MyHealthThemeId = MyHealthThemeId.Default,
         val language: String = "", // "" = follow system
         val lockEnabled: Boolean = false,
@@ -32,7 +32,7 @@ class Preferences(context: Context) {
     val state: StateFlow<Snapshot> = _state.asStateFlow()
 
     private fun read() = Snapshot(
-        theme = runCatching { ThemeMode.valueOf(prefs.getString("theme", ThemeMode.System.name)!!) }.getOrDefault(ThemeMode.System),
+        theme = runCatching { ThemeMode.valueOf(prefs.getString("theme", ThemeMode.Auto.name)!!) }.getOrDefault(ThemeMode.Auto),
         colorTheme = MyHealthThemeId.parse(prefs.getString("color_theme", null)),
         language = prefs.getString("language", "") ?: "",
         lockEnabled = prefs.getBoolean("lock", false),
@@ -80,6 +80,10 @@ class Preferences(context: Context) {
     fun setLockout(l: Lockout) = update { putLong("pin_lock_boot", l.boot); putLong("pin_lock_start", l.startElapsed); putLong("pin_lock_ms", l.durationMs) }
 
     data class Lockout(val boot: Long, val startElapsed: Long, val durationMs: Long) { companion object { val NONE = Lockout(0, 0, 0) } }
+
+    /** Doctor View on the tile grids: out-of-range first, still borders. */
+    fun doctorView(): Boolean = prefs.getBoolean("doctor_view", false)
+    fun setDoctorView(on: Boolean) = update { putBoolean("doctor_view", on) }
 
     /** Item 6: check GitHub for a newer release on app start (default on). */
     fun autoUpdate(): Boolean = prefs.getBoolean("auto_update", true)

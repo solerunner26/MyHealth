@@ -68,9 +68,9 @@ class AppFlowTest {
         val self = runBlocking { ctx.container.stackOrNull!!.members.all() }.single()
         seed(self.id)
         waitTag("scoreCard")
-        // focus: LDL 65 % above range → shown on the dashboard with its rationale
-        rule.onNodeWithTag("home").performScrollToNode(hasText(str(R.string.focus_high_title, str(R.string.analyte_ldl))))
+        // every lab test is a tile; LDL 165 is above its reference → HIGH pill
         rule.onNodeWithTag("home").performScrollToNode(hasTestTag("tile_ldl"))
+        rule.onNode(hasText(str(R.string.tile_high)) and androidx.compose.ui.test.hasAnyAncestor(hasTestTag("tile_ldl")), useUnmergedTree = true).assertExists()
         rule.onNodeWithTag("tile_ldl").performClick()
 
         // trend detail: chart + history

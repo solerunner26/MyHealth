@@ -19,6 +19,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import app.myhealth.ui.home.neonGrid
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -111,36 +112,51 @@ class VitalsViewModel(private val session: Session) : ViewModel() {
     fun delete(id: String) = viewModelScope.launch(Safe.handler) { runCatching { session.stack.vitals.delete(id) } }
 }
 
-/** Section shown at the top of the Trends tab. */
+/** Section on the Trends tab: the triage at a glance and the button to the vitals screen (item 1). */
 @Composable
-fun VitalsSection(state: VitalsState, onAdd: () -> Unit, onOpen: (VitalType) -> Unit, zone: ZoneId) {
+fun VitalsSection(state: VitalsState, onAdd: () -> Unit, onOpenAll: () -> Unit) {
     val sp = MyHealthTheme.spacing
+    val tiles = state.typesWithData.map { app.myhealth.domain.analytics.VitalTiles.fromVital(state.series(it).last()) }
     Column(verticalArrangement = Arrangement.spacedBy(sp.sm), modifier = Modifier.testTag("vitalsSection")) {
         MyHealthSectionHeader(stringResource(R.string.vitals_title))
-        val types = state.typesWithData
-        if (types.isEmpty()) {
-            MyHealthCard {
+        MyHealthCard {
+            if (tiles.isEmpty()) {
                 Text(stringResource(R.string.vitals_empty_title), style = MyHealthTheme.typography.subtitle, color = MyHealthTheme.colors.textPrimary)
                 Text(stringResource(R.string.vitals_empty_body), style = MyHealthTheme.typography.bodySmall, color = MyHealthTheme.colors.textSecondary)
+            } else {
+                val (attention, normal) = app.myhealth.domain.analytics.VitalTiles.triage(tiles)
+                Text(stringResource(R.string.tile_triage, attention, normal), style = MyHealthTheme.typography.subtitle,
+                    color = if (attention > 0) MyHealthTheme.colors.danger else MyHealthTheme.colors.textPrimary)
+            }
+            Row(Modifier.fillMaxWidth().padding(top = sp.md), horizontalArrangement = Arrangement.spacedBy(sp.sm)) {
+                app.myhealth.core.designsystem.components.MyHealthPrimaryButton(stringResource(R.string.vitals_view), onOpenAll, Modifier.weight(1f).testTag("viewVitals"), icon = MyHealthIcons.Vitals)
+                MyHealthSecondaryButton(stringResource(R.string.dash_log_short), onAdd, Modifier.testTag("logVital"), icon = MyHealthIcons.Add)
             }
         }
-        var index = 0
-        // not in range first, then slightly off, then in range
-        val ordered = types.sortedBy { t -> app.myhealth.domain.analytics.VitalRules.band(state.series(t).last()).let { b -> if (b == app.myhealth.domain.analytics.VitalBand.Unknown) null else b.kind() }.let { app.myhealth.ui.home.urgencyOf(it) } }
-        ordered.chunked(app.myhealth.ui.home.TILE_COLUMNS).forEach { row ->
-            app.myhealth.ui.home.TileRow { m ->
-                row.forEach { t ->
-                    val series = state.series(t)
-                    app.myhealth.ui.home.VitalTile(t, series.last(), series.getOrNull(series.size - 2), state.member?.heightCm, zone, { onOpen(t) }, index++, m.testTag("vital_${t.name}"))
-                }
-                repeat(app.myhealth.ui.home.TILE_COLUMNS - row.size) { Spacer(m) }
+    }
+}
+
+/** All vitals as tiles (owner's VitalTile spec), with triage, Doctor View and the Health Connect note. */
+@Composable
+fun VitalsScreen(state: VitalsState, onBack: () -> Unit, onAdd: () -> Unit, onOpen: (VitalType) -> Unit) {
+    val session = app.myhealth.ui.LocalSession.current
+    val prefs = session.container.preferences
+    var doctorView by androidx.compose.runtime.saveable.rememberSaveable { androidx.compose.runtime.mutableStateOf(prefs.doctorView()) }
+    val columns = if (androidx.compose.ui.platform.LocalConfiguration.current.screenWidthDp >= 600) 4 else 2
+    val tiles = state.typesWithData.map { app.myhealth.domain.analytics.VitalTiles.fromVital(state.series(it).last()) }
+    Column(Modifier.fillMaxSize().testTag("vitalsScreen")) {
+        MyHealthTopBar(stringResource(R.string.vitals_screen_title), subtitle = state.member?.name, onBack = onBack, backLabel = stringResource(R.string.action_back))
+        androidx.compose.foundation.lazy.LazyColumn(Modifier.fillMaxSize(), contentPadding = androidx.compose.foundation.layout.PaddingValues(MyHealthTheme.spacing.gutter)) {
+            item { app.myhealth.ui.home.NeonGridHeader(stringResource(R.string.vitals_title), tiles, doctorView) { doctorView = it; prefs.setDoctorView(it) } }
+            item { Spacer(Modifier.height(MyHealthTheme.spacing.md)) }
+            neonGrid(tiles, columns, doctorView) { t -> t.vitalType?.let(onOpen) }
+            state.stepsAverage(LocalDate.now())?.let { avg ->
+                item { MyHealthMetricTile(stringResource(R.string.activity_title), ValueFormat.number(avg, 0), Modifier.fillMaxWidth().testTag("activityTile"),
+                    caption = stringResource(R.string.activity_steps_avg, ValueFormat.number(avg, 0))) }
             }
+            item { MyHealthInfoBanner(stringResource(R.string.vitals_hc_note), Modifier.padding(top = MyHealthTheme.spacing.md), icon = MyHealthIcons.Sync) }
+            item { MyHealthSecondaryButton(stringResource(R.string.vitals_add), onAdd, Modifier.fillMaxWidth().padding(top = MyHealthTheme.spacing.md), icon = MyHealthIcons.Add) }
         }
-        state.stepsAverage(LocalDate.now())?.let { avg ->
-            MyHealthMetricTile(stringResource(R.string.activity_title), ValueFormat.number(avg, 0), Modifier.fillMaxWidth().testTag("activityTile"),
-                caption = stringResource(R.string.activity_steps_avg, ValueFormat.number(avg, 0)))
-        }
-        MyHealthSecondaryButton(stringResource(R.string.vitals_add), onAdd, Modifier.fillMaxWidth().testTag("logVital"), icon = MyHealthIcons.Add)
     }
 }
 

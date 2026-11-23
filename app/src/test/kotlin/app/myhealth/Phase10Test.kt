@@ -40,7 +40,7 @@ class TranslationCompletenessTest {
     private val root = generateSequence(File("").absoluteFile) { it.parentFile }.first { File(it, "settings.gradle.kts").exists() }
     private val res = File(root, "app/src/main/res")
     // Allowed to be identical to English: placeholders-only strings, brand names, language names and lab abbreviations.
-    private val literal = setOf("BMI %1\$s", "%1\$s: %2\$s, %3\$s, %4\$s.", "%1\$s: %2\$s", "%1\$s · %2\$s", "%1\$s, %2\$s", "%1\$d / 100", "%1\$s: %2\$s → %3\$d", "Health Connect", "MyHealth", "English", "हिन्दी", "ગુજરાતી", "—")
+    private val literal = setOf("BMI %1\$s", "%1\$s: %2\$s, %3\$s, %4\$s.", "%1\$s: %2\$s", "%1\$s · %2\$s", "%1\$s, %2\$s", "%1\$s: %2\$s %3\$s, %4\$s", "%1\$d / 100", "%1\$s: %2\$s → %3\$d", "Health Connect", "MyHealth", "English", "हिन्दी", "ગુજરાતી", "—")
     private val technical = Regex("^[A-Z][A-Za-z0-9 ()/.,%₂²+-]*$")
     private fun allowed(v: String) = v in literal || technical.matches(v)
 

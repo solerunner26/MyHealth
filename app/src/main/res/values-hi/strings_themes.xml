@@ -4,6 +4,10 @@
     <string name="settings_color_theme_note">हर थीम में एक ही रंग और शांत न्यूट्रल रंग हैं। ग्लास थीम में चलती रोशनी पर धुंधले काँच के पैनल हैं; सॉलिड थीम गर्म काग़ज़ जैसी सतह पर हैं।</string>
     <string name="theme_family_glass">ग्लास</string>
     <string name="theme_family_solid">सॉलिड</string>
+    <string name="theme_pearl">पर्ल</string>
+    <string name="theme_pearl_desc">शांत आसमानी नीले रंग के साथ साफ़ सफ़ेद</string>
+    <string name="theme_auto">दिन में हल्का, सूर्यास्त के बाद गहरा</string>
+    <string name="theme_auto_sub">सूर्योदय और सूर्यास्त पर अपने आप बदलता है। नीचे हल्का या गहरा चुनने पर यह बंद हो जाता है।</string>
     <string name="theme_aurora">ऑरोरा</string>
     <string name="theme_aurora_desc">रात के आसमान पर धुंधले काँच से छनती फ़िरोज़ी रोशनी</string>
     <string name="theme_crystal">क्रिस्टल</string>

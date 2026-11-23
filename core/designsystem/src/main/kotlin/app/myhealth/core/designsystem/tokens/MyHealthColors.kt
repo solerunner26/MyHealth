@@ -13,6 +13,8 @@ enum class ThemeFamily { Glass, Solid }
  * lightness/chroma steps of that hue. Status is never colour-only: icon, label, fill weight and material carry it.
  */
 enum class MyHealthThemeId(val hue: Float, val accentSat: Float, val neutralSat: Float, val family: ThemeFamily, val neutralHue: Float = hue) {
+    /** Clean white with a calm sky-blue accent: the default theme. */
+    Pearl(205f, 0.72f, 0.06f, ThemeFamily.Solid),
     /** Teal light through frosted glass on a night sky. */
     Aurora(168f, 0.80f, 0.10f, ThemeFamily.Glass),
     /** Clear blue glass, precise and cool. */
@@ -29,7 +31,7 @@ enum class MyHealthThemeId(val hue: Float, val accentSat: Float, val neutralSat:
     Iris(255f, 0.70f, 0.14f, ThemeFamily.Solid);
 
     companion object {
-        val Default = Evergreen
+        val Default = Pearl
         /** Stored names from earlier versions keep working. */
         fun parse(name: String?): MyHealthThemeId = when (name) {
             "Botanical" -> Evergreen
@@ -152,7 +154,8 @@ object MyHealthColorRoles {
             accent = accentLight, onAccent = 0xFFFFFFFF, accentContainer = a(t.accentSat * 0.70f, 0.90f), onAccentContainer = a(t.accentSat, 0.14f),
             accentSoft = a(t.accentSat * 0.6f, if (solid) 0.92f else 0.955f), accentBright = a(t.accentSat, 0.50f),
             hero = hero, onHero = onHero, heroAccent = heroAccent,
-            background = n(0.955f), backgroundAlt = n(0.925f, t.neutralSat * 1.4f), surface = if (solid) 0xFFFFFFFF else n(0.985f), surfaceRaised = 0xFFFFFFFF, surfaceSunken = n(0.925f),
+            background = n(if (t == MyHealthThemeId.Pearl) 0.975f else 0.955f), backgroundAlt = n(if (t == MyHealthThemeId.Pearl) 0.955f else 0.925f, t.neutralSat * 1.4f),
+            surface = if (solid) 0xFFFFFFFF else n(0.985f), surfaceRaised = 0xFFFFFFFF, surfaceSunken = n(0.925f),
             outline = n(0.84f), outlineStrong = n(0.42f, t.neutralSat * 0.6f), textPrimary = n(0.09f, t.neutralSat * 0.5f), textSecondary = n(0.28f, t.neutralSat * 0.5f), textTertiary = n(0.38f, t.neutralSat * 0.5f),
         ) else ColorRoles(
             accent = accentDark, onAccent = darkOn, accentContainer = a(t.accentSat * 0.55f, 0.20f), onAccentContainer = a(t.accentSat * 0.9f, 0.88f),

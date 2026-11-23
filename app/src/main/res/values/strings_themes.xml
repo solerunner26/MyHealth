@@ -4,6 +4,10 @@
     <string name="settings_color_theme_note">Every theme uses one colour plus calm neutrals. Glass themes float frosted panels over moving light; Solid themes sit on warm paper.</string>
     <string name="theme_family_glass">Glass</string>
     <string name="theme_family_solid">Solid</string>
+    <string name="theme_pearl">Pearl</string>
+    <string name="theme_pearl_desc">Clean white with a calm sky-blue accent</string>
+    <string name="theme_auto">Light by day, dark after sunset</string>
+    <string name="theme_auto_sub">Switches by itself at sunrise and sunset. Choosing light or dark below turns this off.</string>
     <string name="theme_aurora">Aurora</string>
     <string name="theme_aurora_desc">Teal light through frosted glass on a night sky</string>
     <string name="theme_crystal">Crystal</string>
