@@ -81,6 +81,7 @@ import app.myhealth.ui.LocalSession
 import app.myhealth.ui.common.Share
 import app.myhealth.ui.common.formatDate
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -394,12 +395,67 @@ fun PolicyEditorScreen(id: String?, onDone: (String?) -> Unit) {
     var confirmDelete by remember { mutableStateOf(false) }
     val ok = stringResource(R.string.action_ok); val cancel = stringResource(R.string.action_cancel)
     val sp = MyHealthTheme.spacing
+    val context = LocalContext.current
+    // item 1: a NEW policy starts from its document (PDF or photos); every filled field stays editable
+    var step by rememberSaveable { mutableStateOf(if (id == null) STEP_PICK else STEP_EDIT) }
+    var filled by rememberSaveable { mutableStateOf(-1) }
+    var progress by remember { mutableStateOf<Float?>(null) }
+    val pendingDocs = remember { mutableListOf<Pair<MediaKind, ByteArray>>() }
+    val pendingHospitals = remember { mutableListOf<HospitalListParser.Parsed>() }
+    val pick = rememberLauncherForActivityResult(ActivityResultContracts.OpenMultipleDocuments()) { uris ->
+        if (uris.isEmpty()) return@rememberLauncherForActivityResult
+        step = STEP_READING; progress = null
+        scope.launch {
+            val result = withContext(Dispatchers.IO) {
+                val pages = mutableListOf<String>()
+                uris.take(MAX_POLICY_DOCS).forEachIndexed { i, uri ->
+                    runCatching {
+                        val raw = context.contentResolver.openInputStream(uri)!!.use { Images.readLimited(it, 25 * 1024 * 1024) } ?: return@runCatching
+                        val kind = DocumentSniffer.kind(raw) ?: return@runCatching
+                        val isPdf = kind == app.myhealth.domain.model.AttachmentKind.Pdf
+                        val stored = if (isPdf) raw else Images.documentPhoto(raw, 2400) ?: return@runCatching
+                        pendingDocs += (if (isPdf) MediaKind.PolicyPdf else MediaKind.PolicyImage) to stored
+                        pages += AndroidTextExtractor(context.applicationContext, maxPages = 300).extract(PickedDocument(raw, "policy", kind)) { done, total ->
+                            progress = ((i + done.toFloat() / total.coerceAtLeast(1)) / uris.size.coerceAtMost(MAX_POLICY_DOCS))
+                        }.pages
+                    }
+                }
+                pendingHospitals += HospitalListParser.parse(pages.flatMap { it.lines() })
+                app.myhealth.domain.insurance.PolicyParser.parse(pages, members.orEmpty())
+            }
+            p = fill(p, result)
+            result.sumInsured?.let { sum = it.toLong().toString() }
+            result.bonus?.let { bonus = it.toLong().toString() }
+            result.premium?.let { premium = it.toLong().toString() }
+            filled = result.found
+            step = STEP_EDIT
+        }
+    }
     fun feature(t: (PolicyFeatures) -> PolicyFeatures) { p = p.copy(features = t(p.features)) }
     @Composable fun intField(label: Int, v: Int?, set: (Int?) -> Unit) =
         MyHealthTextField(v?.toString().orEmpty(), { s -> set(s.filter(Char::isDigit).take(4).toIntOrNull()) }, stringResource(label), keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number))
     Column(Modifier.fillMaxSize().testTag("policyEditor")) {
         MyHealthTopBar(stringResource(if (id == null) R.string.mc_add else R.string.mc_edit), onBack = { onDone(null) }, backLabel = stringResource(R.string.action_back))
+        if (step == STEP_PICK || step == STEP_READING) {
+            Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = sp.gutter).testTag("policyPick"), verticalArrangement = Arrangement.spacedBy(sp.md)) {
+                MyHealthCard {
+                    Text(stringResource(R.string.mc_pick_title), style = MyHealthTheme.typography.title, color = MyHealthTheme.colors.textPrimary)
+                    Text(stringResource(R.string.mc_pick_body), style = MyHealthTheme.typography.body, color = MyHealthTheme.colors.textSecondary, modifier = Modifier.padding(top = sp.xs))
+                }
+                if (step == STEP_READING) MyHealthProgress(stringResource(R.string.mc_reading), progress, Modifier.testTag("policyReading"))
+                else {
+                    MyHealthPrimaryButton(stringResource(R.string.mc_pick_docs), { runCatching { pick.launch(arrayOf("application/pdf", "image/*")) } },
+                        Modifier.fillMaxWidth().testTag("pickPolicyDocs"), icon = MyHealthIcons.Import)
+                    MyHealthSecondaryButton(stringResource(R.string.mc_fill_by_hand), { step = STEP_EDIT }, Modifier.fillMaxWidth().testTag("fillByHand"))
+                    MyHealthInfoBanner(stringResource(R.string.mc_pick_private))
+                }
+            }
+            return@Column
+        }
         Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = sp.gutter), verticalArrangement = Arrangement.spacedBy(sp.sm)) {
+            if (filled > 0) MyHealthInfoBanner(pluralStringResource(R.plurals.mc_filled, filled, filled), Modifier.testTag("policyFilled"), icon = MyHealthIcons.Check)
+            else if (filled == 0) MyHealthInfoBanner(stringResource(R.string.mc_filled_none), Modifier.testTag("policyFilled"))
+            MyHealthTextButton(stringResource(R.string.mc_fill_from_doc), { runCatching { pick.launch(arrayOf("application/pdf", "image/*")) } }, Modifier.fillMaxWidth().testTag("fillFromDoc"), icon = MyHealthIcons.Import)
             MyHealthTextField(p.insurer, { p = p.copy(insurer = it.take(80)) }, stringResource(R.string.mc_insurer), Modifier.testTag("insurer"))
             MyHealthTextField(p.planName, { p = p.copy(planName = it.take(80)) }, stringResource(R.string.mc_plan))
             MyHealthTextField(p.policyNumber, { p = p.copy(policyNumber = it.take(40)) }, stringResource(R.string.mc_number), Modifier.testTag("policyNumber"))
@@ -448,7 +504,17 @@ fun PolicyEditorScreen(id: String?, onDone: (String?) -> Unit) {
                 val final = p.copy(insurer = p.insurer.trim(), sumInsured = num(sum) ?: 0.0, bonus = num(bonus) ?: 0.0, premium = num(premium),
                     coveredMemberIds = (p.coveredMemberIds + p.memberId).distinct())
                 scope.launch {
-                    withContext(Dispatchers.IO) { session.stack.mediclaims.upsert(final) }
+                    withContext(Dispatchers.IO) {
+                        session.stack.mediclaims.upsert(final)
+                        // the documents the details were read from are kept with the policy, plus any hospital list in them
+                        pendingDocs.forEach { (kind, bytes) -> session.stack.media.add(Media(UuidIds.next(), final.memberId, final.id, kind, session.container.clock.millis()), bytes) }
+                        pendingDocs.clear()
+                        val have = session.stack.mediclaims.observeHospitals(final.id).first().map { it.name.lowercase() + it.pincode }.toSet()
+                        pendingHospitals.filter { (it.name.lowercase() + it.pincode) !in have }
+                            .map { NetworkHospital(UuidIds.next(), final.id, it.name, it.address, it.city, it.pincode, it.phone) }
+                            .takeIf { it.isNotEmpty() }?.let { session.stack.mediclaims.addHospitals(it) }
+                        pendingHospitals.clear()
+                    }
                     reschedule(session)
                     withContext(Dispatchers.Main) { onDone(final.id) } // navigation must run on the main thread
                 }
@@ -467,4 +533,32 @@ fun PolicyEditorScreen(id: String?, onDone: (String?) -> Unit) {
             withContext(Dispatchers.Main) { onDone(null) }
         }
     }, stringResource(R.string.action_cancel), { confirmDelete = false }, icon = MyHealthIcons.Delete)
+}
+
+private const val STEP_PICK = 0
+private const val STEP_READING = 1
+private const val STEP_EDIT = 2
+private const val MAX_POLICY_DOCS = 6
+
+/** Copies what the parser found onto the policy; fields it did not find keep what the user already had. */
+internal fun fill(p: MediclaimPolicy, r: app.myhealth.domain.insurance.PolicyParser.Result): MediclaimPolicy {
+    fun pick(new: String, old: String) = new.ifBlank { old }
+    val f = r.features; val o = p.features
+    return p.copy(
+        insurer = pick(r.insurer, p.insurer), planName = pick(r.planName, p.planName), policyNumber = pick(r.policyNumber, p.policyNumber),
+        type = r.type ?: p.type, sumInsured = r.sumInsured ?: p.sumInsured, bonus = r.bonus ?: p.bonus, premium = r.premium ?: p.premium,
+        startDate = r.startDate ?: p.startDate, endDate = r.endDate ?: p.endDate,
+        tpaName = pick(r.tpaName, p.tpaName), tpaPhone = pick(r.tpaPhone, p.tpaPhone), helpline = pick(r.helpline, p.helpline),
+        agentName = pick(r.agentName, p.agentName), agentPhone = pick(r.agentPhone, p.agentPhone),
+        coveredMemberIds = (p.coveredMemberIds + r.memberIds).distinct(),
+        features = o.copy(
+            roomRent = pick(f.roomRent, o.roomRent), coPayPercent = f.coPayPercent ?: o.coPayPercent, deductible = f.deductible ?: o.deductible,
+            initialWaitingDays = f.initialWaitingDays ?: o.initialWaitingDays, pedWaitingMonths = f.pedWaitingMonths ?: o.pedWaitingMonths,
+            specificWaitingMonths = f.specificWaitingMonths ?: o.specificWaitingMonths, preHospitalisationDays = f.preHospitalisationDays ?: o.preHospitalisationDays,
+            postHospitalisationDays = f.postHospitalisationDays ?: o.postHospitalisationDays, noClaimBonusPercent = f.noClaimBonusPercent ?: o.noClaimBonusPercent,
+            ambulanceLimit = f.ambulanceLimit ?: o.ambulanceLimit,
+            dayCare = f.dayCare || o.dayCare, restoration = f.restoration || o.restoration, ayush = f.ayush || o.ayush, maternity = f.maternity || o.maternity,
+            opd = f.opd || o.opd, healthCheckup = f.healthCheckup || o.healthCheckup, domiciliary = f.domiciliary || o.domiciliary, organDonor = f.organDonor || o.organDonor,
+        ),
+    )
 }

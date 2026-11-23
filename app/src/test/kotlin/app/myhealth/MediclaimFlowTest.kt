@@ -42,7 +42,10 @@ class MediclaimFlowTest {
         rule.onNode(hasText(ctx.getString(R.string.nav_more)) and hasAnyAncestor(hasTestTag("bottomBar"))).performClick()
         waitTag("more"); rule.onNodeWithTag("more").performScrollToNode(hasTestTag("openMediclaim")); rule.onNodeWithTag("openMediclaim").performClick()
         waitTag("mediclaim"); rule.onNodeWithTag("addPolicy").performClick()
-        waitTag("policyEditor")
+        waitTag("policyPick") // a new policy starts from its document; this test types it in
+        rule.onNodeWithTag("pickPolicyDocs").assertExists()
+        rule.onNodeWithTag("fillByHand").performClick()
+        waitTag("insurer")
         rule.onNodeWithTag("insurer").performTextInput("Star Health")
         rule.onNodeWithTag("policyNumber").performTextInput("P/2026/123")
         rule.onNodeWithTag("sumInsured").performScrollTo().performTextInput("500000")
@@ -64,5 +67,16 @@ class MediclaimFlowTest {
         val claim = runBlocking { stack.mediclaims.observeClaims(policy.id).first() }.single()
         assertEquals(app.myhealth.domain.model.ClaimStatus.Settled, claim.status); assertEquals(80_000.0, claim.approvedAmount!!, 0.0)
         rule.onNodeWithTag("policyList").performScrollToNode(hasText(app.myhealth.ui.insurance.rupees(420_000.0)))
+    }
+
+    @Test fun documentDetailsFillTheEditorWithoutLosingWhatTheUserTyped() {
+        val typed = app.myhealth.domain.model.MediclaimPolicy("p", "m1", "My insurer", notes = "keep", coveredMemberIds = listOf("m1"),
+            features = app.myhealth.domain.model.PolicyFeatures(roomRent = "Twin sharing", opd = true))
+        val read = app.myhealth.domain.insurance.PolicyParser.Result(policyNumber = "P-77", sumInsured = 300_000.0, memberIds = listOf("m2"),
+            features = app.myhealth.domain.model.PolicyFeatures(coPayPercent = 10), found = 3)
+        val out = app.myhealth.ui.insurance.fill(typed, read)
+        assertEquals("My insurer", out.insurer); assertEquals("P-77", out.policyNumber); assertEquals(300_000.0, out.sumInsured, 0.0)
+        assertEquals(listOf("m1", "m2"), out.coveredMemberIds); assertEquals("keep", out.notes)
+        assertEquals("Twin sharing", out.features.roomRent); assertEquals(10, out.features.coPayPercent); assertEquals(true, out.features.opd)
     }
 }

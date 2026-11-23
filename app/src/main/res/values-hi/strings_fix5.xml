@@ -13,9 +13,20 @@
     <string name="fx_glass_sub">पारदर्शी चमकदार पैनल और चमक। फ़ोन धीमा लगे तो बंद करें।</string>
     <string name="fx_animations">एनिमेशन</string>
     <string name="fx_animations_sub">चलता बैकग्राउंड, टाइल बॉर्डर और चमक। सब कुछ स्थिर रखने के लिए बंद करें।</string>
+    <string name="mc_pick_title">अपने पॉलिसी दस्तावेज़ से शुरू करें</string>
+    <string name="mc_pick_body">पॉलिसी शेड्यूल PDF या फ़ोटो (JPG, PNG) के रूप में चुनें। MyHealth बीमा कंपनी, पॉलिसी नंबर, तारीखें, कवर, संपर्क और लाभ पढ़कर भर देता है। फिर आप कोई भी जानकारी बदल, जोड़ या हटा सकते हैं।</string>
+    <string name="mc_pick_docs">PDF या फ़ोटो चुनें</string>
+    <string name="mc_fill_by_hand">विवरण खुद लिखूँगा</string>
+    <string name="mc_pick_private">दस्तावेज़ केवल इसी फ़ोन पर पढ़ा जाता है और पॉलिसी के साथ एन्क्रिप्ट करके सहेजा जाता है।</string>
+    <string name="mc_filled_none">इस दस्तावेज़ से कुछ पढ़ा नहीं जा सका। कृपया विवरण लिखें।</string>
+    <string name="mc_fill_from_doc">दस्तावेज़ से भरें</string>
     <string name="hc_data_bp">ब्लड प्रेशर</string>
     <string name="hc_data_spo2">ऑक्सीजन (SpO₂)</string>
     <string name="hc_data_glucose">ब्लड ग्लूकोज़</string>
     <string name="hc_data_temp">शरीर का तापमान</string>
     <string name="hc_data_resp">साँस की दर</string>
+    <plurals name="mc_filled">
+        <item quantity="one">आपके दस्तावेज़ से %d जानकारी भरी गई। कृपया जाँचें; आप इसे बदल या हटा सकते हैं।</item>
+        <item quantity="other">आपके दस्तावेज़ से %d जानकारियाँ भरी गईं। कृपया हर एक जाँचें; आप किसी को भी बदल या हटा सकते हैं।</item>
+    </plurals>
 </resources>

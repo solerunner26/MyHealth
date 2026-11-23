@@ -13,9 +13,20 @@
     <string name="fx_glass_sub">Translucent glossy panels and glows. Turn off if your phone feels slow.</string>
     <string name="fx_animations">Animations</string>
     <string name="fx_animations_sub">Moving background, tile borders and glows. Turn off to keep everything still.</string>
+    <string name="mc_pick_title">Start with your policy document</string>
+    <string name="mc_pick_body">Choose the policy schedule as a PDF or as photos (JPG, PNG). MyHealth reads the insurer, policy number, dates, cover, contacts and benefits and fills them in. You can then change, add or clear any detail.</string>
+    <string name="mc_pick_docs">Choose PDF or photos</string>
+    <string name="mc_fill_by_hand">Type the details myself</string>
+    <string name="mc_pick_private">The document is read on this phone only and saved, encrypted, with the policy.</string>
+    <string name="mc_filled_none">Nothing could be read from this document. Please type the details.</string>
+    <string name="mc_fill_from_doc">Fill from a document</string>
     <string name="hc_data_bp">blood pressure</string>
     <string name="hc_data_spo2">oxygen (SpO₂)</string>
     <string name="hc_data_glucose">blood glucose</string>
     <string name="hc_data_temp">body temperature</string>
     <string name="hc_data_resp">breathing rate</string>
+    <plurals name="mc_filled">
+        <item quantity="one">%d detail was filled from your document. Please check it; you can change or clear it.</item>
+        <item quantity="other">%d details were filled from your document. Please check each one; you can change or clear any of them.</item>
+    </plurals>
 </resources>

@@ -13,9 +13,20 @@
     <string name="fx_glass_sub">પારદર્શક ચળકતા પેનલ અને ચમક. ફોન ધીમો લાગે તો બંધ કરો.</string>
     <string name="fx_animations">એનિમેશન</string>
     <string name="fx_animations_sub">ચાલતું બેકગ્રાઉન્ડ, ટાઇલ બોર્ડર અને ચમક. બધું સ્થિર રાખવા બંધ કરો.</string>
+    <string name="mc_pick_title">તમારા પોલિસી દસ્તાવેજથી શરૂ કરો</string>
+    <string name="mc_pick_body">પોલિસી શેડ્યૂલ PDF અથવા ફોટા (JPG, PNG) તરીકે પસંદ કરો. MyHealth વીમા કંપની, પોલિસી નંબર, તારીખો, કવર, સંપર્કો અને લાભો વાંચીને ભરી દે છે. પછી તમે કોઈપણ વિગત બદલી, ઉમેરી કે કાઢી શકો છો.</string>
+    <string name="mc_pick_docs">PDF અથવા ફોટા પસંદ કરો</string>
+    <string name="mc_fill_by_hand">વિગતો જાતે લખીશ</string>
+    <string name="mc_pick_private">દસ્તાવેજ ફક્ત આ ફોન પર વંચાય છે અને પોલિસી સાથે એન્ક્રિપ્ટ કરીને સાચવાય છે.</string>
+    <string name="mc_filled_none">આ દસ્તાવેજમાંથી કંઈ વાંચી શકાયું નહીં. કૃપા કરી વિગતો લખો.</string>
+    <string name="mc_fill_from_doc">દસ્તાવેજમાંથી ભરો</string>
     <string name="hc_data_bp">બ્લડ પ્રેશર</string>
     <string name="hc_data_spo2">ઓક્સિજન (SpO₂)</string>
     <string name="hc_data_glucose">બ્લડ ગ્લુકોઝ</string>
     <string name="hc_data_temp">શરીરનું તાપમાન</string>
     <string name="hc_data_resp">શ્વાસનો દર</string>
+    <plurals name="mc_filled">
+        <item quantity="one">તમારા દસ્તાવેજમાંથી %d વિગત ભરાઈ. કૃપા કરી તપાસો; તમે તેને બદલી કે કાઢી શકો છો.</item>
+        <item quantity="other">તમારા દસ્તાવેજમાંથી %d વિગતો ભરાઈ. કૃપા કરી દરેક તપાસો; તમે કોઈપણ બદલી કે કાઢી શકો છો.</item>
+    </plurals>
 </resources>
