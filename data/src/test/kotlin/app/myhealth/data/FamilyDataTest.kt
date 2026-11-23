@@ -86,7 +86,13 @@ class MediclaimDataTest {
         assertEquals(10, restored.features.coPayPercent); assertTrue(restored.features.restoration); assertEquals(listOf("m1", "m2"), restored.coveredMemberIds)
         assertEquals(55_000.0, b.mediclaims.observeClaims("p1").first().single().approvedAmount!!, 0.0)
         assertEquals("380052", b.mediclaims.observeHospitals("p1").first().single().pincode)
-        b.members.delete("m1") // holder deleted → policy, claims and hospitals go with it
+        // holder deleted → the floater still covers Meera: it moves to her with its claims and hospitals
+        b.members.delete("m1")
+        val moved = b.mediclaims.all().single()
+        assertEquals("m2", moved.memberId); assertEquals(listOf("m2"), moved.coveredMemberIds)
+        assertEquals(1, b.mediclaims.observeClaims("p1").first().size); assertEquals(1, b.mediclaims.observeHospitals("p1").first().size)
+        // the last covered member deleted → the policy goes with them
+        b.members.delete("m2")
         assertTrue(b.mediclaims.all().isEmpty()); assertTrue(b.mediclaims.observeClaims("p1").first().isEmpty())
     }
 }

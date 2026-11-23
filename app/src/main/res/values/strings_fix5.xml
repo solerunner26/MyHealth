@@ -20,6 +20,7 @@
     <string name="mc_pick_private">The document is read on this phone only and saved, encrypted, with the policy.</string>
     <string name="mc_filled_none">Nothing could be read from this document. Please type the details.</string>
     <string name="mc_fill_from_doc">Fill from a document</string>
+    <string name="upd_size">Download size: %1$s MB. Use Wi-Fi if your mobile data is limited.</string>
     <string name="hc_data_bp">blood pressure</string>
     <string name="hc_data_spo2">oxygen (SpO₂)</string>
     <string name="hc_data_glucose">blood glucose</string>

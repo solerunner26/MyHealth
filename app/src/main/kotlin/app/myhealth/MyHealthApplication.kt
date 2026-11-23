@@ -19,7 +19,7 @@ open class MyHealthApplication : Application() {
 
     override fun onCreate() {
         super.onCreate()
-        val crashLog = CrashLog.forContext(this, BuildInfo.versionName(this))
+        val crashLog = CrashLog.forContext(this, BuildInfo.versionName(this) + " build " + app.myhealth.core.Updater.installedVersionCode(this))
         crashLog.install()
         container = AppContainer(this, crashLog, ::createStorageOpener)
         // PdfBox needs the application context once (glyph lists/fonts from its assets); cheap, no I/O until used.

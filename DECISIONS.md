@@ -389,3 +389,53 @@ one-off key are refused by the certificate check, so they still need a manual re
   30/7/1/0 days before the end date. Claim tips cite the IRDAI 2024 master circular (1 h cashless decision, 3 h final
   discharge approval).
 
+
+## D-043 0.5.0: liquid glass, effects switches, policy auto-fill, background updates, adversarial audit
+- **Liquid glass everywhere** (owner's reference boards): milky translucent cards with a white rim that fades
+  downwards, a specular sheen over the top 45 %, an accent-tinted glow underneath; glossy gradient primary buttons;
+  tile icons in glass orbs; a three-zone range bar (low · reference · high) with a glass bead that springs to the
+  value. The background is a gradient whose direction wanders (mostly top → bottom), a light band travelling down
+  the screen and four blurred bubbles on independent paths.
+- **Settings → App settings** and **Quick settings** have *Glass effects* (off = flat surfaces) and *Animations*
+  (off = everything still; the system "remove animations" setting also turns it off).
+- **Quick settings** open from the Home logo: dark mode, automatic day/night, language (3 radio buttons), themes
+  (radio buttons in each theme's colour).
+- **Updates never block start-up.** 5 s after the app is in use, a background check runs (again at most every 6 h);
+  when a newer build exists a dialog offers *Update now* / *Later* with the download size. Settings → App → *Check
+  for updates* shows version and build. Releases are named "MyHealth X · build N" (tag vX-build.N); build N is the
+  versionCode the app compares.
+- **Add a policy starts from its document**: PDF or photos (up to 6 files, 40 MB held until Save), read offline
+  (PDF text layer, else on-device OCR) by `PolicyParser`: insurer, plan, policy number, type, sum insured,
+  cumulative bonus, premium, period (one date found → the other is ±1 year), TPA and phone, helpline, agent, room
+  rent, co-pay, deductible, waiting periods, pre/post hospitalisation, NCB, ambulance, benefits (covered unless the
+  line says excluded / not covered), and the family members whose names are printed. The editor opens pre-filled
+  with a banner "N details were filled ... check each one"; every field can be changed or cleared; *Fill from a
+  document* re-runs it; the documents and any network hospital list in them are saved with the policy.
+- **Health Connect crash** (0.4.0, `NoSuchElementException` on the sync screen): a map of permission names lacked the
+  new data types; replaced with an exhaustive `when` so a new type cannot compile without a label.
+
+### Adversarial audit ("become an enemy of this app")
+Found and fixed in 0.5.0:
+1. *Data loss*: deleting the member who holds a family-floater policy cascaded the policy, its claims, hospitals and
+   documents away from everyone else it covers. Now the policy (and its documents) moves to the next covered
+   member; it is deleted only with the last one. Deleted members are removed from every covered list.
+2. *Crash*: the vital alert text used `single()` on its evidence and would throw as soon as a rule attached more than
+   one reading; it now uses the newest one.
+3. *Crash*: Health Connect labels (above).
+4. *Memory*: policy auto-fill could hold 6 × 25 MB in memory until Save; capped at 40 MB.
+5. *Storage*: a downloaded update (~30 MB) stayed in the cache after installing; removed at the next start.
+6. *Diagnosis*: crash reports from the R8 build are obfuscated ("at y82.b"). Each release now publishes its
+   `mapping.txt`, and reports carry the build number to pick the right one.
+7. *Cost*: the update prompt did not say how much it downloads; it now shows the size and suggests Wi-Fi.
+8. *Startup*: the updater blocked the splash on every cold start (network wait); now background only.
+9. *Test reliability*: infinite animations slow Robolectric; long-running UI flows wait up to 30 s.
+
+Checked and found sound (no change): exported components (launcher, Health Connect rationale, boot receiver only
+rebuilds alarms); FileProvider limited to cache/camera and cache/share, wiped at start; no backup/device transfer of
+any data; HTTPS-only, system CAs only, redirect hosts allow-listed; update APK checked for SHA-256, package, higher
+version and same signing certificate; PIN: PBKDF2 120 k, escalating lockout on the monotonic clock (a reboot restarts
+the wait); backups: AES-GCM chunks with PBKDF2 600 k, entry/size limits, member shares cannot write into another
+member's rows or files; notifications private on the lock screen and re-checked against the database when they
+fire; phone numbers read from documents only open the dialer (the user still presses call); maps queries are
+URL-encoded; crash reports never contain exception messages (redacted); no WebView, no clipboard writes, no logs
+with health data.

@@ -20,6 +20,7 @@
     <string name="mc_pick_private">दस्तावेज़ केवल इसी फ़ोन पर पढ़ा जाता है और पॉलिसी के साथ एन्क्रिप्ट करके सहेजा जाता है।</string>
     <string name="mc_filled_none">इस दस्तावेज़ से कुछ पढ़ा नहीं जा सका। कृपया विवरण लिखें।</string>
     <string name="mc_fill_from_doc">दस्तावेज़ से भरें</string>
+    <string name="upd_size">डाउनलोड आकार: %1$s MB। मोबाइल डेटा सीमित हो तो Wi-Fi का उपयोग करें।</string>
     <string name="hc_data_bp">ब्लड प्रेशर</string>
     <string name="hc_data_spo2">ऑक्सीजन (SpO₂)</string>
     <string name="hc_data_glucose">ब्लड ग्लूकोज़</string>

@@ -39,6 +39,9 @@ class MemberRepositoryImpl(private val db: MyHealthDatabase, private val vault: 
     override suspend fun get(id: String) = db.read { MemberDao.get(it, id) }
     override suspend fun upsert(member: FamilyMember) = db.write(setOf(MemberDao.T)) { MemberDao.upsert(it, member) }
     override suspend fun delete(id: String) {
+        // A family-floater policy held by this member still covers the others: hand it (and its documents) to the next
+        // covered member instead of letting the cascade delete it; drop this member from every policy's covered list.
+        db.write(V3_TABLES) { d -> app.myhealth.data.db.MediclaimDao.releaseMember(d, id) }
         val files = db.read { ReportDao.attachmentIdsForMember(it, id) }
         val media = db.read { app.myhealth.data.db.MediaDao.forMember(it, id) }.map { MediaRepositoryImpl.vaultName(it.id) }
         db.write(RECORD_TABLES + setOf(MemberDao.T, TreatmentDao.T, ActivityDao.T, MedicineDao.D) + V3_TABLES) { MemberDao.delete(it, id) }

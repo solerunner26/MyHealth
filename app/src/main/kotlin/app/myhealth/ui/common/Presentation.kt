@@ -104,7 +104,7 @@ fun focusText(item: FocusItem): FocusText = when (item) {
             stringResource(if (item.lastAbnormal) R.string.focus_overdue_abnormal_body else R.string.focus_overdue_body, formatDate(item.lastDate), months))
     }
     is FocusItem.VitalAlert -> {
-        val e = item.evidence.single()
+        val e = item.evidence.last() // the newest reading (was single(): threw if a rule ever attached more)
         FocusText(stringResource(R.string.focus_vital_title, label(item.type), label(item.band)), stringResource(R.string.focus_vital_body, vitalValue(item.type, e.value, e.value2, e.unit), formatDate(e.date)))
     }
     is FocusItem.DataGap -> when (item.kind) {

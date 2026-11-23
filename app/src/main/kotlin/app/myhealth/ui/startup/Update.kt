@@ -113,7 +113,8 @@ fun UpdatePrompt() {
     LaunchedEffect(failedInstall, ui) { if (failedInstall && ui == UpdateUi.Installing) UpdateController.state.value = UpdateUi.Failed }
     val scope = androidx.compose.runtime.rememberCoroutineScope()
     when (val u = ui) {
-        is UpdateUi.Available -> MyHealthDialog(stringResource(R.string.upd_available_title), stringResource(R.string.upd_available_body, u.a.versionName, u.a.versionCode.toInt()),
+        is UpdateUi.Available -> MyHealthDialog(stringResource(R.string.upd_available_title), stringResource(R.string.upd_available_body, u.a.versionName, u.a.versionCode.toInt()) +
+            (if (u.a.size > 0) "\n\n" + stringResource(R.string.upd_size, app.myhealth.domain.format.ValueFormat.number(u.a.size / 1_048_576.0, 1)) else ""),
             stringResource(R.string.upd_now), { scope.launch { UpdateController.install(context, u.a) } }, stringResource(R.string.upd_later), { UpdateController.later() }, icon = MyHealthIcons.Sync)
         is UpdateUi.NeedsPermission -> MyHealthDialog(stringResource(R.string.upd_allow_title), stringResource(R.string.upd_allow_body), stringResource(R.string.upd_allow),
             { UpdateController.openInstallSettings(context) }, stringResource(R.string.upd_later), { UpdateController.later() }, icon = MyHealthIcons.Lock)

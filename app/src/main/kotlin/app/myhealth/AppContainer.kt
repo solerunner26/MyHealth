@@ -49,7 +49,11 @@ class AppContainer(
 
     fun start() {
         if (_storage.value is StorageState.Ready) return
-        appScope.launch(Dispatchers.IO) { app.myhealth.ui.common.Share.wipe(context) }
+        appScope.launch(Dispatchers.IO) {
+            app.myhealth.ui.common.Share.wipe(context)
+            // a downloaded update is only needed until it is installed (the app restarts afterwards)
+            runCatching { java.io.File(context.cacheDir, "update").deleteRecursively() }
+        }
         appScope.launch(Dispatchers.IO) { openNow() }
     }
 

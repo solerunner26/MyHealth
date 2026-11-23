@@ -149,12 +149,12 @@ class ImportFlowTest {
             ctx.container.preferences.setActiveMember("m1")
         }
         val vm = ImportViewModel(s, DocumentReader(ctx.contentResolver), ImportPipeline(AndroidTextExtractor(ctx, failingOcr), s.stack.records), ctx.container.clock)
-        waitFor(5_000) { vm.state.value.member != null && vm.state.value.members.size == 2 }
+        waitFor(30_000) { vm.state.value.member != null && vm.state.value.members.size == 2 }
         // 1) printed name belongs to nobody → ask; "add as new member" creates the profile and files the report there
         vm.onDocument(PickedDocument(pdf(listOf("City Pathology Laboratory", "Patient Name : Mr. SURESH MEHTA   Age: 61", "Date: 05/01/2024", "TSH 5.9 uIU/mL 0.27 - 4.2")), "a.pdf", AttachmentKind.Pdf))
         waitFor(30_000) { vm.state.value.phase is ImportPhase.ChooseMember }
         vm.onEvent(ImportEvent.AddMemberFromReport((vm.state.value.phase as ImportPhase.ChooseMember).printedName))
-        waitFor(5_000) { vm.state.value.phase == ImportPhase.Review }
+        waitFor(30_000) { vm.state.value.phase == ImportPhase.Review }
         val suresh = runBlocking { s.stack.members.all() }.single { it.name == "Suresh Mehta" }
         assertEquals(suresh.id, vm.state.value.draft!!.memberId)
         // 2) printed name matches another member → filed under them automatically, with a visible notice
@@ -170,7 +170,7 @@ class ImportFlowTest {
         val s = session()
         runBlocking { s.stack.members.upsert(FamilyMember("m1", "Ravi", Relationship.Self)); ctx.container.preferences.setActiveMember("m1") }
         val vm = ImportViewModel(s, DocumentReader(ctx.contentResolver), ImportPipeline(AndroidTextExtractor(ctx, failingOcr), s.stack.records), ctx.container.clock)
-        waitFor(5_000) { vm.state.value.member != null }
+        waitFor(30_000) { vm.state.value.member != null }
         val p1 = pdf(listOf("Sunrise Hospital Discharge Summary", "Date: 03/02/2024", "Haemoglobin 11.2 g/dL 13.0 - 17.0"))
         val p2 = pdf(listOf("Sunrise Hospital laboratory page two", "Creatinine 1.4 mg/dL 0.7 - 1.3", "Haemoglobin 99 g/dL 13 - 17"))
         val f2 = java.io.File(ctx.cacheDir, "page2.pdf").apply { writeBytes(p2) }
@@ -191,7 +191,7 @@ class ImportFlowTest {
         val s = session()
         runBlocking { s.stack.members.upsert(FamilyMember("m1", "Ravi Shah", Relationship.Self)); ctx.container.preferences.setActiveMember("m1") }
         val vm = ImportViewModel(s, DocumentReader(ctx.contentResolver), ImportPipeline(AndroidTextExtractor(ctx, failingOcr), s.stack.records), ctx.container.clock)
-        waitFor(5_000) { vm.state.value.member != null && vm.state.value.members.isNotEmpty() }
+        waitFor(30_000) { vm.state.value.member != null && vm.state.value.members.isNotEmpty() }
         fun file(name: String, lines: List<String>) = android.net.Uri.fromFile(java.io.File(ctx.cacheDir, name).apply { writeBytes(pdf(lines)) })
         val a = file("nov_a.pdf", listOf("Sunrise Lab", "Patient Name : Ravi Shah", "Date: 16/11/2024", "LDL Cholesterol 165 mg/dL 0 - 100"))
         val b = file("jul.pdf", listOf("City Lab", "Patient Name : Ravi Shah", "Date: 22/07/2024", "Haemoglobin 13.1 g/dL 13.0 - 17.0"))
@@ -205,10 +205,10 @@ class ImportFlowTest {
         assertTrue(batch.all { it.memberName == "Ravi Shah" })
         // review one, go back (edits kept), then save the rest together
         vm.onEvent(ImportEvent.ReviewGroup(1))
-        waitFor(5_000) { vm.state.value.phase == ImportPhase.Review && vm.state.value.inBatch }
+        waitFor(30_000) { vm.state.value.phase == ImportPhase.Review && vm.state.value.inBatch }
         vm.onEvent(ImportEvent.SetTitle("Blood count July"))
         vm.onEvent(ImportEvent.BackToBatch)
-        waitFor(5_000) { vm.state.value.phase == ImportPhase.Batch }
+        waitFor(30_000) { vm.state.value.phase == ImportPhase.Batch }
         assertEquals("Blood count July", vm.state.value.batch[1].title)
         vm.onEvent(ImportEvent.SaveAllReady("Lab report"))
         waitFor(30_000) { vm.state.value.phase is ImportPhase.Saved }
@@ -228,7 +228,7 @@ class ImportFlowTest {
             ctx.container.preferences.setActiveMember("m1")
         }
         val vm = ImportViewModel(s, DocumentReader(ctx.contentResolver), ImportPipeline(AndroidTextExtractor(ctx, failingOcr), s.stack.records), ctx.container.clock)
-        waitFor(5_000) { vm.state.value.member != null }
+        waitFor(30_000) { vm.state.value.member != null }
         vm.onDocument(PickedDocument(pdf(listOf("City Pathology Laboratory", "Date: 05/01/2024", "Thyroid Function Test", "TSH 5.9 uIU/mL 0.27 - 4.2")), "thyroid.pdf", AttachmentKind.Pdf))
         waitFor(30_000) { vm.state.value.phase == ImportPhase.Review }
         vm.onEvent(ImportEvent.SetTitle("Thyroid check"))

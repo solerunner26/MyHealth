@@ -295,6 +295,20 @@ object MediclaimDao {
     /** Policies held by this member or covering them. */
     fun forMember(db: SupportSQLiteDatabase, memberId: String) =
         db.q("SELECT * FROM mediclaim_policies WHERE member_id = ? OR (',' || covered || ',') LIKE ? ORDER BY end_date DESC", memberId, "%,$memberId,%").mapAll { policy() }
+    /**
+     * Before a member is deleted: every policy they hold that still covers another (existing) member moves to that
+     * member, with its documents; the member is removed from all covered lists. Policies covering only them cascade.
+     */
+    fun releaseMember(db: SupportSQLiteDatabase, memberId: String) {
+        val existing = db.q("SELECT id FROM members").mapAll { str("id") }.toSet()
+        forMember(db, memberId).forEach { p ->
+            val covered = p.coveredMemberIds.filter { it != memberId && it in existing }
+            val holder = if (p.memberId == memberId) covered.firstOrNull() else p.memberId
+            if (holder == null) return@forEach // only this member: the policy goes with them
+            db.update(P, android.database.sqlite.SQLiteDatabase.CONFLICT_NONE, ContentValues().apply { put("member_id", holder); put("covered", covered.joinToString(",")) }, "id = ?", arrayOf(p.id))
+            if (holder != p.memberId) db.update(MediaDao.T, android.database.sqlite.SQLiteDatabase.CONFLICT_NONE, ContentValues().apply { put("member_id", holder) }, "owner_id = ?", arrayOf(p.id))
+        }
+    }
     fun all(db: SupportSQLiteDatabase) = db.q("SELECT * FROM mediclaim_policies").mapAll { policy() }
     fun get(db: SupportSQLiteDatabase, id: String) = db.q("SELECT * FROM mediclaim_policies WHERE id = ?", id).mapAll { policy() }.firstOrNull()
     fun upsert(db: SupportSQLiteDatabase, p: app.myhealth.domain.model.MediclaimPolicy) = db.upsert(P, ContentValues().apply {

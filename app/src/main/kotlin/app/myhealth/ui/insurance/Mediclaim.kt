@@ -408,13 +408,15 @@ fun PolicyEditorScreen(id: String?, onDone: (String?) -> Unit) {
         scope.launch {
             val result = withContext(Dispatchers.IO) {
                 val pages = mutableListOf<String>()
+                var held = 0L // documents wait in memory until Save: cap them so a big pick cannot exhaust the heap
                 uris.take(MAX_POLICY_DOCS).forEachIndexed { i, uri ->
                     runCatching {
+                        if (held >= MAX_POLICY_BYTES) return@runCatching
                         val raw = context.contentResolver.openInputStream(uri)!!.use { Images.readLimited(it, 25 * 1024 * 1024) } ?: return@runCatching
                         val kind = DocumentSniffer.kind(raw) ?: return@runCatching
                         val isPdf = kind == app.myhealth.domain.model.AttachmentKind.Pdf
                         val stored = if (isPdf) raw else Images.documentPhoto(raw, 2400) ?: return@runCatching
-                        pendingDocs += (if (isPdf) MediaKind.PolicyPdf else MediaKind.PolicyImage) to stored
+                        if (held + stored.size <= MAX_POLICY_BYTES) { pendingDocs += (if (isPdf) MediaKind.PolicyPdf else MediaKind.PolicyImage) to stored; held += stored.size }
                         pages += AndroidTextExtractor(context.applicationContext, maxPages = 300).extract(PickedDocument(raw, "policy", kind)) { done, total ->
                             progress = ((i + done.toFloat() / total.coerceAtLeast(1)) / uris.size.coerceAtMost(MAX_POLICY_DOCS))
                         }.pages
@@ -539,6 +541,7 @@ private const val STEP_PICK = 0
 private const val STEP_READING = 1
 private const val STEP_EDIT = 2
 private const val MAX_POLICY_DOCS = 6
+private const val MAX_POLICY_BYTES = 40L * 1024 * 1024
 
 /** Copies what the parser found onto the policy; fields it did not find keep what the user already had. */
 internal fun fill(p: MediclaimPolicy, r: app.myhealth.domain.insurance.PolicyParser.Result): MediclaimPolicy {
