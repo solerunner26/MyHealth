@@ -1,5 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="upd_available_title">अपडेट उपलब्ध है</string>
+    <string name="upd_available_body">MyHealth %1$s (बिल्ड %2$d) तैयार है। यह ऐप के GitHub पेज से डाउनलोड होकर जाँचा और इंस्टॉल किया जाता है; आपका डेटा जैसा है वैसा रहता है।</string>
+    <string name="upd_now">अभी अपडेट करें</string>
+    <string name="upd_later">बाद में</string>
+    <string name="upd_up_to_date">आपके पास नवीनतम संस्करण है।</string>
+    <string name="upd_check_now">अपडेट देखें</string>
+    <string name="about_version_build">संस्करण %1$s (बिल्ड %2$d)</string>
     <string name="hc_data_bp">ब्लड प्रेशर</string>
     <string name="hc_data_spo2">ऑक्सीजन (SpO₂)</string>
     <string name="hc_data_glucose">ब्लड ग्लूकोज़</string>

@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.runtime.Composable
+import kotlinx.coroutines.launch
 import app.myhealth.core.designsystem.components.MyHealthDivider
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.Column
@@ -107,7 +108,12 @@ fun MoreContent(members: List<FamilyMember>, a: MoreActions, active: FamilyMembe
             Category(stringResource(R.string.cat_app)) {
                 MyHealthListRow(stringResource(R.string.more_settings), subtitle = stringResource(R.string.more_settings_sub), leadingIcon = MyHealthIcons.Settings, onClick = a.settings, modifier = Modifier.testTag("openSettings"))
                 MyHealthDivider()
-                MyHealthListRow(stringResource(R.string.more_about), subtitle = stringResource(R.string.about_version, version), leadingIcon = MyHealthIcons.Info, onClick = { about = true })
+                val ctx = LocalContext.current
+                val scope = androidx.compose.runtime.rememberCoroutineScope()
+                MyHealthListRow(stringResource(R.string.upd_check_now), subtitle = stringResource(R.string.about_version_build, version, app.myhealth.core.Updater.installedVersionCode(ctx).toInt()),
+                    leadingIcon = MyHealthIcons.Sync, onClick = { scope.launch { app.myhealth.ui.startup.UpdateController.check(ctx, manual = true) } }, modifier = Modifier.testTag("checkUpdates"))
+                MyHealthDivider()
+                MyHealthListRow(stringResource(R.string.more_about), subtitle = stringResource(R.string.about_version_build, version, app.myhealth.core.Updater.installedVersionCode(ctx).toInt()), leadingIcon = MyHealthIcons.Info, onClick = { about = true })
             }
         }
     }

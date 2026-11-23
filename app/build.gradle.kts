@@ -11,8 +11,8 @@ android {
         minSdk = 26
         targetSdk = 37
         // CI stamps every release with a growing code (100 + run number) so the self-updater can tell builds apart.
-        versionCode = (project.findProperty("myhealth.versionCode") as String?)?.toIntOrNull() ?: 4
-        versionName = "0.4.0"
+        versionCode = (project.findProperty("myhealth.versionCode") as String?)?.toIntOrNull() ?: 5
+        versionName = "0.5.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
     androidResources {
@@ -59,6 +59,7 @@ android {
     testOptions {
         unitTests.isIncludeAndroidResources = true
         unitTests.all { t ->
+            project.findProperty("liveUpdate")?.let { t.systemProperty("liveUpdate", it.toString()) }
             // Opt-in design screenshots: -Pscreenshots [-Pthemes=Aurora,Crystal] [-Pmodes=Dark,Light]
             if (project.hasProperty("screenshots")) {
                 t.systemProperty("screenshots", "1")

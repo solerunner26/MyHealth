@@ -1,5 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="upd_available_title">Update available</string>
+    <string name="upd_available_body">MyHealth %1$s (build %2$d) is ready. It downloads from this app\'s GitHub page, is checked, and installs; your data stays as it is.</string>
+    <string name="upd_now">Update now</string>
+    <string name="upd_later">Later</string>
+    <string name="upd_up_to_date">You have the latest version.</string>
+    <string name="upd_check_now">Check for updates</string>
+    <string name="about_version_build">Version %1$s (build %2$d)</string>
     <string name="hc_data_bp">blood pressure</string>
     <string name="hc_data_spo2">oxygen (SpO₂)</string>
     <string name="hc_data_glucose">blood glucose</string>

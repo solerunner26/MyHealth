@@ -224,12 +224,12 @@ fun MyHealthDialog(
         title = { Text(title, style = MyHealthTheme.typography.title, color = c.textPrimary) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(MyHealthTheme.spacing.md)) {
-                Text(text, style = MyHealthTheme.typography.body, color = c.textSecondary)
+                if (text.isNotBlank()) Text(text, style = MyHealthTheme.typography.body, color = c.textSecondary)
                 content?.invoke()
             }
         },
         confirmButton = { MyHealthTextButton(confirmLabel, onConfirm) },
-        dismissButton = { MyHealthTextButton(dismissLabel, onDismiss) },
+        dismissButton = if (dismissLabel.isBlank()) null else ({ MyHealthTextButton(dismissLabel, onDismiss) }),
         containerColor = c.surfaceRaised,
         shape = MyHealthTheme.radii.xlShape,
     )
