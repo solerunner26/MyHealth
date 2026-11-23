@@ -78,6 +78,7 @@
         <receiver android:name=".reminders.ReminderReceiver" android:exported="false" />
         <receiver android:name=".reminders.ReminderActionReceiver" android:exported="false" />
         <receiver android:name=".reminders.VaccineReminderReceiver" android:exported="false" />
+        <receiver android:name=".reminders.MediclaimReminderReceiver" android:exported="false" />
         <receiver android:name=".core.UpdateStatusReceiver" android:exported="false" />
         <!-- Exported only to receive protected system broadcasts; the handler just rebuilds alarms from the DB (idempotent). -->
         <receiver android:name=".reminders.RescheduleReceiver" android:exported="true">

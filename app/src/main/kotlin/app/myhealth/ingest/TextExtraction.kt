@@ -48,7 +48,7 @@ class MlKitOcr : OcrEngine {
  * PDF: text layer first (PdfBox, sorted by position so table rows stay on one line); pages with too little text are
  * rendered and OCR'd. Images: OCR. Everything happens in memory: no plaintext temp files.
  */
-class AndroidTextExtractor(private val context: Context, private val ocr: OcrEngine = MlKitOcr()) : TextExtractor {
+class AndroidTextExtractor(private val context: Context, private val ocr: OcrEngine = MlKitOcr(), private val maxPages: Int = MAX_PAGES) : TextExtractor {
     private val initialised by lazy { PDFBoxResourceLoader.init(context.applicationContext); true }
 
     override suspend fun extract(doc: PickedDocument, progress: ExtractionProgress): ExtractedText = when (doc.kind) {
@@ -73,7 +73,7 @@ class AndroidTextExtractor(private val context: Context, private val ocr: OcrEng
         }
         document.use { pdf ->
             if (pdf.isEncrypted && !pdf.currentAccessPermission.canExtractContent()) throw IngestException(IngestError.PasswordProtected)
-            val total = pdf.numberOfPages.coerceAtMost(MAX_PAGES)
+            val total = pdf.numberOfPages.coerceAtMost(maxPages)
             val stripper = PDFTextStripper().apply { sortByPosition = true }
             val renderer by lazy { PDFRenderer(pdf) }
             var ocrPages = 0

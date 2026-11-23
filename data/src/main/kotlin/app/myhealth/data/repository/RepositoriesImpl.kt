@@ -182,7 +182,7 @@ class MediaRepositoryImpl(private val db: MyHealthDatabase, private val vault: E
         ids.forEach { runCatching { vault.delete(vaultName(it)) } }
     }
     companion object {
-        const val MAX_BYTES = 4 * 1024 * 1024
+        const val MAX_BYTES = 25 * 1024 * 1024
         fun vaultName(id: String): String { require(id.matches(Regex("[A-Za-z0-9-]{1,64}"))); return "media-$id" }
     }
 }

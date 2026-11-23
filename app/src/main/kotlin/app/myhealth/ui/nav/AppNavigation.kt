@@ -224,6 +224,19 @@ fun AppNavGraph(nav: NavHostController) {
             val state by vm.state.collectAsStateWithLifecycle()
             app.myhealth.ui.vitals.VitalsScreen(state, onBack = { nav.popBackStack() }, onAdd = { nav.navigate(Routes.vitalNew()) }, onOpen = { nav.navigate(Routes.vital(it.name)) })
         }
+        composable(Routes.MEDICLAIM) { app.myhealth.ui.insurance.MediclaimListScreen(onBack = { nav.popBackStack() }, onOpen = { nav.navigate("mediclaim/view/$it") }, onAdd = { nav.navigate("mediclaim/edit") }) }
+        composable("mediclaim/view/{id}") { e ->
+            val id = e.arguments?.getString("id")!!
+            app.myhealth.ui.insurance.PolicyDetailScreen(id, onBack = { nav.popBackStack() }, onEdit = { nav.navigate("mediclaim/edit?id=$id") })
+        }
+        composable("mediclaim/edit?id={id}", arguments = listOf(androidx.navigation.navArgument("id") { nullable = true; defaultValue = null })) { e ->
+            app.myhealth.ui.insurance.PolicyEditorScreen(e.arguments?.getString("id")) { saved ->
+                val wasNew = e.arguments?.getString("id") == null
+                nav.popBackStack()
+                if (saved == null && !wasNew) nav.popBackStack() // deleted from its detail page
+                else if (saved != null && wasNew) nav.navigate("mediclaim/view/$saved")
+            }
+        }
         composable(Routes.VACCINES) { app.myhealth.ui.family.VaccinationsScreen(onBack = { nav.popBackStack() }) }
         composable(Routes.CARDS) { app.myhealth.ui.family.HealthCardsScreen(onBack = { nav.popBackStack() }) }
         composable(Routes.FAMILY) { app.myhealth.ui.family.FamilyHistoryScreen(onBack = { nav.popBackStack() }) }
@@ -292,7 +305,7 @@ private fun MainTabs(nav: NavHostController) {
                     editMember = { nav.navigate(Routes.memberEdit(it)) }, addMember = { nav.navigate(Routes.MEMBER_NEW) }, summary = { nav.navigate(Routes.SUMMARY) },
                     vaccines = { nav.navigate(Routes.VACCINES) }, cards = { nav.navigate(Routes.CARDS) }, family = { nav.navigate(Routes.FAMILY) }, visitPrep = { nav.navigate(Routes.VISIT_PREP) },
                     settings = { nav.navigate(Routes.SETTINGS) }, backup = { nav.navigate(Routes.BACKUP) }, healthConnect = { nav.navigate(Routes.HEALTH_CONNECT) },
-                    mediclaim = null, // MEDICLAIM_ROUTE
+                    mediclaim = { nav.navigate(Routes.MEDICLAIM) },
                 ), active)
             }
             }

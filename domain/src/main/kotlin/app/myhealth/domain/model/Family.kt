@@ -48,6 +48,6 @@ data class RelativeCondition(
 data class VisitQuestion(val id: String, val memberId: String, val text: String, val done: Boolean = false, val createdAtEpochMs: Long = 0)
 
 /** An encrypted image attached to a vaccination or health card. */
-enum class MediaKind { VaccineCertificate, CardFront, CardBack }
+enum class MediaKind { VaccineCertificate, CardFront, CardBack, PolicyImage, PolicyPdf }
 
 data class Media(val id: String, val memberId: String, val ownerId: String, val kind: MediaKind, val createdAtEpochMs: Long = 0)
