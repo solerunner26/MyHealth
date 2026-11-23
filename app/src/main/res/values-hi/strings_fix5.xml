@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="hc_data_bp">ब्लड प्रेशर</string>
+    <string name="hc_data_spo2">ऑक्सीजन (SpO₂)</string>
+    <string name="hc_data_glucose">ब्लड ग्लूकोज़</string>
+    <string name="hc_data_temp">शरीर का तापमान</string>
+    <string name="hc_data_resp">साँस की दर</string>
+</resources>

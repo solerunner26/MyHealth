@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="hc_data_bp">blood pressure</string>
+    <string name="hc_data_spo2">oxygen (SpO₂)</string>
+    <string name="hc_data_glucose">blood glucose</string>
+    <string name="hc_data_temp">body temperature</string>
+    <string name="hc_data_resp">breathing rate</string>
+</resources>

@@ -211,8 +211,13 @@ fun HealthConnectScreen(onBack: () -> Unit, sourceOverride: HealthSource? = null
     LaunchedEffect(Unit) { vm.refresh() }
     val sp = MyHealthTheme.spacing
     val request = rememberLauncherForActivityResult(androidx.health.connect.client.PermissionController.createRequestPermissionResultContract()) { vm.onPermissionsResult(it) }
-    val names = mapOf(HcData.Steps to R.string.hc_data_steps, HcData.HeartRate to R.string.hc_data_hr, HcData.RestingHeartRate to R.string.hc_data_rhr,
-        HcData.Sleep to R.string.hc_data_sleep, HcData.Weight to R.string.hc_data_weight).mapValues { stringResource(it.value) }
+    // exhaustive `when`: a new data type cannot be forgotten here (a missing map key crashed 0.4.0 on sync)
+    val names = HcData.entries.associateWith { d -> stringResource(when (d) {
+        HcData.Steps -> R.string.hc_data_steps; HcData.HeartRate -> R.string.hc_data_hr; HcData.RestingHeartRate -> R.string.hc_data_rhr
+        HcData.Sleep -> R.string.hc_data_sleep; HcData.Weight -> R.string.hc_data_weight; HcData.BloodPressure -> R.string.hc_data_bp
+        HcData.OxygenSaturation -> R.string.hc_data_spo2; HcData.BloodGlucose -> R.string.hc_data_glucose; HcData.BodyTemperature -> R.string.hc_data_temp
+        HcData.RespiratoryRate -> R.string.hc_data_resp
+    }) }
     Column(Modifier.fillMaxSize().testTag("healthConnect")) {
         MyHealthTopBar(stringResource(R.string.hc_title), onBack = onBack, backLabel = stringResource(R.string.action_back))
         when (s.status) {
@@ -237,7 +242,7 @@ fun HealthConnectScreen(onBack: () -> Unit, sourceOverride: HealthSource? = null
                     MyHealthPrimaryButton(stringResource(R.string.hc_connect), { runCatching { request.launch(HealthConnectSource.PERMISSIONS.values.toSet() + HealthConnectSource.BACKGROUND_READ) } }, Modifier.fillMaxWidth().testTag("hcConnect"), icon = MyHealthIcons.Sync)
                 } else {
                     MyHealthCard {
-                        Text(stringResource(R.string.hc_connected, s.granted.map { names.getValue(it) }.joinToString(", ")), style = MyHealthTheme.typography.body, color = MyHealthTheme.colors.textPrimary)
+                        Text(stringResource(R.string.hc_connected, s.granted.mapNotNull { names[it] }.joinToString(", ")), style = MyHealthTheme.typography.body, color = MyHealthTheme.colors.textPrimary)
                         s.lastDays?.let { Text(androidx.compose.ui.res.pluralStringResource(R.plurals.hc_last_sync, it, it), style = MyHealthTheme.typography.caption, color = MyHealthTheme.colors.textSecondary) }
                         Text(androidx.compose.ui.res.pluralStringResource(R.plurals.hc_days_stored, s.storedDays, s.storedDays), style = MyHealthTheme.typography.caption, color = MyHealthTheme.colors.textSecondary)
                     }

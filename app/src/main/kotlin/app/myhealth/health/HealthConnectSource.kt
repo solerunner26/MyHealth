@@ -38,7 +38,7 @@ class HealthConnectSource(private val context: Context, private val zone: ZoneId
 
     override suspend fun granted(): Set<HcData> {
         val g = client.permissionController.getGrantedPermissions()
-        return HcData.entries.filter { PERMISSIONS.getValue(it) in g }.toSet()
+        return HcData.entries.filter { PERMISSIONS[it]?.let { p -> p in g } == true }.toSet()
     }
 
     override suspend fun dailyAggregates(from: LocalDate, toExclusive: LocalDate): List<DayAggregate> {

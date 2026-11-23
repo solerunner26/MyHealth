@@ -189,3 +189,29 @@ class SecureEraseFlowTest {
         assertTrue(File(ctx.noBackupFilesDir, "secure/vault").listFiles().isNullOrEmpty())
     }
 }
+
+/** Regression for the 0.4.0 crash: the Health Connect screen with EVERY data type granted must render. */
+@RunWith(AndroidJUnit4::class)
+@Config(application = TestApp::class)
+class HealthConnectScreenTest {
+    @get:org.junit.Rule val rule = androidx.compose.ui.test.junit4.createComposeRule()
+    @Test fun allGrantedTypesAreNamedWithoutCrashing() {
+        val ctx = ApplicationProvider.getApplicationContext<TestApp>()
+        val stack = runBlocking { ctx.container.openNow()!! }
+        runBlocking { stack.members.upsert(app.myhealth.domain.model.FamilyMember("me", "Asha", app.myhealth.domain.model.Relationship.Self)) }
+        val session = app.myhealth.ui.Session(ctx.container, stack)
+        val src = FakeSource().apply { granted = HcData.entries.toSet() }
+        rule.setContent {
+            app.myhealth.core.designsystem.theme.MyHealthTheme {
+                androidx.compose.runtime.CompositionLocalProvider(app.myhealth.ui.LocalSession provides session) {
+                    app.myhealth.ui.backup.HealthConnectScreen(onBack = {}, sourceOverride = src)
+                }
+            }
+        }
+        val end = System.currentTimeMillis() + 10_000
+        while (System.currentTimeMillis() < end && rule.onAllNodes(androidx.compose.ui.test.hasText(ctx.getString(R.string.hc_data_bp), substring = true)).fetchSemanticsNodes().isEmpty()) {
+            org.robolectric.shadows.ShadowLooper.idleMainLooper(); rule.waitForIdle(); Thread.sleep(20)
+        }
+        rule.onNode(androidx.compose.ui.test.hasText(ctx.getString(R.string.hc_data_resp), substring = true)).assertExists()
+    }
+}
