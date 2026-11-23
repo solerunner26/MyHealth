@@ -66,6 +66,8 @@ fun QuickSettingsSheet(onDismiss: () -> Unit) {
             MyHealthSwitchRow(stringResource(R.string.qs_dark), c.isDark, { on -> prefs.setTheme(if (on) ThemeMode.Dark else ThemeMode.Light) },
                 modifier = Modifier.testTag("qsDark"))
             MyHealthSwitchRow(stringResource(R.string.theme_auto), state.theme == ThemeMode.Auto, { on -> prefs.setTheme(if (on) ThemeMode.Auto else if (c.isDark) ThemeMode.Dark else ThemeMode.Light) })
+            MyHealthSwitchRow(stringResource(R.string.fx_glass), state.glassEffects, { prefs.setGlassEffects(it) }, modifier = Modifier.testTag("qsGlass"))
+            MyHealthSwitchRow(stringResource(R.string.fx_animations), state.animations, { prefs.setAnimations(it) }, modifier = Modifier.testTag("qsAnimations"))
 
             Header(stringResource(R.string.settings_language))
             Column(Modifier.selectableGroup()) {

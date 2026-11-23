@@ -9,6 +9,10 @@
     <string name="about_version_build">આવૃત્તિ %1$s (બિલ્ડ %2$d)</string>
     <string name="qs_title">ઝડપી સેટિંગ્સ</string>
     <string name="qs_dark">ડાર્ક મોડ</string>
+    <string name="fx_glass">ગ્લાસ ઇફેક્ટ</string>
+    <string name="fx_glass_sub">પારદર્શક ચળકતા પેનલ અને ચમક. ફોન ધીમો લાગે તો બંધ કરો.</string>
+    <string name="fx_animations">એનિમેશન</string>
+    <string name="fx_animations_sub">ચાલતું બેકગ્રાઉન્ડ, ટાઇલ બોર્ડર અને ચમક. બધું સ્થિર રાખવા બંધ કરો.</string>
     <string name="hc_data_bp">બ્લડ પ્રેશર</string>
     <string name="hc_data_spo2">ઓક્સિજન (SpO₂)</string>
     <string name="hc_data_glucose">બ્લડ ગ્લુકોઝ</string>

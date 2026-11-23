@@ -26,6 +26,10 @@ class Preferences(context: Context) {
         val historyYears: Int = 5,
         val onboarded: Boolean = false,
         val healthConnectEnabled: Boolean = false,
+        /** Liquid-glass surfaces, gloss and glow (off = flat surfaces for slower phones). */
+        val glassEffects: Boolean = true,
+        /** Moving background, chasing tile borders, breathing glows (off = everything still). */
+        val animations: Boolean = true,
     )
 
     private val _state = MutableStateFlow(read())
@@ -42,6 +46,8 @@ class Preferences(context: Context) {
         historyYears = prefs.getInt("history_years", 5),
         onboarded = prefs.getBoolean("onboarded", false),
         healthConnectEnabled = prefs.getBoolean("hc_enabled", false),
+        glassEffects = prefs.getBoolean("glass_fx", true),
+        animations = prefs.getBoolean("animations", true),
     )
 
     /** commit(), not apply(): lock state and PIN attempt counters must survive an immediate process death. */
@@ -62,6 +68,8 @@ class Preferences(context: Context) {
     fun setHistoryYears(y: Int) = update { putInt("history_years", y.coerceIn(1, 30)) }
     fun setOnboarded(v: Boolean) = update { putBoolean("onboarded", v) }
     fun setHealthConnect(v: Boolean) = update { putBoolean("hc_enabled", v) }
+    fun setGlassEffects(v: Boolean) = update { putBoolean("glass_fx", v) }
+    fun setAnimations(v: Boolean) = update { putBoolean("animations", v) }
 
     // PIN material (salted PBKDF2 hash) lives here too: it gates the UI, the data keys are Keystore-wrapped.
     fun pinMaterial(): Pair<String, String>? {

@@ -83,9 +83,10 @@ data class MyHealthColors(
     val scrim: Color,
     val isDark: Boolean,
     val theme: MyHealthThemeId,
+    /** Liquid-glass surfaces (default for every theme); off = flat, light-weight surfaces for slower phones. */
+    val isGlass: Boolean = true,
 ) {
     val family get() = theme.family
-    val isGlass get() = theme.family == ThemeFamily.Glass
 }
 
 /** ARGB longs for JVM tests (contrast, hue). */

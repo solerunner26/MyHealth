@@ -48,18 +48,28 @@ object MyHealthTheme {
 }
 
 @Composable
-fun MyHealthTheme(mode: ThemeMode = ThemeMode.System, theme: MyHealthThemeId = MyHealthThemeId.Default, night: Boolean = false, content: @Composable () -> Unit) {
+fun MyHealthTheme(
+    mode: ThemeMode = ThemeMode.System,
+    theme: MyHealthThemeId = MyHealthThemeId.Default,
+    night: Boolean = false,
+    /** User setting "Glass effects": liquid-glass surfaces. */
+    glass: Boolean = true,
+    /** User setting "Animations": off stops every decorative animation (as does the system's animator scale 0). */
+    animations: Boolean = true,
+    content: @Composable () -> Unit,
+) {
     val dark = when (mode) {
         ThemeMode.Auto -> night
         ThemeMode.System -> isSystemInDarkTheme()
         ThemeMode.Light -> false
         ThemeMode.Dark -> true
     }
-    val colors = androidx.compose.runtime.remember(theme, dark) { MyHealthColorRoles.roles(theme, dark).toColors(dark, theme) }
+    val colors = androidx.compose.runtime.remember(theme, dark, glass) { MyHealthColorRoles.roles(theme, dark).toColors(dark, theme).copy(isGlass = glass) }
     val ctx = androidx.compose.ui.platform.LocalContext.current
-    val reduceMotion = androidx.compose.runtime.remember(ctx) {
+    val systemOff = androidx.compose.runtime.remember(ctx) {
         runCatching { android.provider.Settings.Global.getFloat(ctx.contentResolver, android.provider.Settings.Global.ANIMATOR_DURATION_SCALE, 1f) == 0f }.getOrDefault(false)
     }
+    val reduceMotion = systemOff || !animations
     val typography = MyHealthTypography()
     CompositionLocalProvider(
         LocalMyHealthColors provides colors,

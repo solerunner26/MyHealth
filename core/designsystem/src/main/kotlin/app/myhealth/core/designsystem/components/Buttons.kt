@@ -45,10 +45,9 @@ fun MyHealthPrimaryButton(
     // Glass: gradient of the single hue (deep → bright) with a soft glow. Solid: the deep hero shade, like ink.
     val bg = when {
         !enabled -> androidx.compose.ui.graphics.SolidColor(c.surfaceSunken)
-        c.isGlass -> androidx.compose.ui.graphics.Brush.horizontalGradient(listOf(c.accent, androidx.compose.ui.graphics.lerp(c.accent, c.accentBright, if (c.isDark) 0.55f else 0.2f)))
-        else -> androidx.compose.ui.graphics.SolidColor(c.hero)
+        else -> androidx.compose.ui.graphics.Brush.horizontalGradient(listOf(c.accent, androidx.compose.ui.graphics.lerp(c.accent, c.accentBright, if (c.isDark) 0.55f else 0.25f)))
     }
-    val fg = if (c.isGlass) c.onAccent else c.onHero
+    val fg = c.onAccent
     val pressed = remember { androidx.compose.foundation.interaction.MutableInteractionSource() }
     val isPressed by pressed.collectIsPressedAsState()
     val scale by androidx.compose.animation.core.animateFloatAsState(if (isPressed) 0.97f else 1f, label = PRESS)
@@ -58,7 +57,7 @@ fun MyHealthPrimaryButton(
         interactionSource = pressed,
         modifier = modifier.defaultMinSize(minHeight = 52.dp).scale(scale)
             .shadow(if (enabled) 14.dp else 0.dp, shape, ambientColor = if (c.isGlass) c.glow else c.shadow, spotColor = if (c.isGlass) c.glow else c.hero)
-            .background(bg, shape),
+            .background(bg, shape).then(if (c.isGlass && enabled) Modifier.gloss(shape, 0.38f) else Modifier),
         shape = shape,
         colors = ButtonDefaults.buttonColors(
             containerColor = androidx.compose.ui.graphics.Color.Transparent, contentColor = fg,

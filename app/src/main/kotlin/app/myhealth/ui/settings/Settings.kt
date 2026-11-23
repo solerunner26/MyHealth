@@ -79,6 +79,11 @@ fun SettingsScreen(onBack: () -> Unit, onErased: () -> Unit) {
                 { on -> c.preferences.setTheme(if (on) ThemeMode.Auto else ThemeMode.Light) }, subtitle = stringResource(R.string.theme_auto_sub), modifier = Modifier.testTag("autoThemeSwitch"))
             MyHealthChipRow(listOf(ThemeMode.Light, ThemeMode.Dark, ThemeMode.System), prefs.theme.takeIf { it != ThemeMode.Auto }, { stringResource(when (it) { ThemeMode.Light -> R.string.theme_light; ThemeMode.Dark -> R.string.theme_dark; else -> R.string.theme_system }) },
                 { c.preferences.setTheme(it) }, Modifier.testTag("themeChips"))
+            // item 3: every aesthetic effect can be switched off for slower phones
+            MyHealthSwitchRow(stringResource(R.string.fx_glass), prefs.glassEffects, { c.preferences.setGlassEffects(it) },
+                subtitle = stringResource(R.string.fx_glass_sub), modifier = Modifier.testTag("glassSwitch"))
+            MyHealthSwitchRow(stringResource(R.string.fx_animations), prefs.animations, { c.preferences.setAnimations(it) },
+                subtitle = stringResource(R.string.fx_animations_sub), modifier = Modifier.testTag("animationsSwitch"))
             Text(stringResource(R.string.settings_language), style = MyHealthTheme.typography.label, color = MyHealthTheme.colors.textSecondary)
             MyHealthChipRow(listOf("") + LocaleSupport.supported, prefs.language, { tag ->
                 stringResource(when (tag) { "en" -> R.string.lang_en; "hi" -> R.string.lang_hi; "gu" -> R.string.lang_gu; else -> R.string.lang_system })

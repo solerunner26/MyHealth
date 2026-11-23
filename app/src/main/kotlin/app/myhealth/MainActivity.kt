@@ -59,7 +59,7 @@ class MainActivity : FragmentActivity() {
                     kotlinx.coroutines.delay(wait)
                 }
             }
-            MyHealthTheme(prefs.theme, prefs.colorTheme, night) {
+            MyHealthTheme(prefs.theme, prefs.colorTheme, night, glass = prefs.glassEffects, animations = prefs.animations) {
                 app.myhealth.core.designsystem.components.MyHealthAmbientBackground {
                 // While locked the app's screens are not composed at all: nothing is drawn, nothing reaches
                 // accessibility services, and no dialog or popup window (which would float above an overlay) can

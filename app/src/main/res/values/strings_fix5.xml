@@ -9,6 +9,10 @@
     <string name="about_version_build">Version %1$s (build %2$d)</string>
     <string name="qs_title">Quick settings</string>
     <string name="qs_dark">Dark mode</string>
+    <string name="fx_glass">Glass effects</string>
+    <string name="fx_glass_sub">Translucent glossy panels and glows. Turn off if your phone feels slow.</string>
+    <string name="fx_animations">Animations</string>
+    <string name="fx_animations_sub">Moving background, tile borders and glows. Turn off to keep everything still.</string>
     <string name="hc_data_bp">blood pressure</string>
     <string name="hc_data_spo2">oxygen (SpO₂)</string>
     <string name="hc_data_glucose">blood glucose</string>

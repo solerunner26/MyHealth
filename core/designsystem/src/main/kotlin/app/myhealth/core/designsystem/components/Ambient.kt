@@ -29,50 +29,53 @@ import kotlin.math.cos
 import kotlin.math.sin
 
 /**
- * Living backdrop, never a flat colour (android-design-studio: "backgrounds are never flat").
- * - Glass: three large blobs of the hue drift slowly, their tint fading between the accent, its bright step and the
- *   hero shade; a faint diagonal glare sweeps across every ~16 s.
- * - Solid: a warm canvas with a soft header wash that drifts and breathes, a second wash low on the page, and the
- *   same glare sweep, much fainter.
- * Drawing reads the animation values in the draw phase only (no recomposition per frame). Static when the user
- * turned animations off.
+ * Living backdrop (owner's request: colour that moves top-to-bottom and in wandering directions, never flat):
+ * - a two-tone gradient of the hue whose direction slowly wanders (angle is a sum of unrelated slow sines);
+ * - a soft band of light that travels from the top of the screen to the bottom, again and again;
+ * - four large blurred "bubbles" (lighter/brighter steps of the same hue) drifting on independent paths, which is
+ *   what makes the glass panels look like glass;
+ * - a faint diagonal glare every ~16 s.
+ * Everything is read in the draw phase only; static when the user turns Animations off (or the system does).
  */
 @Composable
 fun MyHealthAmbientBackground(modifier: Modifier = Modifier, content: @Composable BoxScope.() -> Unit) {
     val c = MyHealthTheme.colors
     val reduce = MyHealthTheme.reduceMotion
     val tr = if (reduce) null else rememberInfiniteTransition(label = AMBIENT)
-    val drift = tr?.animateFloat(0f, 1f, infiniteRepeatable(tween(MyHealthTheme.motion.ambientMillis, easing = LinearEasing), RepeatMode.Reverse), label = AMBIENT)
-    val hue = tr?.animateFloat(0f, 1f, infiniteRepeatable(tween(MyHealthTheme.motion.ambientMillis * 4 / 3, easing = LinearEasing), RepeatMode.Reverse), label = AMBIENT)
+    // one slow clock (0..1 over ~60 s); every element derives its own motion from it at different rates
+    val clock = tr?.animateFloat(0f, 1f, infiniteRepeatable(tween(60_000, easing = LinearEasing), RepeatMode.Restart), label = AMBIENT)
     val glare = tr?.animateFloat(0f, 1f, infiniteRepeatable(tween(GLARE_MILLIS, easing = LinearEasing), RepeatMode.Restart), label = AMBIENT)
-    Box(modifier.fillMaxSize().background(Brush.verticalGradient(listOf(c.background, c.backgroundAlt)))) {
+    val top = lerp(c.background, c.accentSoft, if (c.isDark) 0.55f else 0.95f)
+    val mid = lerp(c.background, lerp(c.accentSoft, c.accentBright, 0.25f), if (c.isDark) 0.25f else 0.55f)
+    Box(modifier.fillMaxSize().background(c.background)) {
         Canvas(Modifier.fillMaxSize()) {
             val w = size.width; val h = size.height
-            val t = drift?.value ?: 0.25f
-            val k = hue?.value ?: 0.3f
-            val a = t * 2 * Math.PI.toFloat()
-            fun glow(cx: Float, cy: Float, r: Float, color: Color) = drawCircle(
-                Brush.radialGradient(listOf(color, Color.Transparent), center = Offset(cx, cy), radius = r), radius = r, center = Offset(cx, cy),
-            )
-            if (c.isGlass) {
-                val base = c.glow.alpha
-                glow(w * (0.15f + 0.12f * sin(a)), h * (0.10f + 0.06f * cos(a)), w * 0.9f, lerp(c.accent, c.accentBright, k).copy(alpha = base * 0.95f))
-                glow(w * (0.95f - 0.14f * cos(a)), h * (0.45f + 0.10f * sin(a * 0.7f)), w * 0.75f, lerp(c.hero, c.accent, 1f - k).copy(alpha = base * 0.85f))
-                glow(w * (0.30f + 0.18f * cos(a * 0.6f)), h * (0.98f - 0.06f * sin(a)), w * 0.95f, lerp(c.accentBright, c.hero, k).copy(alpha = base * 0.6f))
-            } else {
-                val wash = if (c.isDark) 0.22f else 0.55f
-                glow(w * (0.10f + 0.20f * sin(a)), h * (0.02f + 0.04f * cos(a)), w * 1.05f, lerp(c.accentSoft, c.heroAccent, 0.25f + 0.25f * k).copy(alpha = wash))
-                glow(w * (1.0f - 0.15f * cos(a)), h * (0.80f + 0.06f * sin(a)), w * 0.7f, lerp(c.accentSoft, c.accentContainer, k).copy(alpha = wash * 0.6f))
-            }
-            // Glare: a wide soft diagonal band crossing during the first 40 % of each cycle.
+            val t = clock?.value ?: 0.2f
+            val a = (t * 2 * Math.PI).toFloat()
+            // wandering gradient direction (mostly top → bottom)
+            val angle = Math.toRadians(90.0 + 35.0 * sin(a) + 20.0 * sin(a * 2.3f + 1f) + 10.0 * cos(a * 3.7f)).toFloat()
+            val cx = w / 2; val cy = h / 2; val r = maxOf(w, h)
+            drawRect(Brush.linearGradient(listOf(top, mid, c.background),
+                start = Offset(cx - cos(angle) * r / 2, cy - sin(angle) * r / 2), end = Offset(cx + cos(angle) * r / 2, cy + sin(angle) * r / 2)))
+            fun glow(x: Float, y: Float, radius: Float, color: Color) = drawCircle(
+                Brush.radialGradient(listOf(color, Color.Transparent), center = Offset(x, y), radius = radius), radius = radius, center = Offset(x, y))
+            val strength = if (c.isDark) 0.40f else 0.55f
+            // drifting bubbles: independent Lissajous paths look random but stay smooth
+            glow(w * (0.20f + 0.25f * sin(a * 1.3f)), h * (0.18f + 0.12f * cos(a * 0.9f)), w * 0.75f, lerp(c.accentSoft, c.accentBright, 0.5f).copy(alpha = strength))
+            glow(w * (0.85f - 0.20f * cos(a * 1.7f + 2f)), h * (0.45f + 0.20f * sin(a * 1.1f)), w * 0.65f, c.accentBright.copy(alpha = strength * 0.55f))
+            glow(w * (0.35f + 0.30f * cos(a * 0.8f + 4f)), h * (0.82f + 0.10f * sin(a * 1.9f)), w * 0.80f, lerp(c.accentSoft, c.accent, 0.35f).copy(alpha = strength * 0.7f))
+            glow(w * (0.70f + 0.25f * sin(a * 2.1f + 1f)), h * (0.10f + 0.15f * sin(a * 1.5f + 3f)), w * 0.45f, lerp(c.hero, c.accentBright, 0.6f).copy(alpha = strength * 0.35f))
+            // a soft band of light travelling from top to bottom
+            val bandY = ((t * 3f) % 1f) * (h * 1.4f) - h * 0.2f
+            drawRect(Brush.verticalGradient(listOf(Color.Transparent, c.accentBright.copy(alpha = if (c.isDark) 0.06f else 0.10f), Color.Transparent), startY = bandY - h * 0.15f, endY = bandY + h * 0.15f))
+            // glare: a wide soft diagonal band crossing during the first 40 % of each cycle
             val g = glare?.value ?: 1f
             if (g < 0.4f) {
                 val x = -w * 0.6f + (g / 0.4f) * w * 2.2f
                 val band = w * 0.45f
-                val alpha = if (c.isGlass) 0.06f else if (c.isDark) 0.04f else 0.35f
-                val tint = if (c.isGlass || c.isDark) Color.White else c.surfaceRaised
+                val alpha = if (c.isDark) 0.05f else 0.30f
                 rotate(20f, pivot = Offset(x, h / 2)) {
-                    drawRect(Brush.horizontalGradient(listOf(Color.Transparent, tint.copy(alpha = alpha), Color.Transparent), startX = x - band / 2, endX = x + band / 2),
+                    drawRect(Brush.horizontalGradient(listOf(Color.Transparent, Color.White.copy(alpha = alpha), Color.Transparent), startX = x - band / 2, endX = x + band / 2),
                         topLeft = Offset(x - band / 2, -h), size = androidx.compose.ui.geometry.Size(band, h * 3))
                 }
             }

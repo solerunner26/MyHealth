@@ -11,6 +11,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.graphics.addOutline
+import androidx.compose.ui.graphics.drawscope.clipPath
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Shape
@@ -32,31 +37,52 @@ enum class SurfaceKind { Card, Hero, Alert, Soft }
 @Composable
 fun Modifier.material(kind: SurfaceKind, shape: Shape = MyHealthTheme.radii.lgShape): Modifier {
     val c = MyHealthTheme.colors
+    if (!c.isGlass) return flat(kind, shape)
+    // Liquid glass (owner's reference boards): milky translucent body, a soft glow of the hue underneath, a bright rim
+    // that fades downwards, and a specular highlight across the top.
+    val white = Color.White
+    val rim = Brush.verticalGradient(listOf(white.copy(alpha = if (c.isDark) 0.34f else 0.95f), white.copy(alpha = if (c.isDark) 0.06f else 0.35f)))
     return when (kind) {
-        SurfaceKind.Card -> if (c.isGlass) this
-            .background(Brush.verticalGradient(listOf(c.glassTop, c.glassBottom)), shape)
-            .border(MyHealthTheme.stroke.hairline, c.glassBorder, shape)
-        else this.shadow(10.dp, shape, ambientColor = c.shadow, spotColor = c.shadow).background(c.surfaceRaised, shape)
+        SurfaceKind.Card -> this
+            .shadow(12.dp, shape, ambientColor = c.glow.copy(alpha = 0.18f), spotColor = c.accent.copy(alpha = if (c.isDark) 0.30f else 0.18f))
+            .background(Brush.verticalGradient(listOf(white.copy(alpha = if (c.isDark) 0.13f else 0.72f), lerp(white, c.accentSoft, 0.35f).copy(alpha = if (c.isDark) 0.05f else 0.48f))), shape)
+            .border(1.dp, rim, shape).gloss(shape, if (c.isDark) 0.10f else 0.55f)
         SurfaceKind.Soft -> this
-            .then(if (c.isGlass) Modifier else Modifier.shadow(4.dp, shape, ambientColor = c.shadow, spotColor = c.shadow))
-            .background(if (c.isGlass) Brush.verticalGradient(listOf(c.accentSoft.copy(alpha = 0.9f), c.glassBottom)) else Brush.verticalGradient(listOf(c.accentSoft, c.accentSoft)), shape)
-            .border(MyHealthTheme.stroke.regular, c.accent.copy(alpha = if (c.isGlass) 0.55f else 0.9f), shape)
+            .shadow(10.dp, shape, ambientColor = c.glow, spotColor = c.accent.copy(alpha = 0.25f))
+            .background(Brush.verticalGradient(listOf(c.accentSoft.copy(alpha = 0.92f), c.accentSoft.copy(alpha = 0.55f))), shape)
+            .border(1.5.dp, Brush.verticalGradient(listOf(c.accent.copy(alpha = 0.8f), c.accent.copy(alpha = 0.35f))), shape).gloss(shape, 0.35f)
         SurfaceKind.Alert -> this
-            .then(if (c.isGlass) Modifier else Modifier.shadow(10.dp, shape, ambientColor = c.danger.copy(alpha = 0.3f), spotColor = c.danger.copy(alpha = 0.4f)))
-            .background(Brush.verticalGradient(listOf(c.dangerSoft, if (c.isGlass) c.dangerSoft.copy(alpha = 0.75f) else c.surfaceRaised)), shape)
-            .border(MyHealthTheme.stroke.regular, c.danger, shape)
+            .shadow(12.dp, shape, ambientColor = c.danger.copy(alpha = 0.25f), spotColor = c.danger.copy(alpha = 0.35f))
+            .background(Brush.verticalGradient(listOf(c.dangerSoft.copy(alpha = 0.95f), c.dangerSoft.copy(alpha = 0.65f))), shape)
+            .border(1.5.dp, c.danger, shape).gloss(shape, 0.30f)
             .alertRim(shape)
-        SurfaceKind.Hero -> {
-            val base = if (c.isGlass) this
-                .shadow(18.dp, shape, ambientColor = c.glow, spotColor = c.glow)
-                .background(Brush.linearGradient(listOf(c.hero, androidx.compose.ui.graphics.lerp(c.hero, c.accent, if (c.isDark) 0.35f else 0.15f))), shape)
-                .border(MyHealthTheme.stroke.hairline, c.heroAccent.copy(alpha = 0.45f), shape)
-            else this
-                .shadow(16.dp, shape, ambientColor = c.hero, spotColor = c.hero.copy(alpha = 0.55f))
-                .background(Brush.linearGradient(listOf(c.hero, androidx.compose.ui.graphics.lerp(c.hero, c.heroAccent, 0.10f))), shape)
-            base
-        }
+        SurfaceKind.Hero -> this
+            .shadow(20.dp, shape, ambientColor = c.glow, spotColor = c.accent.copy(alpha = 0.45f))
+            .background(Brush.linearGradient(listOf(c.hero, lerp(c.hero, c.accent, if (c.isDark) 0.35f else 0.22f))), shape)
+            .border(1.dp, Brush.verticalGradient(listOf(c.heroAccent.copy(alpha = 0.7f), c.heroAccent.copy(alpha = 0.15f))), shape).gloss(shape, 0.18f)
     }
+}
+
+/** Flat, light-weight surfaces when "Glass effects" is off (slower phones). */
+@Composable
+private fun Modifier.flat(kind: SurfaceKind, shape: Shape): Modifier {
+    val c = MyHealthTheme.colors
+    return when (kind) {
+        SurfaceKind.Card -> this.background(c.surfaceRaised, shape).border(MyHealthTheme.stroke.hairline, c.outline, shape)
+        SurfaceKind.Soft -> this.background(c.accentSoft, shape).border(MyHealthTheme.stroke.regular, c.accent, shape)
+        SurfaceKind.Alert -> this.background(c.dangerSoft, shape).border(MyHealthTheme.stroke.regular, c.danger, shape)
+        SurfaceKind.Hero -> this.background(c.hero, shape)
+    }
+}
+
+/** Specular highlight: a white sheen over the top ~45 % of the shape, the "liquid" look of glass. */
+fun Modifier.gloss(shape: Shape, strength: Float): Modifier = this.drawWithContent {
+    val outline = shape.createOutline(size, layoutDirection, this)
+    val path = androidx.compose.ui.graphics.Path().apply { this.addOutline(outline) }
+    clipPath(path) {
+        drawRect(Brush.verticalGradient(listOf(Color.White.copy(alpha = strength), Color.White.copy(alpha = 0f)), endY = size.height * 0.45f), size = androidx.compose.ui.geometry.Size(size.width, size.height * 0.45f))
+    }
+    drawContent()
 }
 
 /** A glow ring that breathes (2.4 s) around out-of-range values; static when animations are off. */

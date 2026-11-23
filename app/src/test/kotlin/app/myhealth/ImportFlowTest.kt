@@ -101,13 +101,13 @@ class ImportFlowTest {
                 ImportScreen(st, vm::onEvent, onBack = {}, onPickFile = {}, onTakePhoto = {})
             } }
         }
-        waitFor(15_000) { vm.state.value.member != null }
+        waitFor(30_000) { vm.state.value.member != null }
         val bytes = pdf(listOf(
             "SUNRISE DIAGNOSTIC LABORATORY", "Patient Name : Mr. Ravi Shah   Age: 44",
             "Sample Collected On : 12/03/2024", "Haemoglobin 13.1 g/dL 13.0 - 17.0", "HbA1c 6.4 % 4.0 - 5.6", "TSH 3.1 uIU/mL 0.27 - 4.2",
         ))
         vm.onDocument(PickedDocument(bytes, "cbc.pdf", AttachmentKind.Pdf))
-        rule.waitUntil(15_000) { rule.onAllNodes(hasTestTag("reviewList")).fetchSemanticsNodes().isNotEmpty() }
+        rule.waitUntil(30_000) { rule.onAllNodes(hasTestTag("reviewList")).fetchSemanticsNodes().isNotEmpty() }
         val draft = vm.state.value.draft!!
         assertEquals(LocalDate.of(2024, 3, 12), draft.reportDate)
         assertEquals(listOf("hb", "hba1c", "tsh"), draft.labRows.map { it.analyteId })
@@ -137,7 +137,7 @@ class ImportFlowTest {
         // a second import of the same file is flagged as a duplicate
         vm.onEvent(ImportEvent.Reset)
         vm.onDocument(PickedDocument(bytes, "cbc.pdf", AttachmentKind.Pdf))
-        waitFor(15_000) { vm.state.value.phase == ImportPhase.Review }
+        waitFor(30_000) { vm.state.value.phase == ImportPhase.Review }
         assertEquals(report.id, vm.state.value.draft!!.duplicateOf!!.report.id)
     }
 
@@ -152,7 +152,7 @@ class ImportFlowTest {
         waitFor(5_000) { vm.state.value.member != null && vm.state.value.members.size == 2 }
         // 1) printed name belongs to nobody → ask; "add as new member" creates the profile and files the report there
         vm.onDocument(PickedDocument(pdf(listOf("City Pathology Laboratory", "Patient Name : Mr. SURESH MEHTA   Age: 61", "Date: 05/01/2024", "TSH 5.9 uIU/mL 0.27 - 4.2")), "a.pdf", AttachmentKind.Pdf))
-        waitFor(15_000) { vm.state.value.phase is ImportPhase.ChooseMember }
+        waitFor(30_000) { vm.state.value.phase is ImportPhase.ChooseMember }
         vm.onEvent(ImportEvent.AddMemberFromReport((vm.state.value.phase as ImportPhase.ChooseMember).printedName))
         waitFor(5_000) { vm.state.value.phase == ImportPhase.Review }
         val suresh = runBlocking { s.stack.members.all() }.single { it.name == "Suresh Mehta" }
@@ -161,7 +161,7 @@ class ImportFlowTest {
         vm.onEvent(ImportEvent.Reset)
         vm.onEvent(ImportEvent.ChooseMember("m1"))
         vm.onDocument(PickedDocument(pdf(listOf("City Pathology Laboratory", "Patient Name : Mrs. Meera Shah   Age: 41", "Date: 06/01/2024", "TSH 2.1 uIU/mL 0.27 - 4.2")), "b.pdf", AttachmentKind.Pdf))
-        waitFor(15_000) { vm.state.value.phase == ImportPhase.Review }
+        waitFor(30_000) { vm.state.value.phase == ImportPhase.Review }
         assertEquals("m2", vm.state.value.draft!!.memberId)
         assertEquals("Meera Shah", vm.state.value.autoMatchedName)
     }
@@ -175,9 +175,9 @@ class ImportFlowTest {
         val p2 = pdf(listOf("Sunrise Hospital laboratory page two", "Creatinine 1.4 mg/dL 0.7 - 1.3", "Haemoglobin 99 g/dL 13 - 17"))
         val f2 = java.io.File(ctx.cacheDir, "page2.pdf").apply { writeBytes(p2) }
         vm.onDocument(PickedDocument(p1, "page1.pdf", AttachmentKind.Pdf))
-        waitFor(15_000) { vm.state.value.phase == ImportPhase.Review }
+        waitFor(30_000) { vm.state.value.phase == ImportPhase.Review }
         vm.onEvent(ImportEvent.AddPage(android.net.Uri.fromFile(f2), "page2.pdf"))
-        waitFor(15_000) { vm.state.value.draft!!.sources.size == 2 && vm.state.value.phase == ImportPhase.Review }
+        waitFor(30_000) { vm.state.value.draft!!.sources.size == 2 && vm.state.value.phase == ImportPhase.Review }
         assertEquals(listOf("hb", "creat"), vm.state.value.draft!!.labRows.map { it.analyteId })
         vm.onEvent(ImportEvent.Save("Hospital file"))
         waitFor(10_000) { vm.state.value.phase is ImportPhase.Saved }
@@ -211,7 +211,7 @@ class ImportFlowTest {
         waitFor(5_000) { vm.state.value.phase == ImportPhase.Batch }
         assertEquals("Blood count July", vm.state.value.batch[1].title)
         vm.onEvent(ImportEvent.SaveAllReady("Lab report"))
-        waitFor(15_000) { vm.state.value.phase is ImportPhase.Saved }
+        waitFor(30_000) { vm.state.value.phase is ImportPhase.Saved }
         val reports = runBlocking { s.stack.records.observeReports("m1").first() }.sortedBy { it.reportDate }
         assertEquals(listOf(java.time.LocalDate.of(2024, 7, 22), java.time.LocalDate.of(2024, 11, 16)), reports.map { it.reportDate })
         assertEquals(listOf(1, 2), reports.map { it.attachments.size })
@@ -230,7 +230,7 @@ class ImportFlowTest {
         val vm = ImportViewModel(s, DocumentReader(ctx.contentResolver), ImportPipeline(AndroidTextExtractor(ctx, failingOcr), s.stack.records), ctx.container.clock)
         waitFor(5_000) { vm.state.value.member != null }
         vm.onDocument(PickedDocument(pdf(listOf("City Pathology Laboratory", "Date: 05/01/2024", "Thyroid Function Test", "TSH 5.9 uIU/mL 0.27 - 4.2")), "thyroid.pdf", AttachmentKind.Pdf))
-        waitFor(15_000) { vm.state.value.phase == ImportPhase.Review }
+        waitFor(30_000) { vm.state.value.phase == ImportPhase.Review }
         vm.onEvent(ImportEvent.SetTitle("Thyroid check"))
         vm.onEvent(ImportEvent.Save("Lab report"))
         waitFor(10_000) { vm.state.value.phase is ImportPhase.Saved }

@@ -38,6 +38,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawWithCache
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
@@ -112,6 +113,9 @@ fun NeonVitalTile(
             .padding(border)
             .clip(inner)
             .background(if (c.isDark) c.surfaceRaised else Color.White)
+            .then(if (c.isGlass) Modifier
+                .background(Brush.verticalGradient(listOf(accent.copy(alpha = if (c.isDark) 0.10f else 0.06f), Color.Transparent, accent.copy(alpha = if (c.isDark) 0.08f else 0.05f))))
+                .gloss(inner, if (c.isDark) 0.08f else 0.45f) else Modifier)
             .clickable(interactionSource = interaction, indication = null, role = Role.Button, onClick = onClick)
             .padding(horizontal = 16.dp, vertical = 14.dp),
     ) {
@@ -134,26 +138,74 @@ fun NeonVitalTile(
                     if (unit.isNotBlank()) Text(unit, style = TextStyle(fontSize = 14.sp), color = c.textSecondary, maxLines = 1, softWrap = false,
                         modifier = Modifier.padding(start = 4.dp, bottom = 4.dp))
                 }
-                Box(Modifier.size(40.dp), contentAlignment = Alignment.Center) {
-                    Box(Modifier.size(40.dp).background(Brush.radialGradient(listOf(accent.copy(alpha = 0.28f), Color.Transparent))))
-                    Icon(icon, null, tint = accent, modifier = Modifier.size(30.dp))
-                }
+                GlassOrb(icon, accent)
             }
-            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                val track = if (c.isDark) Color.White.copy(alpha = 0.10f) else c.surfaceSunken
-                val zone = (if (c.isDark) c.accentBright else c.accent).copy(alpha = 0.22f)
-                Canvas(Modifier.fillMaxWidth().height(10.dp)) {
-                    val y = size.height / 2; val h = 4.dp.toPx()
-                    drawRoundRect(track, Offset(0f, y - h / 2), androidx.compose.ui.geometry.Size(size.width, h), CornerRadius(h / 2))
-                    // reference interval = middle half of the track
-                    drawRoundRect(zone, Offset(size.width * 0.25f, y - h / 2), androidx.compose.ui.geometry.Size(size.width * 0.5f, h), CornerRadius(h / 2))
-                    val x = size.width * position.coerceIn(0.05f, 0.95f)
-                    drawCircle(Brush.radialGradient(listOf(accent.copy(alpha = 0.45f), Color.Transparent), Offset(x, y), 10.dp.toPx()), 10.dp.toPx(), Offset(x, y))
-                    drawCircle(accent, 5.dp.toPx(), Offset(x, y))
-                }
+            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                RangeBar(position, accent)
                 if (refCaption != null) Text(refCaption, style = MyHealthTheme.typography.caption, color = c.textTertiary, maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
         }
+    }
+}
+
+/**
+ * The tile's icon inside a glossy glass orb: a gradient bead of the status colour, a white specular cap and a soft
+ * coloured glow underneath (flat tinted circle when glass effects are off).
+ */
+@Composable
+fun GlassOrb(icon: ImageVector, tint: Color, size: androidx.compose.ui.unit.Dp = 44.dp) {
+    val c = MyHealthTheme.colors
+    val orb = androidx.compose.foundation.shape.CircleShape
+    if (!c.isGlass) {
+        Box(Modifier.size(size).clip(orb).background(tint.copy(alpha = 0.14f)), contentAlignment = Alignment.Center) {
+            Icon(icon, null, tint = tint, modifier = Modifier.size(size * 0.55f))
+        }
+        return
+    }
+    Box(
+        Modifier.size(size)
+            .shadow(10.dp, orb, ambientColor = tint, spotColor = tint)
+            .clip(orb)
+            .background(Brush.linearGradient(listOf(androidx.compose.ui.graphics.lerp(tint, Color.White, 0.35f), tint, androidx.compose.ui.graphics.lerp(tint, Color.Black, 0.15f))))
+            .border(1.dp, Brush.verticalGradient(listOf(Color.White.copy(alpha = 0.85f), Color.White.copy(alpha = 0.10f))), orb)
+            .drawWithCache {
+                val cap = Brush.verticalGradient(listOf(Color.White.copy(alpha = 0.65f), Color.White.copy(alpha = 0f)), startY = 0f, endY = this.size.height * 0.5f)
+                onDrawWithContent {
+                    drawContent()
+                    drawOval(cap, topLeft = Offset(this.size.width * 0.18f, this.size.height * 0.06f),
+                        size = androidx.compose.ui.geometry.Size(this.size.width * 0.64f, this.size.height * 0.40f))
+                }
+            },
+        contentAlignment = Alignment.Center,
+    ) { Icon(icon, null, tint = Color.White, modifier = Modifier.size(size * 0.52f)) }
+}
+
+/**
+ * Range bar: three zones (low · reference · high) on an 8 dp glass track, the reference zone glowing in the accent,
+ * the out-of-range zones in soft red, and a glass bead that springs to the value's place.
+ */
+@Composable
+fun RangeBar(position: Float, accent: Color, modifier: Modifier = Modifier) {
+    val c = MyHealthTheme.colors
+    val target = position.coerceIn(0.05f, 0.95f)
+    val p by animateFloatAsState(target, if (MyHealthTheme.reduceMotion) tween(0) else spring(dampingRatio = 0.6f, stiffness = 120f), label = BEAD)
+    val normal = if (c.isDark) c.accentBright else c.accent
+    val out = c.danger
+    Canvas(modifier.fillMaxWidth().height(20.dp)) {
+        val y = size.height / 2; val h = 8.dp.toPx(); val r = CornerRadius(h / 2); val w = size.width
+        drawRoundRect(if (c.isDark) Color.White.copy(alpha = 0.10f) else c.surfaceSunken, Offset(0f, y - h / 2), androidx.compose.ui.geometry.Size(w, h), r)
+        drawRoundRect(Brush.horizontalGradient(listOf(out.copy(alpha = 0.55f), out.copy(alpha = 0.12f)), endX = w * 0.25f), Offset(0f, y - h / 2), androidx.compose.ui.geometry.Size(w * 0.25f, h), r)
+        drawRoundRect(Brush.horizontalGradient(listOf(out.copy(alpha = 0.12f), out.copy(alpha = 0.55f)), startX = w * 0.75f, endX = w), Offset(w * 0.75f, y - h / 2), androidx.compose.ui.geometry.Size(w * 0.25f, h), r)
+        drawRoundRect(Brush.horizontalGradient(listOf(normal.copy(alpha = 0.55f), normal, normal.copy(alpha = 0.55f)), startX = w * 0.25f, endX = w * 0.75f),
+            Offset(w * 0.25f + 2.dp.toPx(), y - h / 2), androidx.compose.ui.geometry.Size(w * 0.5f - 4.dp.toPx(), h), r)
+        // glossy top line on the track
+        drawRoundRect(Color.White.copy(alpha = if (c.isDark) 0.12f else 0.55f), Offset(h / 2, y - h / 2 + 1.dp.toPx()), androidx.compose.ui.geometry.Size(w - h, 1.5.dp.toPx()), r)
+        val x = w * p
+        drawCircle(Brush.radialGradient(listOf(accent.copy(alpha = 0.55f), Color.Transparent), Offset(x, y), 14.dp.toPx()), 14.dp.toPx(), Offset(x, y))
+        drawCircle(Color.White, 8.dp.toPx(), Offset(x, y))
+        drawCircle(accent, 8.dp.toPx(), Offset(x, y), style = androidx.compose.ui.graphics.drawscope.Stroke(3.dp.toPx()))
+        drawCircle(accent, 3.dp.toPx(), Offset(x, y))
+        drawCircle(Color.White.copy(alpha = 0.9f), 2.dp.toPx(), Offset(x - 3.dp.toPx(), y - 3.dp.toPx()))
     }
 }
 
@@ -184,4 +236,5 @@ fun TileGridHeader(title: String, triage: String, doctorLabel: String, doctorVie
 }
 
 private const val BEAM = "beam" // animation inspector id, not UI copy
+private const val BEAD = "bead" // animation inspector id, not UI copy
 private const val PRESS_T = "pressTile" // animation inspector id, not UI copy

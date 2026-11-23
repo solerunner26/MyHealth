@@ -9,6 +9,10 @@
     <string name="about_version_build">संस्करण %1$s (बिल्ड %2$d)</string>
     <string name="qs_title">त्वरित सेटिंग्स</string>
     <string name="qs_dark">डार्क मोड</string>
+    <string name="fx_glass">ग्लास इफ़ेक्ट</string>
+    <string name="fx_glass_sub">पारदर्शी चमकदार पैनल और चमक। फ़ोन धीमा लगे तो बंद करें।</string>
+    <string name="fx_animations">एनिमेशन</string>
+    <string name="fx_animations_sub">चलता बैकग्राउंड, टाइल बॉर्डर और चमक। सब कुछ स्थिर रखने के लिए बंद करें।</string>
     <string name="hc_data_bp">ब्लड प्रेशर</string>
     <string name="hc_data_spo2">ऑक्सीजन (SpO₂)</string>
     <string name="hc_data_glucose">ब्लड ग्लूकोज़</string>
